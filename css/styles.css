@@ -603,17 +603,31 @@ code {
 
 .venue-block {
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  gap: clamp(1.25rem, 3vw, 2rem);
-  align-items: stretch;
+  grid-template-columns: minmax(16rem, 0.9fr) minmax(0, 1.2fr);
+  grid-template-areas: "detail map";
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  align-items: center;
+  direction: ltr;
+}
+
+.venue-block > .detail {
+  grid-area: detail;
+  padding: 0.35rem 0 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.venue-block > .venue-map {
+  grid-area: map;
 }
 
 .detail {
   padding: 0.35rem 0 0;
   border: 0;
   background: transparent;
-  display: flex;
-  flex-direction: column;
 }
 
 .detail__label {
@@ -1463,6 +1477,9 @@ code {
   .maps-guide__grid,
   .venue-block {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "detail"
+      "map";
   }
 
   .gallery__mosaic {

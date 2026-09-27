@@ -60,10 +60,10 @@
     revealEls.forEach((el) => el.classList.add("is-visible"));
   }
 
-  // Wedding day: 27 Nov 2026, 2:00 PM Asia/Manila (UTC+8)
+  // Wedding day: 27 Nov 2026, 1:30 PM Asia/Manila (UTC+8)
   const countdownRoot = document.querySelector("[data-countdown]");
   if (countdownRoot) {
-    const target = new Date("2026-11-27T14:00:00+08:00").getTime();
+    const target = new Date("2026-11-27T13:30:00+08:00").getTime();
     const units = {
       days: countdownRoot.querySelector("[data-days]"),
       hours: countdownRoot.querySelector("[data-hours]"),

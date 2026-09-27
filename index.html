@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=14" />
+  <link rel="stylesheet" href="css/styles.css?v=15" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -365,11 +365,12 @@
         <p class="eyebrow">RSVP</p>
         <h2 class="section__title">Will you join us?</h2>
         <p class="rsvp__intro">
-          Kindly RSVP by <strong>31 October 2026</strong>.
-          Please submit one RSVP form per guest. We kindly ask that each guest complete their own form,
-          and that no additional guests or +1s be included.
+          Kindly RSVP by <strong>31 October 2026</strong>, as it will help us finalize our guest count
+          and make the necessary arrangements.
         </p>
-        <p class="rsvp__outro">We look forward to celebrating with you!</p>
+        <p class="rsvp__closes" data-rsvp-deadline>
+          RSVP closes in <strong data-rsvp-days>—</strong> <span data-rsvp-days-label>days</span>.
+        </p>
 
         <form id="rsvp-form" class="rsvp-form" novalidate>
           <div class="field">
@@ -457,7 +458,7 @@
   </footer>
 
   <script src="js/config.js?v=3"></script>
-  <script src="js/main.js?v=4"></script>
+  <script src="js/main.js?v=5"></script>
   <script src="js/rsvp.js?v=5"></script>
 </body>
 </html>

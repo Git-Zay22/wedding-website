@@ -1232,12 +1232,13 @@ code {
 
 .rsvp__script {
   margin: 0 0 0.45rem;
-  font-family: var(--font-script-soft);
-  font-size: clamp(3rem, 9vw, 4.25rem);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(2.1rem, 5.5vw, 2.75rem);
   font-weight: 400;
   color: #7a5a3c;
   text-align: center;
-  line-height: 1.05;
+  line-height: 1.15;
   letter-spacing: 0.02em;
 }
 
@@ -1250,13 +1251,14 @@ code {
 .rsvp__frame .section__title {
   margin-left: auto;
   margin-right: auto;
-  font-family: var(--font-display);
-  font-style: italic;
+  font-family: var(--font-script-soft);
+  font-style: normal;
   font-weight: 400;
-  font-size: clamp(2.35rem, 6vw, 3.35rem);
+  font-size: clamp(3rem, 9vw, 4.5rem);
   letter-spacing: 0.01em;
   color: var(--ink-soft);
-  max-width: 16ch;
+  max-width: 18ch;
+  line-height: 1.05;
 }
 
 .rsvp__intro {

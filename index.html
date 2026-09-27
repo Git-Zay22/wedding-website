@@ -8,7 +8,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Outfit:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/styles.css" />
@@ -33,7 +33,9 @@
   </div>
 
   <header class="site-header" data-header>
-    <a class="logo" href="#top">C<span>&</span>Z</a>
+    <a class="logo" href="#top" aria-label="Caren & Zayrol — home">
+      <img src="assets/logo-monogram.png" alt="" width="80" height="86" decoding="async" />
+    </a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
       <span class="sr-only">Menu</span>
       <span></span><span></span>
@@ -136,7 +138,7 @@
     <section id="details" class="section details">
       <div class="section__inner">
         <p class="eyebrow" data-reveal>The day</p>
-        <h2 class="section__title" data-reveal>When & where</h2>
+        <h2 class="section__title" data-reveal>When & Where</h2>
 
         <ol class="timeline" data-reveal>
           <li class="timeline__item">
@@ -416,27 +418,15 @@
             </select>
           </div>
 
-          <div class="field-row">
-            <div class="field">
-              <label for="guests">Number of guests</label>
-              <select id="guests" name="guests" required>
-                <option value="1" selected>1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5+</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="commute">Will you bring your own car?</label>
-              <select id="commute" name="commute" required>
-                <option value="Own car" selected>Yes — own car</option>
-                <option value="Carpool">Carpool with other guests</option>
-                <option value="Rideshare">Grab / taxi / rideshare</option>
-                <option value="Need a ride">No — need a ride</option>
-                <option value="Other">Other (note below)</option>
-              </select>
-            </div>
+          <div class="field">
+            <label for="commute">Will you bring your own car?</label>
+            <select id="commute" name="commute" required>
+              <option value="Own car" selected>Yes — own car</option>
+              <option value="Carpool">Carpool with other guests</option>
+              <option value="Rideshare">Grab / taxi / rideshare</option>
+              <option value="Need a ride">No — need a ride</option>
+              <option value="Other">Other (note below)</option>
+            </select>
           </div>
 
           <div class="field">
@@ -465,6 +455,9 @@
   </main>
 
   <footer class="site-footer">
+    <a class="footer__logo" href="#top" aria-label="Caren & Zayrol — back to top">
+      <img src="assets/logo-monogram.png" alt="" width="120" height="129" decoding="async" loading="lazy" />
+    </a>
     <p class="footer__brand">Caren & Zayrol</p>
     <p class="footer__meta">11 · 27 · 2026 · Rodriguez, Rizal</p>
     <p class="footer__thanks">With love — thank you for being part of our day.</p>
@@ -472,6 +465,6 @@
 
   <script src="js/config.js?v=3"></script>
   <script src="js/main.js?v=3"></script>
-  <script src="js/rsvp.js?v=3"></script>
+  <script src="js/rsvp.js?v=5"></script>
 </body>
 </html>

@@ -25,7 +25,11 @@ function doPost(e) {
       return json_({ ok: false, error: "Missing required fields." });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (
+      !/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(
+        email
+      )
+    ) {
       return json_({ ok: false, error: "Please enter a valid email address." });
     }
 

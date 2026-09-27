@@ -1246,7 +1246,8 @@ code {
 
 .rsvp__frame .eyebrow,
 .rsvp__frame .section__title,
-.rsvp__frame .rsvp__intro {
+.rsvp__frame .rsvp__intro,
+.rsvp__frame .rsvp__outro {
   text-align: center;
 }
 

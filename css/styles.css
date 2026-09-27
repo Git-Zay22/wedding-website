@@ -1061,9 +1061,13 @@ code {
   color: var(--ink-soft);
 }
 
+.info-card p {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+}
+
 .info-card p:last-child {
   margin: 0;
-  color: var(--muted);
 }
 
 /* Gallery — editorial mosaic */

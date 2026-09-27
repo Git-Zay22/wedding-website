@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+node_modules/
+.vscode/
+.idea/
+
+# Local RSVP secrets / deployment URL (copy from config.example.js)
+js/config.js

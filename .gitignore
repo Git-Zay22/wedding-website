@@ -7,5 +7,3 @@ node_modules/
 .vscode/
 .idea/
 
-# Local RSVP secrets / deployment URL (copy from config.example.js)
-js/config.js

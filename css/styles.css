@@ -1264,8 +1264,17 @@ code {
 }
 
 .rsvp__intro {
-  margin: calc(var(--space-lg) * -0.5) 0 var(--space-lg);
+  margin: calc(var(--space-lg) * -0.5) 0 0.85rem;
   color: var(--muted);
+}
+
+.rsvp__outro {
+  margin: 0 0 var(--space-lg);
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--ink-soft);
 }
 
 .rsvp__intro strong {

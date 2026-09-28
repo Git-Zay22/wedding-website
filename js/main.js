@@ -82,7 +82,7 @@
         } catch (e) {}
         closeProposalsGate();
         const base = window.location.pathname + window.location.search;
-        window.location.href = base + "#proposals";
+        window.location.href = base + "#owners";
         window.location.reload();
         return;
       }
@@ -94,6 +94,11 @@
       gateInput.focus();
       gateInput.select();
     });
+  }
+
+  // Legacy hash support
+  if (window.location.hash === "#proposals" && isProposalsUnlocked()) {
+    history.replaceState(null, "", window.location.pathname + window.location.search + "#owners");
   }
 
   const header = document.querySelector("[data-header]");

@@ -417,7 +417,7 @@ code {
 
 .hero__media img {
   object-fit: cover;
-  object-position: center 32%;
+  object-position: center 52%;
 }
 
 .hero__veil {
@@ -1667,7 +1667,7 @@ code {
 
   .hero__media img {
     object-fit: cover;
-    object-position: center 30%;
+    object-position: center 50%;
   }
 
   .page-decor__vine,
@@ -1801,7 +1801,7 @@ code {
   }
 
   .hero__media img {
-    object-position: center 26%;
+    object-position: center 58%;
   }
 
   .hero__scroll {

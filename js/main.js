@@ -59,7 +59,7 @@
           sessionStorage.removeItem(PROPOSALS_UNLOCK_KEY);
         } catch (e) {}
         const base = window.location.pathname + window.location.search;
-        window.location.href = base + "#top";
+        window.location.href = base || "/";
         window.location.reload();
         return;
       }

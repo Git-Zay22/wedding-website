@@ -1,4 +1,93 @@
 (function () {
+  const PROPOSALS_UNLOCK_KEY = "cz-proposals-unlock";
+  const PROPOSALS_NAMES = new Set(["zayrol", "caren"]);
+
+  const isProposalsUnlocked = () => {
+    try {
+      return sessionStorage.getItem(PROPOSALS_UNLOCK_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const applyProposalsVisibility = () => {
+    if (isProposalsUnlocked()) {
+      document.documentElement.classList.add("proposals-unlocked");
+    }
+  };
+
+  applyProposalsVisibility();
+
+  const unlockTrigger = document.querySelector("[data-proposals-unlock]");
+  const gateDialog = document.querySelector("[data-proposals-gate]");
+  const gateForm = document.querySelector("[data-proposals-gate-form]");
+  const gateInput = document.querySelector("[data-proposals-gate-input]");
+  const gateError = document.querySelector("[data-proposals-gate-error]");
+  const gateCancel = document.querySelector("[data-proposals-gate-cancel]");
+
+  const openProposalsGate = () => {
+    if (!gateDialog || isProposalsUnlocked()) return;
+    if (gateError) {
+      gateError.hidden = true;
+      gateError.textContent = "";
+    }
+    if (gateInput) {
+      gateInput.value = "";
+    }
+    if (typeof gateDialog.showModal === "function") {
+      gateDialog.showModal();
+      window.setTimeout(() => gateInput && gateInput.focus(), 50);
+    }
+  };
+
+  const closeProposalsGate = () => {
+    if (gateDialog && gateDialog.open) gateDialog.close();
+  };
+
+  const verifyProposalsGate = (raw) => {
+    const normalized = String(raw || "")
+      .trim()
+      .toLowerCase();
+    return PROPOSALS_NAMES.has(normalized);
+  };
+
+  if (unlockTrigger && gateDialog) {
+    unlockTrigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (isProposalsUnlocked()) return;
+      openProposalsGate();
+    });
+  }
+
+  if (gateCancel) {
+    gateCancel.addEventListener("click", closeProposalsGate);
+  }
+
+  if (gateForm) {
+    gateForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!gateInput) return;
+
+      if (verifyProposalsGate(gateInput.value)) {
+        try {
+          sessionStorage.setItem(PROPOSALS_UNLOCK_KEY, "1");
+        } catch (e) {}
+        closeProposalsGate();
+        const base = window.location.pathname + window.location.search;
+        window.location.href = base + "#proposals";
+        window.location.reload();
+        return;
+      }
+
+      if (gateError) {
+        gateError.textContent = "That name does not match. Please try again.";
+        gateError.hidden = false;
+      }
+      gateInput.focus();
+      gateInput.select();
+    });
+  }
+
   const header = document.querySelector("[data-header]");
   const nav = document.querySelector("[data-nav]");
   const toggle = document.querySelector("[data-nav-toggle]");

@@ -11,7 +11,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=39" />
+  <link rel="stylesheet" href="css/styles.css?v=40" />
+  <script>
+    (function () {
+      try {
+        if (sessionStorage.getItem("cz-proposals-unlock") === "1") {
+          document.documentElement.classList.add("proposals-unlocked");
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -37,7 +46,7 @@
       <a href="#attire">Attire</a>
       <a href="#info">Info</a>
       <a href="#gallery">Gallery</a>
-      <a href="#proposals">Proposals</a>
+      <a href="#proposals" class="nav-proposals" data-nav-proposals>Proposals</a>
       <a class="nav-cta" href="#rsvp">RSVP</a>
     </nav>
   </header>
@@ -58,7 +67,7 @@
           <span class="amp">&</span>
           <span>Zayrol</span>
         </h1>
-        <p class="hero__line" data-reveal>With love, we invite you to celebrate our <span class="hero__forever">forever</span>.</p>
+        <p class="hero__line" data-reveal>With <button type="button" class="hero__secret" data-proposals-unlock>love</button>, we invite you to celebrate our <span class="hero__forever">forever</span>.</p>
         <div class="hero__actions" data-reveal>
           <a class="btn btn--primary" href="#rsvp">RSVP</a>
           <a class="btn btn--ghost" href="#details">Wedding details</a>
@@ -368,9 +377,9 @@
       </div>
     </section>
 
-    <div class="divider" aria-hidden="true"><span></span></div>
+    <div class="divider divider--proposals" aria-hidden="true"><span></span></div>
 
-    <section id="proposals" class="section proposals" aria-label="Wedding invitations">
+    <section id="proposals" class="section proposals" aria-label="Wedding invitations" data-proposals-section>
       <div class="section__inner">
         <p class="eyebrow" data-reveal>Wedding invitations</p>
         <h2 class="section__title" data-reveal>Proposals</h2>
@@ -531,6 +540,28 @@
     </section>
   </main>
 
+  <dialog class="proposals-gate" data-proposals-gate aria-labelledby="proposals-gate-title">
+    <form method="dialog" class="proposals-gate__panel" data-proposals-gate-form>
+      <p class="proposals-gate__eyebrow">Confirmation</p>
+      <h2 id="proposals-gate-title" class="proposals-gate__title">Who sent you here?</h2>
+      <p class="proposals-gate__lead">Enter the name to continue.</p>
+      <label class="proposals-gate__label" for="proposals-gate-input">Your answer</label>
+      <input
+        id="proposals-gate-input"
+        class="proposals-gate__input"
+        type="text"
+        autocomplete="off"
+        maxlength="40"
+        data-proposals-gate-input
+      />
+      <p class="proposals-gate__error" data-proposals-gate-error role="alert" hidden></p>
+      <div class="proposals-gate__actions">
+        <button type="button" class="btn btn--ghost-ink" data-proposals-gate-cancel>Cancel</button>
+        <button type="submit" class="btn btn--primary">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
   <footer class="site-footer">
     <a class="footer__logo" href="#top" aria-label="Caren & Zayrol — back to top">
       <img src="assets/logo-monogram.png" alt="" width="120" height="129" decoding="async" loading="lazy" />
@@ -541,7 +572,7 @@
   </footer>
 
   <script src="js/config.js?v=3"></script>
-  <script src="js/main.js?v=10"></script>
+  <script src="js/main.js?v=11"></script>
   <script src="js/rsvp.js?v=5"></script>
 </body>
 </html>

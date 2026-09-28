@@ -473,6 +473,121 @@ code {
   color: rgba(243, 245, 244, 0.88);
 }
 
+.hero__secret {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: inherit;
+  color: var(--powder);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(158, 197, 220, 0.65);
+  text-underline-offset: 0.15em;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hero__secret:hover {
+  color: var(--powder-deep);
+  text-decoration-color: var(--powder-deep);
+}
+
+html:not(.proposals-unlocked) .divider--proposals,
+html:not(.proposals-unlocked) [data-proposals-section],
+html:not(.proposals-unlocked) [data-nav-proposals] {
+  display: none !important;
+}
+
+.proposals-gate {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  max-width: min(22rem, calc(100vw - 2rem));
+  background: transparent;
+}
+
+.proposals-gate::backdrop {
+  background: rgba(36, 48, 58, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.proposals-gate__panel {
+  margin: 0;
+  padding: clamp(1.35rem, 4vw, 1.75rem);
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
+  text-align: center;
+}
+
+.proposals-gate__eyebrow {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--butter-deep);
+}
+
+.proposals-gate__title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.proposals-gate__lead {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.proposals-gate__label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+}
+
+.proposals-gate__input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--tile-border);
+  background: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.proposals-gate__input:focus {
+  outline: 2px solid rgba(106, 159, 189, 0.45);
+  outline-offset: 2px;
+}
+
+.proposals-gate__error {
+  margin: 0.65rem 0 0;
+  font-size: 0.88rem;
+  color: #a44;
+  text-align: left;
+}
+
+.proposals-gate__actions {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: center;
+  margin-top: 1.15rem;
+}
+
+.proposals-gate__actions .btn {
+  min-width: 6.5rem;
+}
+
 .hero__forever {
   display: inline-block;
   font-family: var(--font-script-soft);

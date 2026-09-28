@@ -2049,38 +2049,13 @@ code {
 
 .date-lockup__digits {
   margin: 0;
-  display: grid;
-  gap: 0.15rem;
-  justify-items: center;
-  color: var(--ink-soft);
-  line-height: 1;
-}
-
-.date-lockup__day {
-  font-family: var(--font-display);
-  font-size: clamp(3.25rem, 11vw, 5.5rem);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-}
-
-.date-lockup__month {
   font-family: var(--font-script-soft);
-  font-size: clamp(2.4rem, 7vw, 3.6rem);
+  font-size: clamp(2.75rem, 9vw, 4.75rem);
   font-weight: 400;
-  letter-spacing: 0.02em;
-  color: var(--powder-deep);
-  line-height: 1.05;
-}
-
-.date-lockup__year {
-  font-family: var(--font-body);
-  font-size: clamp(0.95rem, 2.4vw, 1.15rem);
-  font-weight: 400;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 0.35rem;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  color: var(--ink-soft);
+  font-variant-numeric: normal;
 }
 
 .date-lockup__meta {

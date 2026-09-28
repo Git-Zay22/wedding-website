@@ -513,6 +513,8 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   border: 0;
   max-width: min(22rem, calc(100vw - 2rem));
   background: transparent;
+  border-radius: 1rem;
+  overflow: hidden;
 }
 
 .proposals-gate::backdrop {
@@ -527,6 +529,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
   text-align: center;
+  border-radius: 1rem;
 }
 
 .proposals-gate__eyebrow {
@@ -566,6 +569,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   width: 100%;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--tile-border);
+  border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.85);
   font-family: var(--font-body);
   font-size: 1rem;
@@ -593,6 +597,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 
 .proposals-gate__actions .btn {
   min-width: 6.5rem;
+  border-radius: 999px;
 }
 
 .hero__forever {

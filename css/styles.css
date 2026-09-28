@@ -479,13 +479,15 @@ code {
   padding: 0;
   border: 0;
   background: none;
-  font-family: var(--font-script-soft);
-  font-size: 1.55em;
-  font-weight: 400;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: var(--font-script-soft) !important;
+  font-size: 1.55em !important;
+  font-weight: 400 !important;
   font-style: normal;
   line-height: 1;
   letter-spacing: 0.02em;
-  color: var(--powder);
+  color: var(--powder) !important;
   text-shadow: 0 1px 10px rgba(36, 48, 58, 0.28);
   transform: translateY(0.08em);
   cursor: pointer;
@@ -495,7 +497,7 @@ code {
 
 .hero__secret:hover,
 .hero__secret:focus {
-  color: var(--powder);
+  color: var(--powder) !important;
   outline: none;
 }
 

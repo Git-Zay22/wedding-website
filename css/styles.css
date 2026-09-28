@@ -1891,7 +1891,6 @@ code {
   .hero__scroll span,
   [data-reveal],
   .petal,
-  .monogram,
   .flip.is-flipping span {
     animation: none !important;
     transition: none !important;
@@ -1906,43 +1905,31 @@ code {
 }
 
 /* --------------------------------------------------------------------------
-   Design extras — monogram, dividers, timeline, petals, date lockup
+   Design extras — botanical flourish, dividers, timeline, petals, date lockup
    -------------------------------------------------------------------------- */
 
-.monogram {
+.section-flourish {
   position: absolute;
-  inset: 6% 0 auto;
-  text-align: center;
-  font-family: var(--font-script-soft);
-  font-size: clamp(7rem, 22vw, 13rem);
-  line-height: 0.9;
-  color: rgba(106, 159, 189, 0.28);
-  background: linear-gradient(
-    135deg,
-    rgba(106, 159, 189, 0.38),
-    rgba(226, 200, 106, 0.28),
-    rgba(158, 197, 220, 0.34)
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 8px 28px rgba(106, 159, 189, 0.18));
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(22rem, 70vw);
   pointer-events: none;
   user-select: none;
   z-index: 0;
-  animation: monogram-glow 7s ease-in-out infinite;
+  opacity: 0.55;
 }
 
-@keyframes monogram-glow {
-  0%,
-  100% {
-    opacity: 0.72;
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-0.35rem) scale(1.03);
-  }
+.section-flourish img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.section-flourish--soft {
+  top: 2.25rem;
+  opacity: 0.42;
+  width: min(20rem, 64vw);
 }
 
 .section.story .section__inner,
@@ -2125,9 +2112,9 @@ code {
     gap: 0.55rem;
   }
 
-  .monogram {
-    font-size: 5.5rem;
-    opacity: 0.85;
+  .section-flourish {
+    width: min(16rem, 78vw);
+    opacity: 0.45;
   }
 
   .date-lockup {

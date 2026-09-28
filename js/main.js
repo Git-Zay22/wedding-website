@@ -130,4 +130,123 @@
     updateRsvpDays();
     setInterval(updateRsvpDays, 60000);
   }
+
+  // Proposals slider — 10s autoplay, pause on hover
+  const proposalsRoot = document.querySelector("[data-proposals]");
+  if (proposalsRoot) {
+    const slides = Array.from(proposalsRoot.querySelectorAll("[data-proposal-slide]"));
+    const dotsWrap = proposalsRoot.querySelector("[data-proposal-dots]");
+    const prevBtn = proposalsRoot.querySelector("[data-proposal-prev]");
+    const nextBtn = proposalsRoot.querySelector("[data-proposal-next]");
+    const progress = proposalsRoot.querySelector("[data-proposal-progress]");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const INTERVAL = 10000;
+    let index = Math.max(0, slides.findIndex((s) => s.classList.contains("is-active")));
+    let timer = null;
+    let paused = false;
+
+    if (index < 0) index = 0;
+
+    const dots = slides.map((_, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "proposals__dot" + (i === index ? " is-active" : "");
+      btn.setAttribute("role", "tab");
+      btn.setAttribute("aria-label", "Show proposal " + (i + 1));
+      btn.addEventListener("click", () => goTo(i, true));
+      if (dotsWrap) dotsWrap.appendChild(btn);
+      return btn;
+    });
+
+    const setProgress = (running) => {
+      if (!progress) return;
+      progress.classList.remove("is-running");
+      void progress.offsetWidth;
+      if (running && !reduceMotion) progress.classList.add("is-running");
+    };
+
+    const show = (nextIndex) => {
+      if (!slides.length) return;
+      const prev = slides[index];
+      index = (nextIndex + slides.length) % slides.length;
+      const next = slides[index];
+
+      slides.forEach((slide, i) => {
+        slide.classList.remove("is-active", "is-leaving");
+        if (i === index) {
+          slide.hidden = false;
+          slide.classList.add("is-active");
+        } else if (slide === prev && prev !== next) {
+          slide.hidden = false;
+          slide.classList.add("is-leaving");
+          window.setTimeout(() => {
+            if (!slide.classList.contains("is-active")) {
+              slide.hidden = true;
+              slide.classList.remove("is-leaving");
+            }
+          }, 700);
+        } else {
+          slide.hidden = true;
+        }
+      });
+
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("is-active", i === index);
+      });
+
+      setProgress(!paused && !reduceMotion);
+    };
+
+    const stopTimer = () => {
+      if (timer) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const schedule = () => {
+      stopTimer();
+      if (paused || reduceMotion || slides.length < 2) return;
+      timer = window.setTimeout(() => {
+        show(index + 1);
+        schedule();
+      }, INTERVAL);
+      setProgress(true);
+    };
+
+    const goTo = (i, userDriven) => {
+      show(i);
+      if (userDriven) schedule();
+    };
+
+    const pause = () => {
+      paused = true;
+      proposalsRoot.classList.add("is-paused");
+      stopTimer();
+      if (progress) progress.classList.remove("is-running");
+    };
+
+    const resume = () => {
+      paused = false;
+      proposalsRoot.classList.remove("is-paused");
+      schedule();
+    };
+
+    if (prevBtn) prevBtn.addEventListener("click", () => goTo(index - 1, true));
+    if (nextBtn) nextBtn.addEventListener("click", () => goTo(index + 1, true));
+
+    proposalsRoot.addEventListener("mouseenter", pause);
+    proposalsRoot.addEventListener("mouseleave", resume);
+    proposalsRoot.addEventListener("focusin", pause);
+    proposalsRoot.addEventListener("focusout", (event) => {
+      if (!proposalsRoot.contains(event.relatedTarget)) resume();
+    });
+
+    // Touch: pause while finger is down
+    proposalsRoot.addEventListener("touchstart", pause, { passive: true });
+    proposalsRoot.addEventListener("touchend", resume, { passive: true });
+
+    show(index);
+    schedule();
+  }
 })();

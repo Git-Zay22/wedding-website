@@ -12,12 +12,22 @@
   }
 
   if (toggle && nav && header) {
+    const isMobileNav = () => window.matchMedia("(max-width: 720px)").matches;
+
+    const blockPageScroll = (event) => {
+      if (!nav.classList.contains("is-open")) return;
+      // Allow scrolling inside the drawer if it overflows
+      if (nav.contains(event.target) && nav.scrollHeight > nav.clientHeight) {
+        return;
+      }
+      event.preventDefault();
+    };
+
     const setOpen = (open) => {
       nav.classList.toggle("is-open", open);
       header.classList.toggle("nav-open", open);
       toggle.setAttribute("aria-expanded", String(open));
-      document.documentElement.classList.toggle("nav-locked", open);
-      document.body.classList.toggle("nav-locked", open);
+      // Do not toggle overflow/position on body — that jumps scroll on mobile Safari
     };
 
     toggle.addEventListener("click", (event) => {
@@ -34,12 +44,21 @@
       if (event.key === "Escape") setOpen(false);
     });
 
+    document.addEventListener("touchmove", blockPageScroll, { passive: false });
+    document.addEventListener(
+      "wheel",
+      (event) => {
+        if (nav.classList.contains("is-open") && isMobileNav()) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
     window.addEventListener(
       "resize",
       () => {
-        if (window.matchMedia("(min-width: 721px)").matches) {
-          setOpen(false);
-        }
+        if (!isMobileNav()) setOpen(false);
       },
       { passive: true }
     );

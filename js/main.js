@@ -58,9 +58,7 @@
         try {
           sessionStorage.removeItem(PROPOSALS_UNLOCK_KEY);
         } catch (e) {}
-        const base = window.location.pathname + window.location.search;
-        window.location.href = base || "/";
-        window.location.reload();
+        window.location.replace(window.location.pathname + window.location.search || "/");
         return;
       }
       if (gateDialog) openProposalsGate();

@@ -27,6 +27,22 @@
   --font-body: "Outfit", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
+  --tile-bg:
+    linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.88) 0%,
+      rgba(232, 242, 248, 0.72) 48%,
+      rgba(255, 255, 255, 0.78) 100%
+    );
+  --tile-border: rgba(158, 197, 220, 0.55);
+  --tile-border-hi: rgba(255, 255, 255, 0.92);
+  --tile-glow: rgba(106, 159, 189, 0.14);
+  --tile-shadow:
+    inset 0 1px 0 var(--tile-border-hi),
+    inset 0 0 0 1px rgba(158, 197, 220, 0.18),
+    0 0 0 1px rgba(158, 197, 220, 0.22),
+    0 12px 32px var(--tile-glow);
+
   --space-xs: 0.5rem;
   --space-sm: 1rem;
   --space-md: 1.75rem;
@@ -713,8 +729,10 @@ code {
   position: relative;
   min-height: 16rem;
   aspect-ratio: 16 / 11;
-  background: var(--mist);
-  border: 1px solid rgba(158, 197, 220, 0.45);
+  background:
+    linear-gradient(165deg, rgba(232, 242, 248, 0.9), rgba(207, 227, 239, 0.75));
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
   overflow: hidden;
 }
 
@@ -746,10 +764,11 @@ code {
   padding: clamp(2rem, 5vw, 3.25rem) clamp(1.25rem, 4vw, 2.5rem);
   text-align: center;
   background:
-    radial-gradient(ellipse 40% 50% at 8% 30%, rgba(107, 115, 64, 0.08), transparent 60%),
-    radial-gradient(ellipse 40% 50% at 92% 70%, rgba(47, 90, 60, 0.1), transparent 60%),
-    linear-gradient(180deg, #f7f3ea 0%, #f1ebe0 100%);
-  border: 1px solid rgba(107, 115, 64, 0.18);
+    radial-gradient(ellipse 40% 50% at 8% 30%, rgba(158, 197, 220, 0.16), transparent 60%),
+    radial-gradient(ellipse 40% 50% at 92% 70%, rgba(107, 115, 64, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(232, 242, 248, 0.55) 100%);
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
   position: relative;
   overflow: hidden;
 }
@@ -895,8 +914,9 @@ code {
 .map-card {
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(158, 197, 220, 0.45);
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
   overflow: hidden;
   min-width: 0;
 }
@@ -1014,8 +1034,9 @@ code {
   line-height: 1;
   color: var(--ink-soft);
   padding: 0.65rem 0.35rem;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(158, 197, 220, 0.45);
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
   perspective: 400px;
 }
 
@@ -1064,16 +1085,16 @@ code {
   margin: 0;
   padding: 1.25rem 1.2rem 1.35rem;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(251, 248, 239, 0.75)),
+    var(--tile-bg),
     repeating-linear-gradient(
       0deg,
       transparent,
       transparent 11px,
-      rgba(158, 197, 220, 0.05) 11px,
-      rgba(158, 197, 220, 0.05) 12px
+      rgba(158, 197, 220, 0.06) 11px,
+      rgba(158, 197, 220, 0.06) 12px
     );
-  border: 1px solid rgba(158, 197, 220, 0.35);
-  box-shadow: 0 10px 28px rgba(106, 159, 189, 0.08);
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
 }
 
 .info-card__label {
@@ -1142,13 +1163,14 @@ code {
 .frame__mat {
   position: relative;
   overflow: hidden;
-  background: var(--white);
+  background: var(--tile-bg);
   padding: 0.7rem 0.7rem 1.85rem;
-  border: 1px solid rgba(36, 48, 58, 0.08);
+  border: 1px solid var(--tile-border);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
-    0 1px 0 rgba(36, 48, 58, 0.04),
-    0 18px 40px rgba(106, 159, 189, 0.12);
+    inset 0 1px 0 var(--tile-border-hi),
+    inset 0 0 0 1px rgba(158, 197, 220, 0.16),
+    0 1px 0 rgba(36, 48, 58, 0.03),
+    0 18px 40px rgba(106, 159, 189, 0.14);
   transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
 }
 
@@ -1156,13 +1178,14 @@ code {
   content: "";
   position: absolute;
   inset: 0.35rem;
-  border: 1px dashed rgba(106, 159, 189, 0.28);
+  border: 1px solid rgba(158, 197, 220, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
   pointer-events: none;
   z-index: 1;
 }
 
 .frame__mat--powder {
-  background: linear-gradient(165deg, #e8f2f8 0%, #cfe3ef 100%);
+  background: linear-gradient(165deg, #f4f9fc 0%, #d7e8f2 52%, #eaf3f8 100%);
   padding-bottom: 1.85rem;
 }
 
@@ -1255,12 +1278,19 @@ code {
 .rsvp__frame {
   padding: clamp(1.5rem, 4vw, 2.25rem);
   background:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.72), rgba(243, 236, 216, 0.55));
-  border: 1px solid rgba(158, 197, 220, 0.55);
+    linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(232, 242, 248, 0.78) 45%,
+      rgba(255, 255, 255, 0.82) 100%
+    );
+  border: 1px solid var(--tile-border);
   box-shadow:
-    0 0 0 6px rgba(251, 248, 239, 0.8),
-    0 0 0 7px rgba(226, 200, 106, 0.35),
-    0 24px 48px rgba(106, 159, 189, 0.12);
+    inset 0 1px 0 var(--tile-border-hi),
+    inset 0 0 0 1px rgba(158, 197, 220, 0.2),
+    0 0 0 6px rgba(251, 248, 239, 0.72),
+    0 0 0 7px rgba(158, 197, 220, 0.45),
+    0 24px 48px rgba(106, 159, 189, 0.16);
 }
 
 .rsvp__script {
@@ -1355,19 +1385,26 @@ code {
   width: 100%;
   max-width: 100%;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--stone);
+  border: 1px solid var(--tile-border);
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.65);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(232, 242, 248, 0.45));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(158, 197, 220, 0.08);
   outline: none;
   font-size: 1rem; /* prevents iOS zoom on focus */
-  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 
 .field input:not([type="radio"]):not([type="checkbox"]):focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: var(--sage);
-  background: var(--white);
+  border-color: var(--powder-deep);
+  background: linear-gradient(180deg, #ffffff, rgba(232, 242, 248, 0.55));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 0 0 3px rgba(158, 197, 220, 0.28);
 }
 
 .field.is-invalid input:not([type="radio"]):not([type="checkbox"]),
@@ -1411,8 +1448,9 @@ code {
   align-items: center;
   gap: 0.55rem;
   padding: 0.55rem 0.75rem;
-  border: 1px solid var(--stone);
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--tile-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(232, 242, 248, 0.42));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   cursor: pointer;
   font-size: 0.92rem;
   font-weight: 400;
@@ -1420,12 +1458,15 @@ code {
   text-transform: none;
   line-height: 1.3;
   color: var(--ink-soft);
-  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 
 .choice:has(input:checked) {
   border-color: var(--powder-deep);
-  background: rgba(158, 197, 220, 0.18);
+  background: linear-gradient(180deg, rgba(232, 242, 248, 0.95), rgba(158, 197, 220, 0.28));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 2px rgba(158, 197, 220, 0.22);
 }
 
 .choice input {
@@ -2043,8 +2084,9 @@ code {
   padding: 1.25rem 1.15rem;
   display: grid;
   gap: 1rem;
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(158, 197, 220, 0.4);
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
 }
 
 .timeline__item {
@@ -2162,8 +2204,9 @@ code {
   .rsvp__frame {
     padding: 1.25rem 1rem 1.5rem;
     box-shadow:
-      0 0 0 4px rgba(251, 248, 239, 0.85),
-      0 0 0 5px rgba(226, 200, 106, 0.3),
-      0 16px 32px rgba(106, 159, 189, 0.1);
+      inset 0 1px 0 var(--tile-border-hi),
+      0 0 0 4px rgba(251, 248, 239, 0.78),
+      0 0 0 5px rgba(158, 197, 220, 0.4),
+      0 16px 32px rgba(106, 159, 189, 0.14);
   }
 }

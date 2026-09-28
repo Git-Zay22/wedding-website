@@ -43,6 +43,11 @@
     0 0 0 1px rgba(158, 197, 220, 0.22),
     0 12px 32px var(--tile-glow);
 
+  --radius-sm: 0.65rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.35rem;
+  --radius-pill: 999px;
+
   --space-xs: 0.5rem;
   --space-sm: 1rem;
   --space-md: 1.75rem;
@@ -359,6 +364,7 @@ code {
 .nav-cta {
   padding: 0.55rem 1rem;
   border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
 }
 
 .nav-toggle {
@@ -513,7 +519,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   border: 0;
   max-width: min(22rem, calc(100vw - 2rem));
   background: transparent;
-  border-radius: 1rem;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -529,7 +535,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
   text-align: center;
-  border-radius: 1rem;
+  border-radius: var(--radius-lg);
 }
 
 .proposals-gate__eyebrow {
@@ -569,7 +575,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   width: 100%;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--tile-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.85);
   font-family: var(--font-body);
   font-size: 1rem;
@@ -663,6 +669,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   min-height: 2.85rem;
   padding: 0.7rem 1.4rem;
   border: 1px solid transparent;
+  border-radius: var(--radius-pill);
   font-size: 0.78rem;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -874,6 +881,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
   overflow: hidden;
+  border-radius: 0;
 }
 
 .venue-map iframe {
@@ -906,6 +914,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   background: var(--tile-bg);
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
+  border-radius: var(--radius-lg);
 }
 
 .attire-guide__script {
@@ -957,6 +966,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   background: var(--swatch);
   border: 1px solid var(--tile-border);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
 }
 
 .swatch figcaption {
@@ -1035,12 +1045,14 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   box-shadow: var(--tile-shadow);
   overflow: hidden;
   min-width: 0;
+  border-radius: 0;
 }
 
 .map-card__frame {
   position: relative;
   aspect-ratio: 16 / 11;
   background: var(--mist);
+  border-radius: 0;
 }
 
 .map-card__frame iframe {
@@ -1153,6 +1165,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   background: var(--tile-bg);
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
+  border-radius: var(--radius-md);
   perspective: 400px;
 }
 
@@ -1211,6 +1224,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
     );
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
+  border-radius: var(--radius-lg);
 }
 
 .info-card__label {
@@ -1282,6 +1296,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   background: var(--tile-bg);
   padding: 0.7rem 0.7rem 1.85rem;
   border: 1px solid var(--tile-border);
+  border-radius: var(--radius-lg);
   box-shadow:
     inset 0 1px 0 var(--tile-border-hi),
     inset 0 0 0 1px rgba(158, 197, 220, 0.16),
@@ -1295,6 +1310,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   position: absolute;
   inset: 0.35rem;
   border: 1px solid rgba(158, 197, 220, 0.28);
+  border-radius: calc(var(--radius-lg) - 0.2rem);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
   pointer-events: none;
   z-index: 1;
@@ -1440,6 +1456,8 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   background: var(--tile-bg);
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .proposal-slide__frame img {
@@ -1470,6 +1488,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   width: 2.5rem;
   height: 2.5rem;
   border: 1px solid var(--tile-border);
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.72);
   color: var(--ink-soft);
   font-size: 1.45rem;
@@ -1572,6 +1591,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
       rgba(255, 255, 255, 0.82) 100%
     );
   border: 1px solid var(--tile-border);
+  border-radius: var(--radius-lg);
   box-shadow:
     inset 0 1px 0 var(--tile-border-hi),
     inset 0 0 0 1px rgba(158, 197, 220, 0.2),
@@ -1680,7 +1700,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   max-width: 100%;
   padding: 0.85rem 1rem;
   border: 1px solid var(--tile-border);
-  border-radius: 0;
+  border-radius: var(--radius-md);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(232, 242, 248, 0.45));
   box-shadow:
@@ -1743,6 +1763,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   gap: 0.55rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--tile-border);
+  border-radius: var(--radius-md);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(232, 242, 248, 0.42));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   cursor: pointer;
@@ -2424,6 +2445,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   background: var(--tile-bg);
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
+  border-radius: var(--radius-lg);
 }
 
 .timeline__item {

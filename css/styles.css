@@ -1976,32 +1976,8 @@ code {
 }
 
 /* --------------------------------------------------------------------------
-   Design extras — botanical flourish, dividers, timeline, petals, date lockup
+   Design extras — dividers, timeline, petals, date lockup
    -------------------------------------------------------------------------- */
-
-.section-flourish {
-  position: absolute;
-  top: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(22rem, 70vw);
-  pointer-events: none;
-  user-select: none;
-  z-index: 0;
-  opacity: 0.55;
-}
-
-.section-flourish img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.section-flourish--soft {
-  top: 2.25rem;
-  opacity: 0.42;
-  width: min(20rem, 64vw);
-}
 
 .section.story .section__inner,
 .section.rsvp .section__inner {
@@ -2179,11 +2155,6 @@ code {
   .timeline__item {
     grid-template-columns: 4.5rem 0.85rem 1fr;
     gap: 0.55rem;
-  }
-
-  .section-flourish {
-    width: min(16rem, 78vw);
-    opacity: 0.45;
   }
 
   .date-lockup {

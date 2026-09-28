@@ -57,18 +57,49 @@ body {
   font-size: 1.0625rem;
   line-height: 1.65;
   color: var(--ink);
-  background-color: var(--cloud);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%239ec5dc' stroke-opacity='0.14' stroke-width='1'%3E%3Cpath d='M10 40c8-12 18-12 26 0s18 12 26 0'/%3E%3Ccircle cx='40' cy='40' r='1.5' fill='%23e2c86a' fill-opacity='0.35' stroke='none'/%3E%3C/g%3E%3C/svg%3E"),
-    radial-gradient(ellipse 120% 80% at 8% -10%, rgba(158, 197, 220, 0.28), transparent 52%),
-    radial-gradient(ellipse 90% 60% at 100% 18%, rgba(240, 223, 160, 0.35), transparent 48%),
-    linear-gradient(180deg, var(--cloud) 0%, var(--mist) 100%);
-  background-attachment: fixed, fixed, fixed, fixed;
-  background-size: 80px 80px, auto, auto, auto;
+  background-color: #fdfaf4;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   min-width: 0;
   position: relative;
+}
+
+/* Softened full-page floral backdrop */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #fdfaf4;
+  overflow: hidden;
+}
+
+.page-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("../assets/bg-floral.png") left top / cover no-repeat;
+  opacity: 0.34;
+  filter: brightness(1.22) saturate(0.62) contrast(0.92);
+  transform: scale(1.02);
+}
+
+.page-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      105deg,
+      rgba(253, 250, 244, 0.28) 0%,
+      rgba(253, 250, 244, 0.62) 42%,
+      rgba(253, 250, 244, 0.78) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(251, 248, 239, 0.2),
+      rgba(251, 248, 239, 0.45)
+    );
 }
 
 /* Side & background ornaments */
@@ -1573,7 +1604,6 @@ code {
 
   body {
     font-size: 1rem;
-    background-attachment: scroll, scroll, scroll, scroll;
   }
 
   .hero {
@@ -1962,10 +1992,7 @@ code {
   overflow: hidden;
   text-align: center;
   padding: clamp(3.5rem, 8vw, 5.5rem) 1.25rem;
-  background:
-    radial-gradient(ellipse 70% 80% at 20% 20%, rgba(158, 197, 220, 0.22), transparent 55%),
-    radial-gradient(ellipse 60% 70% at 85% 75%, rgba(240, 223, 160, 0.28), transparent 50%),
-    linear-gradient(180deg, rgba(251, 248, 239, 0.35), rgba(243, 236, 216, 0.55));
+  background: transparent;
 }
 
 .date-lockup__petals {

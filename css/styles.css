@@ -80,7 +80,7 @@ body {
   position: relative;
 }
 
-/* Softened full-page floral backdrop */
+/* Softened full-page floral backdrop — flowers more embossed / visible */
 .page-bg {
   position: fixed;
   inset: 0;
@@ -93,11 +93,16 @@ body {
 .page-bg::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -1%;
   background: url("../assets/bg-floral.png") left top / cover no-repeat;
-  opacity: 0.34;
-  filter: brightness(1.22) saturate(0.62) contrast(0.92);
-  transform: scale(1.02);
+  opacity: 0.62;
+  filter:
+    brightness(1.06)
+    saturate(0.92)
+    contrast(1.12)
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
+    drop-shadow(0 8px 18px rgba(226, 200, 106, 0.18));
+  transform: scale(1.03);
 }
 
 .page-bg::after {
@@ -105,16 +110,25 @@ body {
   position: absolute;
   inset: 0;
   background:
+    /* Keep left flowers clearer; wash the reading area more */
     linear-gradient(
-      105deg,
-      rgba(253, 250, 244, 0.28) 0%,
-      rgba(253, 250, 244, 0.62) 42%,
-      rgba(253, 250, 244, 0.78) 100%
+      100deg,
+      rgba(253, 250, 244, 0.08) 0%,
+      rgba(253, 250, 244, 0.28) 28%,
+      rgba(253, 250, 244, 0.58) 58%,
+      rgba(253, 250, 244, 0.72) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(251, 248, 239, 0.2),
-      rgba(251, 248, 239, 0.45)
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(251, 248, 239, 0.22) 55%,
+      rgba(251, 248, 239, 0.34) 100%
+    ),
+    /* Soft emboss rim light over floral edge */
+    radial-gradient(
+      ellipse 55% 80% at 8% 18%,
+      rgba(255, 255, 255, 0.28),
+      transparent 58%
     );
 }
 

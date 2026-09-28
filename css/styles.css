@@ -80,6 +80,10 @@ body {
   position: relative;
 }
 
+body.nav-locked {
+  overflow: hidden;
+}
+
 /* Softened full-page floral backdrop — lighter tone */
 .page-bg {
   position: fixed;
@@ -1846,6 +1850,10 @@ code {
     z-index: 60;
   }
 
+  .site-header.nav-open {
+    z-index: 80;
+  }
+
   .site-nav {
     position: fixed;
     inset: 0;
@@ -1858,7 +1866,7 @@ code {
       calc(var(--header-h) + env(safe-area-inset-top))
       1.5rem
       calc(2rem + env(safe-area-inset-bottom));
-    background: rgba(23, 26, 23, 0.97);
+    background: rgba(23, 26, 23, 0.98);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -1881,6 +1889,12 @@ code {
     align-items: center;
   }
 
+  /* Keep drawer links light even when header is scrolled */
+  .site-header.is-scrolled.nav-open .site-nav a,
+  .site-header.nav-open .site-nav a {
+    color: var(--cloud);
+  }
+
   .nav-cta {
     margin-top: 0.5rem;
     min-width: 10rem;
@@ -1899,16 +1913,16 @@ code {
     background: var(--cloud);
   }
 
-.site-header.nav-open .logo {
-  color: var(--cloud);
-  position: relative;
-  z-index: 60;
-}
+  .site-header.nav-open .logo {
+    color: var(--cloud);
+    position: relative;
+    z-index: 60;
+  }
 
-.site-header.nav-open .logo img {
-  filter: none;
-  opacity: 1;
-}
+  .site-header.nav-open .logo img {
+    filter: none;
+    opacity: 1;
+  }
 
   .hero {
     min-height: 78svh;

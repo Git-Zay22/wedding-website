@@ -16,7 +16,7 @@
       nav.classList.toggle("is-open", open);
       header.classList.toggle("nav-open", open);
       toggle.setAttribute("aria-expanded", String(open));
-      document.body.style.overflow = open ? "hidden" : "";
+      document.body.classList.toggle("nav-locked", open);
     };
 
     toggle.addEventListener("click", () => {
@@ -30,6 +30,15 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") setOpen(false);
     });
+
+    // Close the mobile drawer when the page scrolls
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (nav.classList.contains("is-open")) setOpen(false);
+      },
+      { passive: true }
+    );
 
     window.addEventListener(
       "resize",

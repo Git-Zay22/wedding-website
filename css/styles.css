@@ -73,20 +73,20 @@ body {
   font-size: 1.0625rem;
   line-height: 1.65;
   color: var(--ink);
-  background-color: #fdfaf4;
+  background-color: #ffffff;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   min-width: 0;
   position: relative;
 }
 
-/* Softened full-page floral backdrop — lighter tone */
+/* Softened full-page floral backdrop — light watercolor tone */
 .page-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-color: #fdfaf4;
+  background-color: #ffffff;
   overflow: hidden;
 }
 
@@ -94,10 +94,10 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("../assets/bg-floral.png?v=3") left top / cover no-repeat;
-  opacity: 0.34;
-  filter: brightness(1.22) saturate(0.62) contrast(0.92);
-  transform: scale(1.02);
+  background: url("../assets/bg-floral.png?v=4") left top / cover no-repeat;
+  opacity: 0.55;
+  filter: brightness(1.08) saturate(0.85) contrast(0.96);
+  transform: scale(1.01);
 }
 
 .page-bg::after {
@@ -107,14 +107,14 @@ body {
   background:
     linear-gradient(
       105deg,
-      rgba(253, 250, 244, 0.28) 0%,
-      rgba(253, 250, 244, 0.62) 42%,
-      rgba(253, 250, 244, 0.78) 100%
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.45) 38%,
+      rgba(255, 255, 255, 0.72) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(251, 248, 239, 0.2),
-      rgba(251, 248, 239, 0.45)
+      rgba(253, 250, 244, 0.12),
+      rgba(253, 250, 244, 0.28)
     );
 }
 

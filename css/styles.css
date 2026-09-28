@@ -487,8 +487,10 @@ code {
   -webkit-tap-highlight-color: transparent;
 }
 
-.hero__secret:hover {
-  color: var(--powder-deep);
+.hero__secret:hover,
+.hero__secret:focus {
+  color: var(--powder);
+  outline: none;
 }
 
 html:not(.proposals-unlocked) .divider--proposals,

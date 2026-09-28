@@ -12,25 +12,12 @@
   }
 
   if (toggle && nav && header) {
-    let lockY = 0;
-    let ignoreScrollCloseUntil = 0;
-
     const setOpen = (open) => {
-      const wasOpen = nav.classList.contains("is-open");
       nav.classList.toggle("is-open", open);
       header.classList.toggle("nav-open", open);
       toggle.setAttribute("aria-expanded", String(open));
+      document.documentElement.classList.toggle("nav-locked", open);
       document.body.classList.toggle("nav-locked", open);
-
-      if (open && !wasOpen) {
-        lockY = window.scrollY || window.pageYOffset || 0;
-        document.body.style.top = `-${lockY}px`;
-        ignoreScrollCloseUntil = Date.now() + 500;
-      } else if (!open && wasOpen) {
-        document.body.style.top = "";
-        window.scrollTo(0, lockY);
-        ignoreScrollCloseUntil = Date.now() + 500;
-      }
     };
 
     toggle.addEventListener("click", (event) => {
@@ -46,17 +33,6 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") setOpen(false);
     });
-
-    // Close only on intentional scroll after the menu has settled
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (!nav.classList.contains("is-open")) return;
-        if (Date.now() < ignoreScrollCloseUntil) return;
-        setOpen(false);
-      },
-      { passive: true }
-    );
 
     window.addEventListener(
       "resize",

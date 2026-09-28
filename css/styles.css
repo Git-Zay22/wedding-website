@@ -80,12 +80,9 @@ body {
   position: relative;
 }
 
+html.nav-locked,
 body.nav-locked {
   overflow: hidden;
-  position: fixed;
-  left: 0;
-  right: 0;
-  width: 100%;
 }
 
 /* Softened full-page floral backdrop — lighter tone */

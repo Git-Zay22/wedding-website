@@ -82,6 +82,10 @@ body {
 
 body.nav-locked {
   overflow: hidden;
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
 }
 
 /* Softened full-page floral backdrop — lighter tone */
@@ -1852,6 +1856,15 @@ code {
 
   .site-header.nav-open {
     z-index: 80;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .site-header.is-scrolled.nav-open {
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
   }
 
   .site-nav {
@@ -1871,6 +1884,8 @@ code {
     visibility: hidden;
     pointer-events: none;
     transition: opacity 0.35s var(--ease), visibility 0.35s var(--ease);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .site-nav.is-open {

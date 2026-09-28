@@ -770,73 +770,46 @@ code {
   max-width: 28rem;
 }
 
-/* Attire guide */
+/* Attire guide — text + swatches only (reference PNG not used) */
 
 .attire-guide {
   margin-top: 0;
-  padding: clamp(2rem, 5vw, 3.25rem) clamp(1.25rem, 4vw, 2.5rem);
+  padding: clamp(1.75rem, 4vw, 2.75rem) clamp(1.25rem, 4vw, 2.25rem);
   text-align: center;
-  background:
-    radial-gradient(ellipse 40% 50% at 8% 30%, rgba(158, 197, 220, 0.16), transparent 60%),
-    radial-gradient(ellipse 40% 50% at 92% 70%, rgba(107, 115, 64, 0.08), transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(232, 242, 248, 0.55) 100%);
+  background: var(--tile-bg);
   border: 1px solid var(--tile-border);
   box-shadow: var(--tile-shadow);
-  position: relative;
-  overflow: hidden;
-}
-
-.attire-guide::before,
-.attire-guide::after {
-  content: "";
-  position: absolute;
-  width: 9rem;
-  height: 9rem;
-  border: 1px solid rgba(139, 115, 85, 0.18);
-  border-radius: 50% 40% 55% 45%;
-  pointer-events: none;
-}
-
-.attire-guide::before {
-  top: -2rem;
-  left: -2rem;
-  transform: rotate(-18deg);
-}
-
-.attire-guide::after {
-  bottom: -2.5rem;
-  right: -1.5rem;
-  transform: rotate(22deg);
 }
 
 .attire-guide__script {
-  margin: 0 0 1.15rem;
+  margin: 0 0 1rem;
   font-family: var(--font-script);
-  font-size: clamp(2.75rem, 8vw, 4rem);
+  font-size: clamp(2.5rem, 7vw, 3.5rem);
   font-weight: 400;
-  color: #6b5344;
+  color: var(--ink-soft);
   line-height: 1.1;
 }
 
 .attire-guide__invite {
-  margin: 0 auto 1.35rem;
-  max-width: 36rem;
+  margin: 0 auto 1.25rem;
+  max-width: 34rem;
   font-family: var(--font-display);
   font-size: clamp(1.05rem, 2.4vw, 1.2rem);
   line-height: 1.55;
-  color: #5c4a3d;
+  color: var(--muted);
 }
 
 .attire-guide__invite em {
   font-style: italic;
+  color: var(--ink-soft);
 }
 
 .attire-guide__theme {
-  margin: 0 0 1.75rem;
+  margin: 0 0 1.5rem;
   font-family: var(--font-display);
   font-size: clamp(1.15rem, 2.6vw, 1.35rem);
   font-weight: 400;
-  color: #4a3b30;
+  color: var(--ink-soft);
 }
 
 .attire-swatches {
@@ -852,18 +825,21 @@ code {
 }
 
 .swatch__chip {
-  aspect-ratio: 1;
+  aspect-ratio: 1.15 / 1;
   width: 100%;
   background: var(--swatch);
-  border: 1px solid rgba(74, 59, 48, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--tile-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .swatch figcaption {
   margin-top: 0.65rem;
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  color: #5c4a3d;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .map-link {

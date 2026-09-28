@@ -483,15 +483,12 @@ code {
   font-weight: inherit;
   color: var(--powder);
   cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: rgba(158, 197, 220, 0.65);
-  text-underline-offset: 0.15em;
+  text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .hero__secret:hover {
   color: var(--powder-deep);
-  text-decoration-color: var(--powder-deep);
 }
 
 html:not(.proposals-unlocked) .divider--proposals,

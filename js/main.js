@@ -51,11 +51,19 @@
     return PROPOSALS_NAMES.has(normalized);
   };
 
-  if (unlockTrigger && gateDialog) {
+  if (unlockTrigger) {
     unlockTrigger.addEventListener("click", (event) => {
       event.preventDefault();
-      if (isProposalsUnlocked()) return;
-      openProposalsGate();
+      if (isProposalsUnlocked()) {
+        try {
+          sessionStorage.removeItem(PROPOSALS_UNLOCK_KEY);
+        } catch (e) {}
+        const base = window.location.pathname + window.location.search;
+        window.location.href = base + "#top";
+        window.location.reload();
+        return;
+      }
+      if (gateDialog) openProposalsGate();
     });
   }
 

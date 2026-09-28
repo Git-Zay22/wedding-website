@@ -1411,16 +1411,6 @@ code {
   to { width: 100%; }
 }
 
-.proposals__hint {
-  margin: 0.85rem 0 0;
-  text-align: center;
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .proposal-slide,
   .proposal-slide.is-active,

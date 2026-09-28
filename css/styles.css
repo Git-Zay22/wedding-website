@@ -51,7 +51,7 @@
   --space-2xl: 8rem;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --header-h: 4.25rem;
+  --header-h: 4.75rem;
   --max: 68rem;
 }
 
@@ -326,7 +326,7 @@ code {
 
 .logo img {
   display: block;
-  height: 2.65rem;
+  height: 3.5rem;
   width: auto;
   object-fit: contain;
   transition: filter 0.3s var(--ease), opacity 0.3s var(--ease);
@@ -1646,14 +1646,14 @@ code {
 
 @media (max-width: 720px) {
   :root {
-    --header-h: 3.75rem;
+    --header-h: 4.15rem;
     --space-lg: 2rem;
     --space-xl: 3.25rem;
     --space-2xl: 4.5rem;
   }
 
   .logo img {
-    height: 2.25rem;
+    height: 2.9rem;
   }
 
   body {

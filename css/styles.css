@@ -94,14 +94,14 @@ body {
   content: "";
   position: absolute;
   inset: -1%;
-  background: url("../assets/bg-floral.png") left top / cover no-repeat;
-  opacity: 0.62;
+  background: url("../assets/bg-floral.png?v=2") left top / cover no-repeat;
+  opacity: 0.68;
   filter:
-    brightness(1.06)
-    saturate(0.92)
-    contrast(1.12)
-    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
-    drop-shadow(0 8px 18px rgba(226, 200, 106, 0.18));
+    brightness(1.05)
+    saturate(1.02)
+    contrast(1.1)
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.5))
+    drop-shadow(0 10px 22px rgba(106, 159, 189, 0.22));
   transform: scale(1.03);
 }
 
@@ -110,24 +110,35 @@ body {
   position: absolute;
   inset: 0;
   background:
+    /* Soft powder-blue veil to reinforce cool flower tones */
+    radial-gradient(
+      ellipse 48% 70% at 12% 22%,
+      rgba(158, 197, 220, 0.22),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 40% 55% at 8% 70%,
+      rgba(106, 159, 189, 0.14),
+      transparent 60%
+    ),
     /* Keep left flowers clearer; wash the reading area more */
     linear-gradient(
       100deg,
-      rgba(253, 250, 244, 0.08) 0%,
-      rgba(253, 250, 244, 0.28) 28%,
+      rgba(253, 250, 244, 0.06) 0%,
+      rgba(253, 250, 244, 0.26) 28%,
       rgba(253, 250, 244, 0.58) 58%,
       rgba(253, 250, 244, 0.72) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.12) 0%,
-      rgba(251, 248, 239, 0.22) 55%,
-      rgba(251, 248, 239, 0.34) 100%
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(251, 248, 239, 0.2) 55%,
+      rgba(251, 248, 239, 0.32) 100%
     ),
     /* Soft emboss rim light over floral edge */
     radial-gradient(
       ellipse 55% 80% at 8% 18%,
-      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.22),
       transparent 58%
     );
 }

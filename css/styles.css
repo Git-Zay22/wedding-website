@@ -474,14 +474,20 @@ code {
 }
 
 .hero__secret {
-  display: inline;
+  display: inline-block;
   margin: 0;
   padding: 0;
   border: 0;
   background: none;
-  font: inherit;
-  font-weight: inherit;
+  font-family: var(--font-script-soft);
+  font-size: 1.55em;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: 0.02em;
   color: var(--powder);
+  text-shadow: 0 1px 10px rgba(36, 48, 58, 0.28);
+  transform: translateY(0.08em);
   cursor: pointer;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;

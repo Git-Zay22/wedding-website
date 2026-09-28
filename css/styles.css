@@ -1651,6 +1651,13 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   color: var(--muted);
 }
 
+.field__hint {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
 .field input:not([type="radio"]):not([type="checkbox"]),
 .field select,
 .field textarea {

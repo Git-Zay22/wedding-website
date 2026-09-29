@@ -156,7 +156,7 @@ function lookupByName_(data) {
     return json_({
       ok: false,
       error:
-        "No RSVP found for that name. Check the spelling, or turn the edit switch off to send a new RSVP.",
+        "No RSVP found for that full name. Use the complete name from your RSVP (capitalization does not matter), or turn the edit switch off to send a new RSVP.",
     });
   }
 
@@ -193,7 +193,7 @@ function updateByName_(data) {
     return json_({
       ok: false,
       error:
-        "No RSVP found for that name. Check the spelling, or turn the edit switch off to send a new RSVP.",
+        "No RSVP found for that full name. Use the complete name from your RSVP (capitalization does not matter), or turn the edit switch off to send a new RSVP.",
     });
   }
 
@@ -263,10 +263,14 @@ function normalizePhone_(value) {
 }
 
 function normalizeName_(value) {
+  // Case-insensitive whole-name match: ignore letter case, extra spaces, and punctuation.
+  // Partial names do not match (e.g. "Juan" will not find "Juan Dela Cruz").
   return String(value || "")
-    .trim()
     .toLowerCase()
-    .replace(/\s+/g, " ");
+    .replace(/[^a-z0-9\sñÑ]/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 function isValidEmail_(email) {

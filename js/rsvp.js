@@ -4,9 +4,16 @@
 
   const statusEl = form.querySelector("[data-status]");
   const submitBtn = form.querySelector("[data-submit]");
+  const findBtn = form.querySelector("[data-find-rsvp]");
+  const editToggle = form.querySelector("[data-edit-toggle]");
+  const detailsEl = form.querySelector("[data-rsvp-details]");
   const eventsField = form.querySelector("[data-events-field]");
   const eventsSelect = form.events;
   const config = window.RSVP_CONFIG || {};
+
+  let editMode = false;
+  let editLoaded = false;
+  let originalGuestName = "";
 
   function clearStatus() {
     if (!statusEl) return;
@@ -81,10 +88,81 @@
     }
   }
 
+  function setSelectValue(select, value) {
+    if (!select) return;
+    const next = String(value || "");
+    const hasOption = Array.from(select.options).some((opt) => opt.value === next);
+    if (hasOption) {
+      select.value = next;
+    } else {
+      select.value = "";
+    }
+  }
+
+  function setAttendanceValue(value) {
+    const match = String(value || "");
+    form.querySelectorAll('input[name="attendance"]').forEach((input) => {
+      input.checked = input.value === match;
+    });
+    syncEventsField();
+  }
+
+  function syncEditUi() {
+    form.classList.toggle("is-edit-mode", editMode);
+    form.classList.toggle("is-edit-pending", editMode && !editLoaded);
+    form.classList.toggle("is-edit-loaded", editMode && editLoaded);
+
+    const pending = editMode && !editLoaded;
+    if (detailsEl) detailsEl.hidden = pending;
+
+    form.email.required = !pending;
+    form.phone.required = !pending;
+    form.commute.required = !pending;
+    const yesRadio = form.querySelector('input[name="attendance"][value="Yes"]');
+    if (yesRadio) yesRadio.required = !pending;
+    if (eventsSelect) {
+      eventsSelect.required = !pending && form.attendance.value !== "No";
+    }
+
+    if (findBtn) findBtn.hidden = !pending;
+    if (submitBtn) {
+      submitBtn.hidden = pending;
+      submitBtn.textContent = editMode ? "Resend RSVP" : "Send RSVP";
+    }
+  }
+
+  function resetEditState(keepName) {
+    const keptName = keepName ? form.guestName.value : "";
+    editLoaded = false;
+    originalGuestName = "";
+    form.reset();
+    if (editToggle) editToggle.checked = editMode;
+    if (keepName) form.guestName.value = keptName;
+    setAttendanceValue("");
+    syncEventsField();
+    syncEditUi();
+  }
+
+  function fillFormFromRecord(record) {
+    form.guestName.value = record.guestName || "";
+    form.email.value = record.email || "";
+    form.phone.value = record.phone || "";
+    setAttendanceValue(record.attendance === "No" ? "No" : record.attendance === "Yes" ? "Yes" : "");
+    const eventsValue =
+      record.events && record.events !== "Not attending" ? record.events : "";
+    setSelectValue(form.events, eventsValue);
+    setSelectValue(form.commute, record.commute || "");
+    form.allergies.value = record.allergies || "";
+    form.message.value = record.message || "";
+    originalGuestName = record.guestName || form.guestName.value.trim();
+    editLoaded = true;
+    syncEventsField();
+    syncEditUi();
+  }
+
   function isValidEmail(value) {
     const email = String(value || "").trim();
     if (!email || email.length > 160) return false;
-    // Practical check: local@domain.tld with a real TLD (rejects a@b.c-style typos)
     return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(
       email
     );
@@ -143,28 +221,122 @@
     return true;
   }
 
+  async function postAction(payload) {
+    const response = await fetch(config.scriptUrl, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || "Something went wrong. Please try again.");
+    }
+    return data;
+  }
+
+  async function lookupRsvp() {
+    clearStatus();
+    const guestName = form.guestName.value.trim();
+    if (!guestName) {
+      setStatus("Please complete the required fields:", "error", [
+        { label: "Full name", detail: "is required" },
+      ]);
+      form.guestName.focus();
+      return;
+    }
+
+    if (findBtn) findBtn.disabled = true;
+    setStatus("Looking up your RSVP…");
+
+    try {
+      if (!isConfigured()) {
+        await new Promise((r) => setTimeout(r, 500));
+        throw new Error(
+          "Lookup needs your live Apps Script URL. Deploy the updated Code.gs, then try again."
+        );
+      }
+
+      const data = await postAction({
+        action: "lookup",
+        guestName: guestName,
+      });
+
+      if (!data.record) {
+        throw new Error("No RSVP found for that name.");
+      }
+
+      fillFormFromRecord(data.record);
+      setStatus("We found your RSVP — update anything below, then Resend RSVP.", "success");
+      form.email.focus();
+    } catch (err) {
+      console.error(err);
+      editLoaded = false;
+      syncEditUi();
+      setStatus(err.message || "Could not find that RSVP.", "error");
+    } finally {
+      if (findBtn) findBtn.disabled = false;
+    }
+  }
+
+  if (editToggle) {
+    editToggle.addEventListener("change", () => {
+      editMode = Boolean(editToggle.checked);
+      clearStatus();
+      if (editMode) {
+        resetEditState(true);
+        setStatus("Enter the full name on your RSVP, then tap Find my RSVP.");
+        form.guestName.focus();
+      } else {
+        resetEditState(false);
+      }
+    });
+  }
+
+  if (findBtn) {
+    findBtn.addEventListener("click", () => {
+      lookupRsvp();
+    });
+  }
+
+  form.guestName.addEventListener("keydown", (event) => {
+    if (editMode && !editLoaded && event.key === "Enter") {
+      event.preventDefault();
+      lookupRsvp();
+    }
+  });
+
   form.querySelectorAll('input[name="attendance"]').forEach((input) => {
     input.addEventListener("change", syncEventsField);
   });
   syncEventsField();
+  syncEditUi();
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearStatus();
+
+    if (editMode && !editLoaded) {
+      lookupRsvp();
+      return;
+    }
 
     if (!validateClient()) return;
 
     // Honeypot
     if (form.website && form.website.value.trim() !== "") {
       setStatus("Thanks — your RSVP was received.", "success");
-      form.reset();
-      syncEventsField();
+      editMode = false;
+      if (editToggle) editToggle.checked = false;
+      resetEditState(false);
       return;
     }
 
     const attending = form.attendance.value === "Yes";
     const payload = {
+      action: editMode ? "update" : "create",
       guestName: form.guestName.value.trim(),
+      originalGuestName: editMode ? originalGuestName || form.guestName.value.trim() : undefined,
       email: form.email.value.trim().toLowerCase(),
       phone: form.phone.value.trim(),
       attendance: form.attendance.value,
@@ -177,7 +349,7 @@
     };
 
     submitBtn.disabled = true;
-    setStatus("Sending…");
+    setStatus(editMode ? "Updating your RSVP…" : "Sending…");
 
     try {
       if (!isConfigured()) {
@@ -187,29 +359,23 @@
           "Demo mode: RSVP captured in the browser console. Set your Apps Script URL in js/config.js to go live.",
           "success"
         );
-        form.reset();
-        syncEventsField();
+        editMode = false;
+        if (editToggle) editToggle.checked = false;
+        resetEditState(false);
         return;
       }
 
-      const response = await fetch(config.scriptUrl, {
-        method: "POST",
-        mode: "cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-      });
+      await postAction(payload);
 
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(
-          data.error || "Something went wrong. Please try again."
-        );
-      }
-
-      setStatus("Thank you — your RSVP is on its way to us.", "success");
-      form.reset();
-      syncEventsField();
+      setStatus(
+        editMode
+          ? "Thank you — your RSVP has been updated."
+          : "Thank you — your RSVP is on its way to us.",
+        "success"
+      );
+      editMode = false;
+      if (editToggle) editToggle.checked = false;
+      resetEditState(false);
     } catch (err) {
       console.error(err);
       setStatus(err.message || "Could not send RSVP. Please try again later.", "error");

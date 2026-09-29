@@ -2280,24 +2280,6 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
     0 0 0 3px rgba(158, 197, 220, 0.28);
 }
 
-.field.is-invalid input:not([type="radio"]):not([type="checkbox"]),
-.field.is-invalid select,
-.field.is-invalid textarea {
-  border-color: #8b3a3a;
-  background: rgba(139, 58, 58, 0.04);
-}
-
-.field-error {
-  margin: 0;
-  font-size: 0.82rem;
-  line-height: 1.35;
-  color: #8b3a3a;
-}
-
-.field-error[hidden] {
-  display: none;
-}
-
 .field-row {
   display: grid;
   gap: 1.15rem;

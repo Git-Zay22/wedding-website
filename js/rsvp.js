@@ -90,51 +90,6 @@
     );
   }
 
-  function setEmailFieldError(message) {
-    const emailInput = form.email;
-    const field = emailInput.closest(".field");
-    let hint = field && field.querySelector("[data-email-error]");
-
-    emailInput.setCustomValidity(message || "");
-    emailInput.setAttribute("aria-invalid", message ? "true" : "false");
-
-    if (field) field.classList.toggle("is-invalid", Boolean(message));
-
-    if (!hint && field && message) {
-      hint = document.createElement("p");
-      hint.className = "field-error";
-      hint.dataset.emailError = "";
-      hint.setAttribute("role", "alert");
-      field.appendChild(hint);
-    }
-
-    if (hint) {
-      hint.textContent = message || "";
-      hint.hidden = !message;
-    }
-  }
-
-  function validateEmailField(showEmptyError) {
-    const email = form.email.value.trim();
-
-    if (!email) {
-      if (showEmptyError) {
-        setEmailFieldError("Please enter your email address.");
-        return false;
-      }
-      setEmailFieldError("");
-      return false;
-    }
-
-    if (!isValidEmail(email)) {
-      setEmailFieldError("Please enter a valid email address (e.g. you@email.com).");
-      return false;
-    }
-
-    setEmailFieldError("");
-    return true;
-  }
-
   function validateClient() {
     const name = form.guestName.value.trim();
     const email = form.email.value.trim();
@@ -150,14 +105,10 @@
 
     if (!email) {
       issues.push({ label: "Email", detail: "is required" });
-      setEmailFieldError("Please enter your email address.");
       focusEl = focusEl || form.email;
     } else if (!isValidEmail(email)) {
       issues.push({ label: "Email", detail: "needs a valid address" });
-      setEmailFieldError("Please enter a valid email address (e.g. you@email.com).");
       focusEl = focusEl || form.email;
-    } else {
-      setEmailFieldError("");
     }
 
     if (!phone) {
@@ -191,16 +142,6 @@
     return true;
   }
 
-  form.email.addEventListener("blur", () => {
-    if (form.email.value.trim()) validateEmailField(false);
-  });
-
-  form.email.addEventListener("input", () => {
-    if (form.email.getAttribute("aria-invalid") === "true") {
-      validateEmailField(false);
-    }
-  });
-
   form.querySelectorAll('input[name="attendance"]').forEach((input) => {
     input.addEventListener("change", syncEventsField);
   });
@@ -216,7 +157,6 @@
     if (form.website && form.website.value.trim() !== "") {
       setStatus("Thanks — your RSVP was received.", "success");
       form.reset();
-      setEmailFieldError("");
       syncEventsField();
       return;
     }
@@ -247,7 +187,6 @@
           "success"
         );
         form.reset();
-        setEmailFieldError("");
         syncEventsField();
         return;
       }
@@ -269,7 +208,6 @@
 
       setStatus("Thank you — your RSVP is on its way to us.", "success");
       form.reset();
-      setEmailFieldError("");
       syncEventsField();
     } catch (err) {
       console.error(err);

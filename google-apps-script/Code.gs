@@ -157,6 +157,9 @@ function createRsvp_(data) {
     .toLowerCase();
   const phone = normalizePhone_(String(data.phone || "").trim());
   const attendance = String(data.attendance || "").trim();
+  // Generic on purpose — do not reveal allowlist / already-registered status.
+  const errSave =
+    "We couldn't save this RSVP. Check that your name matches the invitation, or turn on “Already registered? Edit your RSVP” if you already replied.";
 
   if (!guestNameRaw || !email || !attendance || !phone) {
     return json_({ ok: false, error: "Missing required fields." });
@@ -164,11 +167,7 @@ function createRsvp_(data) {
 
   const guestName = resolveInvitedGuestName_(guestNameRaw);
   if (!guestName) {
-    return json_({
-      ok: false,
-      error:
-        "This name is not on the guest list. Please enter your name exactly as it appears on the invitation (capitalization does not matter).",
-    });
+    return json_({ ok: false, error: errSave });
   }
 
   if (!isValidEmail_(email)) {
@@ -183,20 +182,12 @@ function createRsvp_(data) {
   const nameKey = normalizeName_(guestName);
 
   if (findRowByName_(sheet, nameKey)) {
-    return json_({
-      ok: false,
-      error:
-        "This name already has an RSVP. Turn on “Already registered? Edit your RSVP” below to update it.",
-    });
+    return json_({ ok: false, error: errSave });
   }
 
   const duplicate = findDuplicate_(sheet, email, phone, 0);
   if (duplicate) {
-    return json_({
-      ok: false,
-      error:
-        "This email or mobile number already has an RSVP. Turn on “Already registered? Edit your RSVP” below to update it.",
-    });
+    return json_({ ok: false, error: errSave });
   }
 
   writeRow_(sheet, sheet.getLastRow() + 1, data, guestName, email, String(data.phone || "").trim());
@@ -209,6 +200,9 @@ function lookupByName_(data) {
     .trim()
     .toLowerCase();
   const phone = normalizePhone_(String(data.phone || "").trim());
+  // Generic on purpose — do not reveal whether the name exists without matching contact.
+  const errFind =
+    "We couldn't find a matching RSVP. Check your full name and the email or mobile number used before.";
 
   if (!guestName) {
     return json_({ ok: false, error: "Please enter your full name." });
@@ -225,11 +219,7 @@ function lookupByName_(data) {
   const sheet = getSheet_();
   const found = findRowByName_(sheet, normalizeName_(guestName));
   if (!found) {
-    return json_({
-      ok: false,
-      error:
-        "No RSVP found for those details. Check your name and contact info, or turn the edit switch off to send a new RSVP.",
-    });
+    return json_({ ok: false, error: errFind });
   }
 
   const record = found.record;
@@ -242,11 +232,7 @@ function lookupByName_(data) {
     phone.length >= 10 && phone === normalizePhone_(record.phone);
 
   if (!emailOk && !phoneOk) {
-    return json_({
-      ok: false,
-      error:
-        "Name and contact details do not match our RSVP records.",
-    });
+    return json_({ ok: false, error: errFind });
   }
 
   return json_({ ok: true, record: record });
@@ -263,6 +249,8 @@ function updateByName_(data) {
   const phoneRaw = String(data.phone || "").trim();
   const phone = normalizePhone_(phoneRaw);
   const attendance = String(data.attendance || "").trim();
+  const errUpdate =
+    "We couldn't update this RSVP. Find your RSVP with your name and contact details first, then try again.";
 
   if (!guestNameRaw || !email || !attendance || !phone) {
     return json_({ ok: false, error: "Missing required fields." });
@@ -270,11 +258,7 @@ function updateByName_(data) {
 
   const guestName = resolveInvitedGuestName_(guestNameRaw);
   if (!guestName) {
-    return json_({
-      ok: false,
-      error:
-        "This name is not on the guest list. Please enter your name exactly as it appears on the invitation (capitalization does not matter).",
-    });
+    return json_({ ok: false, error: errUpdate });
   }
 
   if (!isValidEmail_(email)) {
@@ -288,11 +272,7 @@ function updateByName_(data) {
   const sheet = getSheet_();
   const found = findRowByName_(sheet, normalizeName_(originalGuestName));
   if (!found) {
-    return json_({
-      ok: false,
-      error:
-        "No RSVP found for those details. Find your RSVP first, then resend your updates.",
-    });
+    return json_({ ok: false, error: errUpdate });
   }
 
   const verifyEmail = String(data.originalEmail || data.verifyEmail || "")
@@ -310,28 +290,17 @@ function updateByName_(data) {
     verifyPhone.length >= 10 && verifyPhone === currentPhone;
 
   if (!verifyEmailOk && !verifyPhoneOk) {
-    return json_({
-      ok: false,
-      error:
-        "Could not verify this RSVP. Find your RSVP with your name and contact details first.",
-    });
+    return json_({ ok: false, error: errUpdate });
   }
 
   const nameOwner = findRowByName_(sheet, normalizeName_(guestName));
   if (nameOwner && nameOwner.rowIndex !== found.rowIndex) {
-    return json_({
-      ok: false,
-      error: "Another RSVP already uses that name. Please keep your registered name.",
-    });
+    return json_({ ok: false, error: errUpdate });
   }
 
   const duplicate = findDuplicate_(sheet, email, phone, found.rowIndex);
   if (duplicate) {
-    return json_({
-      ok: false,
-      error:
-        "This email or mobile number already belongs to another RSVP. Please use your original contact details or message Caren or Zayrol.",
-    });
+    return json_({ ok: false, error: errUpdate });
   }
 
   writeRow_(sheet, found.rowIndex, data, guestName, email, phoneRaw);

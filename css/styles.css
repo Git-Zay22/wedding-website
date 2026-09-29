@@ -2235,7 +2235,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   }
 
   .hero__media img {
-    object-position: 28% top;
+    object-position: center 28%;
   }
 
   .hero__scroll {

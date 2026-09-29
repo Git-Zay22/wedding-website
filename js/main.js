@@ -558,4 +558,40 @@
       }
     });
   }
+
+  // iPhone/iPad: prefer Google Maps app deep links; fall back to browser maps.
+  const mapLinks = document.querySelectorAll("[data-map-app][data-map-query]");
+  if (mapLinks.length) {
+    const isAppleTouch =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    if (isAppleTouch) {
+      mapLinks.forEach((link) => {
+        link.addEventListener("click", (event) => {
+          const mode = link.getAttribute("data-map-app");
+          const query = link.getAttribute("data-map-query");
+          if (!query) return;
+
+          event.preventDefault();
+          const encoded = encodeURIComponent(query);
+          const appUrl =
+            mode === "dir"
+              ? `comgooglemaps://?daddr=${encoded}&directionsmode=driving`
+              : `comgooglemaps://?q=${encoded}`;
+          const webUrl = link.href;
+
+          const started = Date.now();
+          window.location.href = appUrl;
+
+          window.setTimeout(() => {
+            // If the app did not take over, open the web maps URL.
+            if (document.visibilityState === "visible" && Date.now() - started < 1600) {
+              window.location.href = webUrl;
+            }
+          }, 900);
+        });
+      });
+    }
+  }
 })();

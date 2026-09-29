@@ -226,9 +226,16 @@ function sheetHasGuestsColumn_(sheet) {
   );
 }
 
+function formatTimestampPh_(value) {
+  var date = value ? new Date(value) : new Date();
+  if (isNaN(date.getTime())) date = new Date();
+  // Philippine time: 2026-09-29 21:42:05:123
+  return Utilities.formatDate(date, "Asia/Manila", "yyyy-MM-dd HH:mm:ss:SSS");
+}
+
 function buildRowValues_(data, guestName, email, phoneRaw, includeGuests) {
   const base = [
-    data.submittedAt || new Date().toISOString(),
+    formatTimestampPh_(data.submittedAt),
     guestName.slice(0, 120),
     email.slice(0, 160),
     String(phoneRaw != null ? phoneRaw : data.phone || "")

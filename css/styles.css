@@ -2783,7 +2783,6 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   .hero__media,
   .hero__scroll span,
   [data-reveal],
-  .petal,
   .flip.is-flipping span {
     animation: none !important;
     transition: none !important;
@@ -2791,14 +2790,13 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
     transform: none;
   }
 
-  .page-decor__orb,
-  .petal {
+  .page-decor__orb {
     display: none;
   }
 }
 
 /* --------------------------------------------------------------------------
-   Design extras — dividers, timeline, petals, date lockup
+   Design extras — dividers, timeline, date lockup
    -------------------------------------------------------------------------- */
 
 .section.story .section__inner,
@@ -2832,13 +2830,6 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   text-align: center;
   padding: clamp(3.5rem, 8vw, 5.5rem) 1.25rem;
   background: transparent;
-}
-
-.date-lockup__petals {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
 }
 
 .date-lockup__content {
@@ -2917,64 +2908,6 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   color: var(--muted);
 }
 
-.petal {
-  position: absolute;
-  top: -12%;
-  width: 0.85rem;
-  height: 1.25rem;
-  border-radius: 70% 10% 70% 10%;
-  background: linear-gradient(145deg, rgba(158, 197, 220, 0.85), rgba(240, 223, 160, 0.7));
-  box-shadow: 0 2px 8px rgba(106, 159, 189, 0.18);
-  opacity: 0.75;
-  transform-origin: center;
-  animation-name: petal-fall;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform, opacity;
-}
-
-.petal--1  { left: 4%;  width: 0.7rem;  height: 1.05rem; animation-duration: 11s; animation-delay: 0s; }
-.petal--2  { left: 11%; width: 0.95rem; height: 1.35rem; animation-duration: 14s; animation-delay: -2s; background: linear-gradient(145deg, rgba(240, 223, 160, 0.9), rgba(158, 197, 220, 0.55)); }
-.petal--3  { left: 18%; width: 0.6rem;  height: 0.95rem; animation-duration: 12s; animation-delay: -5s; }
-.petal--4  { left: 26%; width: 1.05rem; height: 1.45rem; animation-duration: 16s; animation-delay: -1s; background: linear-gradient(160deg, rgba(106, 159, 189, 0.7), rgba(240, 223, 160, 0.65)); }
-.petal--5  { left: 33%; width: 0.75rem; height: 1.15rem; animation-duration: 13s; animation-delay: -7s; }
-.petal--6  { left: 41%; width: 0.55rem; height: 0.85rem; animation-duration: 10s; animation-delay: -3s; background: linear-gradient(145deg, rgba(226, 200, 106, 0.75), rgba(158, 197, 220, 0.5)); }
-.petal--7  { left: 48%; width: 0.9rem;  height: 1.3rem;  animation-duration: 15s; animation-delay: -9s; }
-.petal--8  { left: 55%; width: 0.65rem; height: 1rem;    animation-duration: 11.5s; animation-delay: -4s; background: linear-gradient(145deg, rgba(240, 223, 160, 0.85), rgba(106, 159, 189, 0.45)); }
-.petal--9  { left: 62%; width: 1rem;    height: 1.4rem;  animation-duration: 17s; animation-delay: -6s; }
-.petal--10 { left: 69%; width: 0.7rem;  height: 1.1rem;  animation-duration: 12.5s; animation-delay: -8s; background: linear-gradient(150deg, rgba(158, 197, 220, 0.8), rgba(226, 200, 106, 0.55)); }
-.petal--11 { left: 76%; width: 0.85rem; height: 1.2rem;  animation-duration: 14.5s; animation-delay: -2.5s; }
-.petal--12 { left: 83%; width: 0.55rem; height: 0.9rem;  animation-duration: 10.5s; animation-delay: -10s; background: linear-gradient(145deg, rgba(240, 223, 160, 0.8), rgba(158, 197, 220, 0.5)); }
-.petal--13 { left: 90%; width: 0.95rem; height: 1.35rem; animation-duration: 15.5s; animation-delay: -1.5s; }
-.petal--14 { left: 96%; width: 0.65rem; height: 1rem;    animation-duration: 13.5s; animation-delay: -11s; }
-.petal--15 { left: 22%; width: 0.8rem;  height: 1.2rem;  animation-duration: 18s; animation-delay: -12s; background: linear-gradient(145deg, rgba(158, 197, 220, 0.7), rgba(240, 223, 160, 0.75)); }
-.petal--16 { left: 58%; width: 0.75rem; height: 1.1rem;  animation-duration: 9.5s; animation-delay: -0.8s; background: linear-gradient(155deg, rgba(226, 200, 106, 0.8), rgba(106, 159, 189, 0.5)); }
-
-@keyframes petal-fall {
-  0% {
-    transform: translate3d(0, -8%, 0) rotate(0deg) scale(0.9);
-    opacity: 0;
-  }
-  8% {
-    opacity: 0.85;
-  }
-  25% {
-    transform: translate3d(2.5vw, 22%, 0) rotate(70deg) scale(1);
-  }
-  50% {
-    transform: translate3d(-3vw, 50%, 0) rotate(160deg) scale(1.05);
-    opacity: 0.8;
-  }
-  75% {
-    transform: translate3d(2vw, 78%, 0) rotate(250deg) scale(0.95);
-    opacity: 0.55;
-  }
-  100% {
-    transform: translate3d(-2.5vw, 112%, 0) rotate(340deg) scale(0.85);
-    opacity: 0;
-  }
-}
-
 @media (max-width: 720px) {
   .timeline__item {
     grid-template-columns: 4.5rem 0.85rem 1fr;
@@ -2983,21 +2916,6 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 
   .date-lockup {
     padding: 3rem 1.15rem;
-  }
-
-  .petal {
-    opacity: 0.65;
-  }
-
-  .petal--9,
-  .petal--10,
-  .petal--11,
-  .petal--12,
-  .petal--13,
-  .petal--14,
-  .petal--15,
-  .petal--16 {
-    display: none;
   }
 
   .rsvp__frame {

@@ -371,12 +371,15 @@
   async function sendAction(payload) {
     const action = String(payload.action || "create").toLowerCase();
     const url = new URL(config.scriptUrl);
+    const token = String((config && config.rsvpToken) || "").trim();
+    if (token) payload.token = token;
 
     if (action === "lookup") {
       url.searchParams.set("action", "lookup");
       url.searchParams.set("guestName", payload.guestName || "");
       if (payload.email) url.searchParams.set("email", payload.email);
       if (payload.phone) url.searchParams.set("phone", payload.phone);
+      if (token) url.searchParams.set("token", token);
 
       const response = await fetch(url.toString(), {
         method: "GET",

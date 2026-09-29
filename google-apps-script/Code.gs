@@ -9,16 +9,18 @@
  * Timestamp | Name | Email | Phone | Attendance | Events | Commute | Allergies | Message | Source
  *
  * GET actions:
- * - lookup: guestName + (email and/or phone)
+ * - lookup: guestName + (email and/or phone) + token
  * - health (no action)
  *
  * POST actions:
- * - create / update (JSON body, text/plain)
+ * - create / update (JSON body, text/plain) + token
  *
  * SECURITY: Keep SPREADSHEET_ID and GUEST_LIST only in the Apps Script editor.
  * Do not commit real values to GitHub. Local backup (gitignored): secrets.local.gs
  * When updating Apps Script, copy logic from this file but keep your private
  * SPREADSHEET_ID + GUEST_LIST values already in the editor (do not overwrite them with blanks).
+ *
+ * RSVP_TOKEN must match js/config.js → rsvpToken (set the same value in Apps Script).
  */
 
 const SHEET_NAME = "RSVPs";
@@ -36,6 +38,12 @@ const HEADERS = [
   "Message",
   "Source",
 ];
+
+/**
+ * Must match window.RSVP_CONFIG.rsvpToken in js/config.js.
+ * Set this in the Apps Script editor to the same value.
+ */
+const RSVP_TOKEN = "";
 
 /**
  * Paste your Google Sheet ID in the Apps Script editor only (not in GitHub).
@@ -72,6 +80,19 @@ function resolveInvitedGuestName_(guestName) {
   return getGuestListMap_()[key] || null;
 }
 
+function assertRsvpToken_(data) {
+  var expected = String(RSVP_TOKEN || "").trim();
+  if (!expected) return null;
+  var got = String((data && data.token) || "").trim();
+  if (!got || got !== expected) {
+    return json_({
+      ok: false,
+      error: "Your RSVP couldn't be saved. Please try again.",
+    });
+  }
+  return null;
+}
+
 var RATE_LIMIT_WINDOW_SEC = 60;
 var RATE_LIMIT_MAX = 10;
 
@@ -106,6 +127,9 @@ function doPost(e) {
       .trim()
       .toLowerCase();
 
+    var tokenBlocked = assertRsvpToken_(data);
+    if (tokenBlocked) return tokenBlocked;
+
     var limited = assertRateLimit_(action || "create", data);
     if (limited) return limited;
 
@@ -135,7 +159,10 @@ function doGet(e) {
         guestName: params.guestName || "",
         email: params.email || "",
         phone: params.phone || "",
+        token: params.token || "",
       };
+      var tokenBlocked = assertRsvpToken_(lookupData);
+      if (tokenBlocked) return tokenBlocked;
       var limited = assertRateLimit_("lookup", lookupData);
       if (limited) return limited;
       return lookupByName_(lookupData);

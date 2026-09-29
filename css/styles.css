@@ -431,7 +431,7 @@ code {
 
 .hero__media img {
   object-fit: cover;
-  object-position: center top;
+  object-position: 68% top;
 }
 
 .hero__veil {
@@ -2035,7 +2035,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 
   .hero__media img {
     object-fit: cover;
-    object-position: center top;
+    object-position: 70% top;
   }
 
   .page-decor__vine,
@@ -2235,7 +2235,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   }
 
   .hero__media img {
-    object-position: center top;
+    object-position: 72% top;
   }
 
   .hero__scroll {

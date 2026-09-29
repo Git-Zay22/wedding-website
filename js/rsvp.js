@@ -73,11 +73,11 @@
   }
 
   function syncEventsField() {
-    const attending = form.attendance.value === "Yes";
-    if (eventsField) eventsField.hidden = !attending;
+    const declining = form.attendance.value === "No";
+    if (eventsField) eventsField.hidden = declining;
     if (eventsSelect) {
-      eventsSelect.required = attending;
-      if (!attending) eventsSelect.value = "Both";
+      eventsSelect.required = !declining;
+      if (declining) eventsSelect.value = "";
     }
   }
 
@@ -121,9 +121,10 @@
 
     if (!form.attendance.value) {
       issues.push({ label: "Attendance", detail: "is required" });
+      focusEl = focusEl || form.querySelector('input[name="attendance"]');
     }
 
-    if (form.attendance.value === "Yes" && !form.events.value) {
+    if (form.attendance.value !== "No" && !form.events.value) {
       issues.push({ label: "Attending", detail: "is required" });
       focusEl = focusEl || form.events;
     }

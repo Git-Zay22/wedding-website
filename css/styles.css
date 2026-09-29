@@ -467,28 +467,57 @@ code {
   letter-spacing: 0.01em;
   display: flex;
   flex-direction: column;
-  color: #f7fbff;
+  color: #f4fbff;
+  -webkit-text-stroke: 0.5px rgba(180, 220, 240, 0.35);
+  paint-order: stroke fill;
   text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.55),
-    0 2px 0 rgba(210, 230, 242, 0.45),
-    0 3px 0 rgba(120, 170, 200, 0.35),
-    0 5px 0 rgba(45, 95, 125, 0.28),
-    0 8px 4px rgba(20, 50, 70, 0.22),
-    0 14px 28px rgba(10, 30, 45, 0.45),
-    0 2px 18px rgba(110, 180, 216, 0.35);
+    /* front highlight */
+    0 1px 0 #ffffff,
+    1px 1px 0 #e8f6fc,
+    /* extruded depth steps */
+    1px 2px 0 #cfe8f5,
+    2px 3px 0 #b5d8ea,
+    2px 4px 0 #9ac7df,
+    3px 5px 0 #7eb4d2,
+    3px 6px 0 #5f9cbe,
+    4px 7px 0 #4686ab,
+    4px 8px 0 #326f94,
+    5px 9px 0 #25597a,
+    5px 10px 0 #1a455f,
+    /* soft ground shadow */
+    6px 14px 6px rgba(12, 35, 52, 0.28),
+    8px 20px 18px rgba(8, 28, 42, 0.38),
+    10px 28px 36px rgba(6, 22, 34, 0.42),
+    /* cool ambient rim */
+    -1px -1px 0 rgba(255, 255, 255, 0.35),
+    0 0 24px rgba(110, 180, 216, 0.35);
+  transform: perspective(700px) rotateX(6deg);
+  transform-origin: center top;
+}
+
+.hero__brand > span:not(.amp) {
+  display: inline-block;
+  transform: translateZ(12px);
 }
 
 .hero__brand .amp {
   font-family: var(--font-script);
   font-size: 0.55em;
   font-weight: 400;
-  color: var(--champagne);
+  color: #ffe9a0;
   margin: 0.05em 0;
+  -webkit-text-stroke: 0.4px rgba(255, 230, 150, 0.4);
   text-shadow:
-    0 1px 0 rgba(255, 248, 220, 0.65),
-    0 2px 0 rgba(200, 160, 40, 0.35),
-    0 4px 0 rgba(120, 90, 20, 0.28),
-    0 8px 16px rgba(20, 30, 40, 0.4);
+    0 1px 0 #fff8dc,
+    1px 1px 0 #f5e08a,
+    1px 2px 0 #e4c04a,
+    2px 3px 0 #c9a028,
+    2px 4px 0 #a88418,
+    3px 5px 0 #866612,
+    3px 6px 0 #684e0e,
+    4px 10px 8px rgba(40, 28, 8, 0.35),
+    6px 16px 22px rgba(20, 16, 8, 0.4),
+    0 0 18px rgba(245, 215, 110, 0.35);
 }
 
 .hero__line {
@@ -2374,6 +2403,10 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .hero__brand {
+    transform: none;
   }
 
   .hero__media,

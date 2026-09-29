@@ -15,7 +15,10 @@
  * POST actions:
  * - create / update (JSON body, text/plain)
  *
- * Guest allowlist is enforced server-side only.
+ * SECURITY: Keep SPREADSHEET_ID and GUEST_LIST only in the Apps Script editor.
+ * Do not commit real values to GitHub. Local backup (gitignored): secrets.local.gs
+ * When updating Apps Script, copy logic from this file but keep your private
+ * SPREADSHEET_ID + GUEST_LIST values already in the editor (do not overwrite them with blanks).
  */
 
 const SHEET_NAME = "RSVPs";
@@ -35,15 +38,15 @@ const HEADERS = [
 ];
 
 /**
- * Optional: paste your Google Sheet ID here (from the sheet URL).
- * Required if the Apps Script is NOT bound to that sheet.
- * Example URL: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
+ * Paste your Google Sheet ID in the Apps Script editor only (not in GitHub).
+ * From: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
+ * Leave empty in the public repo template.
  */
 const SPREADSHEET_ID = "";
 
 /**
- * Only these invited names may submit an RSVP (case-insensitive full-name match).
- * "RESERVED" placeholders are intentionally excluded.
+ * Invited names allowlist — maintain only in Apps Script (case-insensitive full-name match).
+ * "RESERVED" placeholders should be excluded. Leave empty in the public repo template.
  */
 const GUEST_LIST = [
   // "FULL NAME HERE",

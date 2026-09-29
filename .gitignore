@@ -7,3 +7,7 @@ node_modules/
 .vscode/
 .idea/
 
+# Private Apps Script values (guest allowlist + spreadsheet ID)
+google-apps-script/secrets.local.gs
+google-apps-script/*.local.gs
+

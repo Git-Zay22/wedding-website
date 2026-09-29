@@ -2430,6 +2430,17 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   display: none;
 }
 
+.rsvp-find-hint {
+  margin: -0.35rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: rgba(23, 26, 23, 0.62);
+}
+
+.rsvp-find-hint[hidden] {
+  display: none !important;
+}
+
 .rsvp-edit-switch {
   margin-top: 0.35rem;
 }

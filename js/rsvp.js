@@ -7,6 +7,7 @@
   const findBtn = form.querySelector("[data-find-rsvp]");
   const editToggle = form.querySelector("[data-edit-toggle]");
   const editInstructions = form.querySelector("[data-edit-instructions]");
+  const findHint = form.querySelector("[data-find-hint]");
   const detailsEl = form.querySelector("[data-rsvp-details]");
   const eventsField = form.querySelector("[data-events-field]");
   const loadingEl = document.querySelector("[data-rsvp-loading]");
@@ -17,6 +18,8 @@
   let editMode = false;
   let editLoaded = false;
   let originalGuestName = "";
+  let originalEmail = "";
+  let originalPhone = "";
   let baselineSnapshot = "";
   let lookupBusy = false;
   let submitBusy = false;
@@ -187,7 +190,9 @@
     const pending = editMode && !editLoaded;
     if (detailsEl) detailsEl.hidden = pending;
     if (editInstructions) editInstructions.hidden = !editMode;
+    if (findHint) findHint.hidden = !pending;
 
+    // During find, HTML5 must not require both contacts — one of email/phone is enough
     form.email.required = !pending;
     form.phone.required = !pending;
     form.commute.required = !pending;
@@ -204,6 +209,8 @@
     const keptName = keepName ? form.guestName.value : "";
     editLoaded = false;
     originalGuestName = "";
+    originalEmail = "";
+    originalPhone = "";
     baselineSnapshot = "";
     form.reset();
     if (editToggle) editToggle.checked = editMode;
@@ -225,6 +232,10 @@
     form.allergies.value = record.allergies || "";
     form.message.value = record.message || "";
     originalGuestName = record.guestName || form.guestName.value.trim();
+    originalEmail = String(record.email || "")
+      .trim()
+      .toLowerCase();
+    originalPhone = String(record.phone || "").trim();
     editLoaded = true;
     baselineSnapshot = getFormSnapshot();
     syncEventsField();
@@ -239,28 +250,63 @@
     );
   }
 
-  function validateClient() {
+  function phoneDigits(value) {
+    return String(value || "").replace(/\D/g, "");
+  }
+
+  function validateFindFields() {
     const name = form.guestName.value.trim();
     const email = form.email.value.trim();
     const phone = form.phone.value.trim();
-    const phoneDigits = phone.replace(/\D/g, "");
+    const digits = phoneDigits(phone);
     const issues = [];
     let focusEl = null;
 
     if (!name) {
       issues.push({ label: "Full name", detail: "is required" });
       focusEl = focusEl || form.guestName;
-    } else if (typeof window.resolveRsvpGuestName === "function") {
-      const invitedName = window.resolveRsvpGuestName(name);
-      if (!invitedName) {
-        issues.push({
-          label: "Full name",
-          detail: "must match a name on the guest list",
-        });
-        focusEl = focusEl || form.guestName;
-      } else {
-        form.guestName.value = invitedName;
+    }
+
+    const hasEmail = Boolean(email);
+    const hasPhone = digits.length >= 10;
+
+    if (!hasEmail && !hasPhone) {
+      issues.push({
+        label: "Email or Mobile",
+        detail: "enter at least one from your original RSVP",
+      });
+      focusEl = focusEl || form.email;
+    } else {
+      if (hasEmail && !isValidEmail(email)) {
+        issues.push({ label: "Email", detail: "needs a valid address" });
+        focusEl = focusEl || form.email;
       }
+      if (phone && !hasPhone) {
+        issues.push({ label: "Mobile", detail: "needs a valid number" });
+        focusEl = focusEl || form.phone;
+      }
+    }
+
+    if (issues.length) {
+      setStatus("Please complete the required fields:", "error", issues);
+      if (focusEl) focusEl.focus();
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateClient() {
+    const name = form.guestName.value.trim();
+    const email = form.email.value.trim();
+    const phone = form.phone.value.trim();
+    const digits = phoneDigits(phone);
+    const issues = [];
+    let focusEl = null;
+
+    if (!name) {
+      issues.push({ label: "Full name", detail: "is required" });
+      focusEl = focusEl || form.guestName;
     }
 
     if (!email) {
@@ -274,7 +320,7 @@
     if (!phone) {
       issues.push({ label: "Mobile", detail: "is required" });
       focusEl = focusEl || form.phone;
-    } else if (phoneDigits.length < 10) {
+    } else if (digits.length < 10) {
       issues.push({ label: "Mobile", detail: "needs a valid number" });
       focusEl = focusEl || form.phone;
     }
@@ -323,43 +369,45 @@
   }
 
   async function sendAction(payload) {
-    const url = new URL(config.scriptUrl);
     const action = String(payload.action || "create").toLowerCase();
+    const url = new URL(config.scriptUrl);
 
     if (action === "lookup") {
       url.searchParams.set("action", "lookup");
       url.searchParams.set("guestName", payload.guestName || "");
-    } else {
-      // GET + payload avoids Apps Script POST redirect/HTML failures in browsers
-      url.searchParams.set("action", action);
-      url.searchParams.set("payload", JSON.stringify(payload));
+      if (payload.email) url.searchParams.set("email", payload.email);
+      if (payload.phone) url.searchParams.set("phone", payload.phone);
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        mode: "cors",
+        redirect: "follow",
+        cache: "no-store",
+      });
+      return parseJsonResponse(response);
     }
 
-    const response = await fetch(url.toString(), {
-      method: "GET",
+    // Apps Script CORS: text/plain avoids a preflight; follow redirect for /exec → /userCodeAppPanel
+    const response = await fetch(config.scriptUrl, {
+      method: "POST",
       mode: "cors",
       redirect: "follow",
       cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
     });
     return parseJsonResponse(response);
-  }
-
-  async function lookupByName(guestName) {
-    return sendAction({ action: "lookup", guestName: guestName });
   }
 
   async function lookupRsvp() {
     if (!editMode || lookupBusy) return;
 
     clearStatus();
+    if (!validateFindFields()) return;
+
     const guestName = form.guestName.value.trim();
-    if (!guestName) {
-      setStatus("Please complete the required fields:", "error", [
-        { label: "Full name", detail: "is required" },
-      ]);
-      form.guestName.focus();
-      return;
-    }
+    const email = form.email.value.trim().toLowerCase();
+    const phone = form.phone.value.trim();
 
     lookupBusy = true;
     syncButtonState();
@@ -374,7 +422,12 @@
         );
       }
 
-      const data = await lookupByName(guestName);
+      const data = await sendAction({
+        action: "lookup",
+        guestName: guestName,
+        email: email,
+        phone: phone,
+      });
 
       if (data && data.message && !data.record) {
         throw new Error(
@@ -383,7 +436,7 @@
       }
 
       if (!data.record) {
-        throw new Error("No RSVP found for that name.");
+        throw new Error("No RSVP found for those details.");
       }
 
       hideLoading();
@@ -425,12 +478,16 @@
     });
   }
 
-  form.guestName.addEventListener("keydown", (event) => {
+  function onFindEnter(event) {
     if (editMode && !editLoaded && event.key === "Enter") {
       event.preventDefault();
       lookupRsvp();
     }
-  });
+  }
+
+  form.guestName.addEventListener("keydown", onFindEnter);
+  form.email.addEventListener("keydown", onFindEnter);
+  form.phone.addEventListener("keydown", onFindEnter);
 
   form.addEventListener("input", () => {
     if (editMode && editLoaded) syncButtonState();
@@ -478,6 +535,8 @@
       action: editMode ? "update" : "create",
       guestName: form.guestName.value.trim(),
       originalGuestName: editMode ? originalGuestName || form.guestName.value.trim() : undefined,
+      originalEmail: editMode ? originalEmail : undefined,
+      originalPhone: editMode ? originalPhone : undefined,
       email: form.email.value.trim().toLowerCase(),
       phone: form.phone.value.trim(),
       attendance: form.attendance.value,

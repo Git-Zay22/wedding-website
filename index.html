@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="You're invited to the wedding of Caren D. Cabudol and Zayrol C. Buyan — 27 November 2026." />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; frame-src https://maps.google.com https://www.google.com https://maps.googleapis.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; form-action 'self'; upgrade-insecure-requests"
+  />
   <title>Caren & Zayrol — Wedding</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -11,25 +16,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=80" />
-  <script>
-    (function () {
-      try {
-        if (sessionStorage.getItem("cz-proposals-unlock") === "1") {
-          document.documentElement.classList.add("proposals-unlocked");
-        }
-      } catch (e) {}
-      try {
-        var screenW = Math.min(screen.width || 0, screen.height || 0);
-        var narrow = window.matchMedia("(max-width: 720px)").matches;
-        var desktopSiteOnPhone = screenW > 0 && screenW <= 540 && window.innerWidth > screenW * 1.25;
-        var coarsePhone = window.matchMedia("(hover: none) and (pointer: coarse)").matches && screenW > 0 && screenW <= 540;
-        if (narrow || desktopSiteOnPhone || coarsePhone) {
-          document.documentElement.classList.add("hero-phone");
-        }
-      } catch (e) {}
-    })();
-  </script>
+  <link rel="stylesheet" href="css/styles.css?v=81" />
+  <script src="js/boot.js?v=1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -553,8 +541,7 @@
             <input id="guestName" name="guestName" type="text" autocomplete="name" required maxlength="120" placeholder="Your name" />
           </div>
 
-          <div class="rsvp-form__details" data-rsvp-details>
-          <div class="field-row">
+          <div class="field-row" data-rsvp-contact>
             <div class="field">
               <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
               <input id="email" name="email" type="email" autocomplete="email" required maxlength="160" placeholder="you@email.com" />
@@ -564,7 +551,11 @@
               <input id="phone" name="phone" type="tel" autocomplete="tel" required maxlength="40" placeholder="09XXXXXXXXX" />
             </div>
           </div>
+          <p class="rsvp-find-hint" data-find-hint hidden>
+            To find your RSVP, enter your full name plus the email <em>or</em> mobile number you used before.
+          </p>
 
+          <div class="rsvp-form__details" data-rsvp-details>
           <fieldset class="field field--choice">
             <legend>Attendance <span class="req" aria-hidden="true">*</span></legend>
             <div class="choice-row">
@@ -639,10 +630,10 @@
           <div class="rsvp-edit-instructions" data-edit-instructions hidden>
             <p class="rsvp-edit-instructions__title">How to edit your RSVP</p>
             <ol class="rsvp-edit-instructions__list">
-              <li>Enter your complete full name (capital letters or small letters both work).</li>
+              <li>Enter your complete full name (capitalization does not matter).</li>
+              <li>Enter the email <strong>or</strong> mobile number from your original RSVP.</li>
               <li>Tap <strong>Find my RSVP</strong> to load your reply.</li>
-              <li>Change any details you need to update.</li>
-              <li>Tap <strong>Resend RSVP</strong> to save the changes.</li>
+              <li>Change any details you need, then tap <strong>Resend RSVP</strong>.</li>
             </ol>
           </div>
         </form>
@@ -706,9 +697,8 @@
     <p class="footer__thanks">With love — thank you for being part of our day.</p>
   </footer>
 
-  <script src="js/config.js?v=3"></script>
-  <script src="js/guest-list.js?v=1"></script>
-  <script src="js/main.js?v=26"></script>
-  <script src="js/rsvp.js?v=20"></script>
+  <script src="js/config.js?v=4"></script>
+  <script src="js/main.js?v=27"></script>
+  <script src="js/rsvp.js?v=21"></script>
 </body>
 </html>

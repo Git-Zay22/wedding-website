@@ -8,12 +8,14 @@
  * Headers:
  * Timestamp | Name | Email | Phone | Attendance | Events | Commute | Allergies | Message | Source
  *
- * GET / POST actions:
- * - create (default): append a new RSVP
- * - lookup: { action: "lookup", guestName }
- * - update: { action: "update", guestName, originalGuestName?, email, phone, ... }
+ * GET actions:
+ * - lookup: guestName + (email and/or phone)
+ * - health (no action)
  *
- * Browser calls should use GET ?payload=<json> (most reliable with Apps Script CORS).
+ * POST actions:
+ * - create / update (JSON body, text/plain)
+ *
+ * Guest allowlist is enforced server-side only.
  */
 
 const SHEET_NAME = "RSVPs";
@@ -67,6 +69,32 @@ function resolveInvitedGuestName_(guestName) {
   return getGuestListMap_()[key] || null;
 }
 
+var RATE_LIMIT_WINDOW_SEC = 60;
+var RATE_LIMIT_MAX = 10;
+
+function rateLimitKey_(action, data) {
+  var name = normalizeName_((data && data.guestName) || "");
+  var phone = normalizePhone_((data && data.phone) || "");
+  var email = String((data && data.email) || "")
+    .trim()
+    .toLowerCase();
+  return "rl:" + action + ":" + (name || "anon") + ":" + (phone || email || "x");
+}
+
+function assertRateLimit_(action, data) {
+  var cache = CacheService.getScriptCache();
+  var key = rateLimitKey_(action, data);
+  var count = Number(cache.get(key) || "0");
+  if (count >= RATE_LIMIT_MAX) {
+    return json_({
+      ok: false,
+      error: "Too many requests. Please wait a minute and try again.",
+    });
+  }
+  cache.put(key, String(count + 1), RATE_LIMIT_WINDOW_SEC);
+  return null;
+}
+
 function doPost(e) {
   try {
     const raw = e.postData && e.postData.contents ? e.postData.contents : "{}";
@@ -74,6 +102,9 @@ function doPost(e) {
     const action = String(data.action || "create")
       .trim()
       .toLowerCase();
+
+    var limited = assertRateLimit_(action || "create", data);
+    if (limited) return limited;
 
     if (action === "lookup") {
       return lookupByName_(data);
@@ -91,37 +122,25 @@ function doPost(e) {
 function doGet(e) {
   try {
     const params = (e && e.parameter) || {};
-    var data = {};
-
-    // Preferred browser path: ?payload={...json...}
-    if (params.payload) {
-      data = JSON.parse(params.payload);
-    }
-
-    const action = String(
-      data.action || params.action || (params.payload ? "create" : "")
-    )
+    const action = String(params.action || "")
       .trim()
       .toLowerCase();
 
-    if (action === "info") {
-      return sheetInfo_();
-    }
+    // Writes are POST-only. GET supports health + authenticated lookup.
     if (action === "lookup") {
-      return lookupByName_({
-        guestName: data.guestName || params.guestName || "",
-      });
-    }
-    if (action === "update") {
-      return updateByName_(data);
-    }
-    if (action === "create") {
-      return createRsvp_(data);
+      var lookupData = {
+        guestName: params.guestName || "",
+        email: params.email || "",
+        phone: params.phone || "",
+      };
+      var limited = assertRateLimit_("lookup", lookupData);
+      if (limited) return limited;
+      return lookupByName_(lookupData);
     }
 
     return json_({
       ok: true,
-      message: "Caren & Zayrol RSVP endpoint is live. Use POST from the wedding site.",
+      message: "Caren & Zayrol RSVP endpoint is live.",
     });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
@@ -183,8 +202,21 @@ function createRsvp_(data) {
 
 function lookupByName_(data) {
   const guestName = String(data.guestName || "").trim();
+  const email = String(data.email || "")
+    .trim()
+    .toLowerCase();
+  const phone = normalizePhone_(String(data.phone || "").trim());
+
   if (!guestName) {
     return json_({ ok: false, error: "Please enter your full name." });
+  }
+
+  if (!email && phone.length < 10) {
+    return json_({
+      ok: false,
+      error:
+        "Enter your full name plus the email or mobile number used on your RSVP.",
+    });
   }
 
   const sheet = getSheet_();
@@ -193,11 +225,28 @@ function lookupByName_(data) {
     return json_({
       ok: false,
       error:
-        "No RSVP found for that full name. Use the complete name from your RSVP (capitalization does not matter), or turn the edit switch off to send a new RSVP.",
+        "No RSVP found for those details. Check your name and contact info, or turn the edit switch off to send a new RSVP.",
     });
   }
 
-  return json_({ ok: true, record: found.record });
+  const record = found.record;
+  const emailOk =
+    Boolean(email) &&
+    email === String(record.email || "")
+      .trim()
+      .toLowerCase();
+  const phoneOk =
+    phone.length >= 10 && phone === normalizePhone_(record.phone);
+
+  if (!emailOk && !phoneOk) {
+    return json_({
+      ok: false,
+      error:
+        "Name and contact details do not match our RSVP records.",
+    });
+  }
+
+  return json_({ ok: true, record: record });
 }
 
 function updateByName_(data) {
@@ -239,7 +288,29 @@ function updateByName_(data) {
     return json_({
       ok: false,
       error:
-        "No RSVP found for that full name. Use the complete name from your RSVP (capitalization does not matter), or turn the edit switch off to send a new RSVP.",
+        "No RSVP found for those details. Find your RSVP first, then resend your updates.",
+    });
+  }
+
+  const verifyEmail = String(data.originalEmail || data.verifyEmail || "")
+    .trim()
+    .toLowerCase();
+  const verifyPhone = normalizePhone_(
+    String(data.originalPhone || data.verifyPhone || "").trim()
+  );
+  const currentEmail = String(found.record.email || "")
+    .trim()
+    .toLowerCase();
+  const currentPhone = normalizePhone_(found.record.phone);
+  const verifyEmailOk = Boolean(verifyEmail) && verifyEmail === currentEmail;
+  const verifyPhoneOk =
+    verifyPhone.length >= 10 && verifyPhone === currentPhone;
+
+  if (!verifyEmailOk && !verifyPhoneOk) {
+    return json_({
+      ok: false,
+      error:
+        "Could not verify this RSVP. Find your RSVP with your name and contact details first.",
     });
   }
 

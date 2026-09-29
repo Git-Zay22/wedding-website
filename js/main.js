@@ -374,13 +374,15 @@
         const active = proposalsRoot.querySelector(".proposal-slide.is-active [data-proposal-card]");
         if (!active) return;
         const rect = active.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width;
-        const y = (event.clientY - rect.top) / rect.height;
-        const rotY = (x - 0.5) * 14;
-        const rotX = (0.5 - y) * 10;
+        const x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+        const y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+        const rotY = (x - 0.5) * 16;
+        const rotX = (0.5 - y) * 12;
         active.classList.add("is-tilting");
+        active.style.setProperty("--mx", (x * 100).toFixed(1) + "%");
+        active.style.setProperty("--my", (y * 100).toFixed(1) + "%");
         active.style.transform =
-          "translateZ(22px) rotateX(" + rotX.toFixed(2) + "deg) rotateY(" + rotY.toFixed(2) + "deg)";
+          "translateZ(34px) rotateX(" + rotX.toFixed(2) + "deg) rotateY(" + rotY.toFixed(2) + "deg)";
       };
 
       const resetTilt = () => {
@@ -388,6 +390,8 @@
         cards.forEach((card) => {
           card.classList.remove("is-tilting");
           card.style.transform = "";
+          card.style.removeProperty("--mx");
+          card.style.removeProperty("--my");
         });
       };
 

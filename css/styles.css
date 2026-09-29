@@ -438,6 +438,16 @@ code {
   object-position: 32% top;
 }
 
+/* Force phone hero crop even when Chrome "Desktop site" widens the viewport */
+html.hero-phone .hero__media img {
+  object-position: center 28%;
+}
+
+html.hero-phone .hero {
+  min-height: 78svh;
+  min-height: 78dvh;
+}
+
 .hero__veil {
   position: absolute;
   inset: 0;

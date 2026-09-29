@@ -127,21 +127,35 @@
   });
 
   /* Hero image: browsers often keep the desktop <picture> source after resize /
-     DevTools phone mode — force the correct asset when the breakpoint changes. */
+     DevTools phone mode — and Chrome "Desktop site" forces a wide viewport on phones.
+     Prefer phone hero when the layout is narrow OR the physical screen is phone-sized. */
   const heroImg = document.querySelector("[data-hero-img]");
   if (heroImg) {
     const desktopSrc = heroImg.getAttribute("data-hero-desktop") || heroImg.getAttribute("src");
     const phoneSrc = heroImg.getAttribute("data-hero-phone");
     const heroMq = window.matchMedia("(max-width: 720px)");
+    const coarseMq = window.matchMedia("(hover: none) and (pointer: coarse)");
+
+    const shouldUsePhoneHero = () => {
+      if (heroMq.matches) return true;
+      const screenW = Math.min(window.screen.width || 0, window.screen.height || 0);
+      // Chrome "Desktop site" on phone: layout viewport ~980+, physical screen still phone-sized
+      if (screenW > 0 && screenW <= 540 && window.innerWidth > screenW * 1.25) return true;
+      if (coarseMq.matches && screenW > 0 && screenW <= 540) return true;
+      return false;
+    };
 
     const syncHeroImage = () => {
       if (!phoneSrc || !desktopSrc) return;
-      const next = heroMq.matches ? phoneSrc : desktopSrc;
+      const usePhone = shouldUsePhoneHero();
+      document.documentElement.classList.toggle("hero-phone", usePhone);
+
+      const next = usePhone ? phoneSrc : desktopSrc;
       const current = heroImg.getAttribute("src") || "";
-      if (current.split("?")[0] === next.split("?")[0] && current === next) return;
-      if (current === next) return;
-      heroImg.setAttribute("src", next);
-      if (heroMq.matches) {
+      if (current !== next) {
+        heroImg.setAttribute("src", next);
+      }
+      if (usePhone) {
         heroImg.setAttribute("width", "1200");
         heroImg.setAttribute("height", "1800");
       } else {
@@ -156,7 +170,13 @@
     } else if (typeof heroMq.addListener === "function") {
       heroMq.addListener(syncHeroImage);
     }
+    if (typeof coarseMq.addEventListener === "function") {
+      coarseMq.addEventListener("change", syncHeroImage);
+    }
     window.addEventListener("resize", syncHeroImage, { passive: true });
+    window.addEventListener("orientationchange", () => {
+      window.setTimeout(syncHeroImage, 150);
+    });
   }
 
   const header = document.querySelector("[data-header]");

@@ -451,20 +451,11 @@ code {
 .hero__meta {
   margin: 0 0 1.25rem;
   font-family: var(--font-body);
-  font-size: clamp(0.88rem, 2.5vw, 1.05rem);
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--champagne);
-  -webkit-text-stroke: 1px #000;
-  paint-order: stroke fill;
-  text-shadow:
-    0 0 1px #000,
-    1px 0 0 #000,
-    -1px 0 0 #000,
-    0 1px 0 #000,
-    0 -1px 0 #000,
-    0 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 .hero__brand {
@@ -2379,7 +2370,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   }
 
   .hero__meta {
-    font-size: 0.8rem;
+    font-size: 0.68rem;
     letter-spacing: 0.12em;
   }
 

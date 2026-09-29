@@ -40,6 +40,46 @@ function json(data, status, origin) {
   });
 }
 
+/**
+ * Apps Script /exec often 302s to script.googleusercontent.com.
+ * Following POST redirects automatically can hang; re-POST to Location instead.
+ */
+async function postAppsScript(scriptUrl, bodyText) {
+  const headers = { "Content-Type": "text/plain;charset=utf-8" };
+  const init = {
+    method: "POST",
+    redirect: "manual",
+    headers,
+    body: bodyText,
+  };
+
+  let res = await fetch(scriptUrl, init);
+
+  if (res.status >= 300 && res.status < 400) {
+    const loc = res.headers.get("Location");
+    if (loc) {
+      res = await fetch(loc, {
+        method: "POST",
+        redirect: "follow",
+        headers,
+        body: bodyText,
+      });
+    }
+  }
+
+  // Fallback if manual redirect wasn't exposed
+  if (res.status === 0 || res.type === "opaqueredirect") {
+    res = await fetch(scriptUrl, {
+      method: "POST",
+      redirect: "follow",
+      headers,
+      body: bodyText,
+    });
+  }
+
+  return res;
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -74,16 +114,12 @@ export default {
         }
 
         body.token = env.RSVP_TOKEN;
+        const bodyText = JSON.stringify(body);
 
-        const upstream = await fetch(env.SCRIPT_URL, {
-          method: "POST",
-          redirect: "follow",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(body),
-        });
+        const upstream = await postAppsScript(env.SCRIPT_URL, bodyText);
         const text = await upstream.text();
         return new Response(text, {
-          status: upstream.status,
+          status: upstream.status || 200,
           headers: {
             "Content-Type": "application/json; charset=utf-8",
             ...corsHeaders(origin),

@@ -491,6 +491,28 @@
   syncEventsField();
   syncEditUi();
 
+  // Warm Apps Script / Worker so the first Find/Send is less likely to cold-start hang.
+  function warmRsvpEndpoint() {
+    const url = String((config && config.scriptUrl) || "").trim();
+    if (!url || !isConfigured()) return;
+    fetch(url, { method: "GET", mode: "cors", cache: "no-store" }).catch(
+      function () {}
+    );
+  }
+  warmRsvpEndpoint();
+  const rsvpSection = document.getElementById("rsvp");
+  if (rsvpSection && "IntersectionObserver" in window) {
+    const warmOnce = new IntersectionObserver(
+      function (entries) {
+        if (!entries.some(function (e) { return e.isIntersecting; })) return;
+        warmRsvpEndpoint();
+        warmOnce.disconnect();
+      },
+      { rootMargin: "200px" }
+    );
+    warmOnce.observe(rsvpSection);
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearStatus();

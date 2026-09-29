@@ -359,6 +359,7 @@ function writeRow_(sheet, rowIndex, data, guestName, email, phoneRaw) {
   const includeGuests = sheetHasGuestsColumn_(sheet);
   const values = buildRowValues_(data, guestName, email, phoneRaw, includeGuests);
   sheet.getRange(rowIndex, 1, 1, values.length).setValues([values]);
+  invalidateSheetCache_(sheet);
 }
 
 function normalizePhone_(value) {
@@ -398,22 +399,55 @@ function recordFromRow_(row, hasGuests) {
   };
 }
 
-function findRowByName_(sheet, nameKey) {
+var SHEET_CACHE_TTL_SEC_ = 45;
+
+function sheetCacheKey_(sheet) {
+  return "rsvp_rows:" + sheet.getParent().getId() + ":" + sheet.getName();
+}
+
+function invalidateSheetCache_(sheet) {
+  try {
+    CacheService.getScriptCache().remove(sheetCacheKey_(sheet));
+  } catch (err) {}
+}
+
+function readSheetRows_(sheet) {
   const lastRow = sheet.getLastRow();
-  if (lastRow < 2 || !nameKey) return null;
+  if (lastRow < 2) return { hasGuests: false, rows: [] };
 
   const hasGuests = sheetHasGuestsColumn_(sheet);
   const width = hasGuests ? 11 : 10;
-  const values = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+  // getRange(row, column, numRows, numColumns)
+  const values = sheet.getRange(2, 1, lastRow - 1, width).getValues();
+  return { hasGuests: hasGuests, rows: values };
+}
+
+function readSheetRowsCached_(sheet) {
+  var cache = CacheService.getScriptCache();
+  var key = sheetCacheKey_(sheet);
+  try {
+    var hit = cache.get(key);
+    if (hit) return JSON.parse(hit);
+  } catch (err) {}
+
+  var data = readSheetRows_(sheet);
+  try {
+    cache.put(key, JSON.stringify(data), SHEET_CACHE_TTL_SEC_);
+  } catch (err) {}
+  return data;
+}
+
+function findRowByName_(sheet, nameKey) {
+  if (!nameKey) return null;
+
+  const data = readSheetRowsCached_(sheet);
   var match = null;
 
-  for (var i = 0; i < values.length; i++) {
-    if (normalizeName_(values[i][0]) === nameKey) {
-      var rowIndex = i + 2;
-      var row = sheet.getRange(rowIndex, 1, 1, width).getValues()[0];
+  for (var i = 0; i < data.rows.length; i++) {
+    if (normalizeName_(data.rows[i][1]) === nameKey) {
       match = {
-        rowIndex: rowIndex,
-        record: recordFromRow_(row, hasGuests),
+        rowIndex: i + 2,
+        record: recordFromRow_(data.rows[i], data.hasGuests),
       };
     }
   }
@@ -422,19 +456,16 @@ function findRowByName_(sheet, nameKey) {
 }
 
 function findDuplicate_(sheet, email, phone, excludeRow) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return false;
+  const data = readSheetRowsCached_(sheet);
 
-  // Col C = Email (3), Col D = Phone (4)
-  const values = sheet.getRange(2, 3, lastRow - 1, 2).getValues();
-  for (var i = 0; i < values.length; i++) {
+  for (var i = 0; i < data.rows.length; i++) {
     var rowIndex = i + 2;
     if (excludeRow && rowIndex === excludeRow) continue;
 
-    const existingEmail = String(values[i][0] || "")
+    const existingEmail = String(data.rows[i][2] || "")
       .trim()
       .toLowerCase();
-    const existingPhone = normalizePhone_(values[i][1]);
+    const existingPhone = normalizePhone_(data.rows[i][3]);
     if (existingEmail && existingEmail === email) return true;
     if (existingPhone && existingPhone === phone) return true;
   }

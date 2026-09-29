@@ -116,6 +116,7 @@
     if (!url) return false;
     if (url.indexOf("YOUR_GOOGLE_APPS_SCRIPT") !== -1) return false;
     if (url.indexOf("script.google.com") !== -1) return true;
+    if (url.indexOf(".workers.dev") !== -1) return true;
     return config.demoMode === false;
   }
 

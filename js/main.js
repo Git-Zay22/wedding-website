@@ -126,6 +126,39 @@
     }
   });
 
+  /* Hero image: browsers often keep the desktop <picture> source after resize /
+     DevTools phone mode — force the correct asset when the breakpoint changes. */
+  const heroImg = document.querySelector("[data-hero-img]");
+  if (heroImg) {
+    const desktopSrc = heroImg.getAttribute("data-hero-desktop") || heroImg.getAttribute("src");
+    const phoneSrc = heroImg.getAttribute("data-hero-phone");
+    const heroMq = window.matchMedia("(max-width: 720px)");
+
+    const syncHeroImage = () => {
+      if (!phoneSrc || !desktopSrc) return;
+      const next = heroMq.matches ? phoneSrc : desktopSrc;
+      const current = heroImg.getAttribute("src") || "";
+      if (current.split("?")[0] === next.split("?")[0] && current === next) return;
+      if (current === next) return;
+      heroImg.setAttribute("src", next);
+      if (heroMq.matches) {
+        heroImg.setAttribute("width", "1200");
+        heroImg.setAttribute("height", "1800");
+      } else {
+        heroImg.setAttribute("width", "2400");
+        heroImg.setAttribute("height", "880");
+      }
+    };
+
+    syncHeroImage();
+    if (typeof heroMq.addEventListener === "function") {
+      heroMq.addEventListener("change", syncHeroImage);
+    } else if (typeof heroMq.addListener === "function") {
+      heroMq.addListener(syncHeroImage);
+    }
+    window.addEventListener("resize", syncHeroImage, { passive: true });
+  }
+
   const header = document.querySelector("[data-header]");
   const nav = document.querySelector("[data-nav]");
   const toggle = document.querySelector("[data-nav-toggle]");

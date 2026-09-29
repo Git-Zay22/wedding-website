@@ -420,14 +420,20 @@ code {
   background: linear-gradient(160deg, #6a8fa8 0%, #9ec5dc 45%, #3d5568 100%);
 }
 
-.hero__media picture,
-.hero__media img {
+.hero__media picture {
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
 }
 
 .hero__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
   object-fit: cover;
   object-position: 32% top;
 }
@@ -2708,6 +2714,7 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   }
 
   .hero__media img {
+    object-fit: cover;
     object-position: center 28%;
   }
 

@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=69" />
+  <link rel="stylesheet" href="css/styles.css?v=70" />
   <script>
     (function () {
       try {
@@ -54,9 +54,18 @@
   <main id="main">
     <section id="top" class="hero" aria-label="Invitation">
       <div class="hero__media" role="img" aria-label="Caren and Zayrol in formal wedding attire">
-        <picture>
-          <source media="(max-width: 720px)" srcset="assets/hero-mobile.jpg?v=6" />
-          <img src="assets/hero.jpg?v=10" alt="" width="2400" height="880" fetchpriority="high" />
+        <picture data-hero-picture>
+          <source media="(max-width: 720px)" srcset="assets/hero-mobile.jpg?v=6" data-hero-mobile />
+          <img
+            src="assets/hero.jpg?v=10"
+            alt=""
+            width="2400"
+            height="880"
+            fetchpriority="high"
+            data-hero-img
+            data-hero-desktop="assets/hero.jpg?v=10"
+            data-hero-phone="assets/hero-mobile.jpg?v=6"
+          />
         </picture>
       </div>
       <div class="hero__veil"></div>
@@ -647,7 +656,7 @@
   </footer>
 
   <script src="js/config.js?v=3"></script>
-  <script src="js/main.js?v=22"></script>
+  <script src="js/main.js?v=23"></script>
   <script src="js/rsvp.js?v=5"></script>
 </body>
 </html>

@@ -15,6 +15,27 @@
  */
 
 const SHEET_NAME = "RSVPs";
+const SPREADSHEET_NAME = "Caren & Zayrol RSVPs";
+const PROP_SPREADSHEET_ID = "RSVP_SPREADSHEET_ID";
+const HEADERS = [
+  "Timestamp",
+  "Name",
+  "Email",
+  "Phone",
+  "Attendance",
+  "Events",
+  "Guests",
+  "Commute",
+  "Allergies",
+  "Message",
+  "Source",
+];
+
+/**
+ * Optional: paste a spreadsheet ID here to force a specific sheet.
+ * Leave blank to use the bound spreadsheet, Script Properties, or auto-create.
+ */
+const SPREADSHEET_ID = "";
 
 function doPost(e) {
   try {
@@ -267,25 +288,73 @@ function findDuplicate_(sheet, email, phone, excludeRow) {
   return false;
 }
 
-function getSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow([
-      "Timestamp",
-      "Name",
-      "Email",
-      "Phone",
-      "Attendance",
-      "Events",
-      "Guests",
-      "Commute",
-      "Allergies",
-      "Message",
-      "Source",
-    ]);
+function getSpreadsheet_() {
+  // 1) Script bound to a Google Sheet
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) return ss;
+
+  var props = PropertiesService.getScriptProperties();
+
+  // 2) Hardcoded spreadsheet ID (if set above)
+  var configuredId = String(SPREADSHEET_ID || "").trim();
+  if (configuredId) {
+    ss = SpreadsheetApp.openById(configuredId);
+    props.setProperty(PROP_SPREADSHEET_ID, configuredId);
+    return ss;
   }
+
+  // 3) Previously created / remembered spreadsheet
+  var savedId = props.getProperty(PROP_SPREADSHEET_ID);
+  if (savedId) {
+    try {
+      ss = SpreadsheetApp.openById(savedId);
+      if (ss) return ss;
+    } catch (err) {
+      // Sheet was deleted — create a fresh one below.
+    }
+  }
+
+  // 4) Create a new spreadsheet when none exists
+  ss = SpreadsheetApp.create(SPREADSHEET_NAME);
+  props.setProperty(PROP_SPREADSHEET_ID, ss.getId());
+  return ss;
+}
+
+function ensureHeaders_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+    return;
+  }
+
+  var firstCell = String(sheet.getRange(1, 1).getValue() || "")
+    .trim()
+    .toLowerCase();
+  if (!firstCell) {
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+  }
+}
+
+function getSheet_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+
+  if (!sheet) {
+    // Prefer renaming the default first tab when the file is brand new
+    var first = ss.getSheets()[0];
+    if (
+      first &&
+      ss.getSheets().length === 1 &&
+      first.getLastRow() === 0 &&
+      /^sheet\d+$/i.test(first.getName())
+    ) {
+      first.setName(SHEET_NAME);
+      sheet = first;
+    } else {
+      sheet = ss.insertSheet(SHEET_NAME);
+    }
+  }
+
+  ensureHeaders_(sheet);
   return sheet;
 }
 

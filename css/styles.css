@@ -1347,6 +1347,26 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   position: relative;
 }
 
+.frame__open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.frame__open:focus-visible {
+  outline: 2px solid var(--powder-deep);
+  outline-offset: 4px;
+  border-radius: var(--radius-lg);
+}
+
 .frame--feature { grid-area: feature; }
 .frame--tall.frame--tilt-a { grid-area: tall-a; }
 .frame--tall.frame--tilt-b { grid-area: tall-b; }
@@ -1456,6 +1476,183 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 
 .frame--accent figcaption span {
   color: #b8962e;
+}
+
+/* Gallery lightbox */
+
+.lightbox {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100%;
+  max-height: 100%;
+  background: transparent;
+  color: var(--cloud);
+}
+
+.lightbox:modal {
+  max-width: 100vw;
+  max-height: 100%;
+}
+
+.lightbox::backdrop {
+  background: rgba(20, 28, 36, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.lightbox__shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  justify-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(0.75rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(0.75rem, env(safe-area-inset-left));
+  box-sizing: border-box;
+}
+
+.lightbox__figure {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: min(92vw, 68rem);
+  max-height: calc(100dvh - 6.5rem);
+}
+
+.lightbox__img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 8.5rem);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lightbox__caption {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(251, 248, 239, 0.88);
+  text-align: center;
+}
+
+.lightbox__close,
+.lightbox__nav {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), transform 0.25s var(--ease);
+}
+
+.lightbox__close:hover,
+.lightbox__nav:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.lightbox__close:focus-visible,
+.lightbox__nav:focus-visible {
+  outline: 2px solid var(--butter);
+  outline-offset: 3px;
+}
+
+.lightbox__close {
+  position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  font-size: 1.75rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+.lightbox__nav {
+  grid-row: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  font-size: 1.85rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  align-self: center;
+}
+
+.lightbox__nav--prev {
+  grid-column: 1;
+}
+
+.lightbox__nav--next {
+  grid-column: 3;
+}
+
+@media (max-width: 720px) {
+  .lightbox__shell {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: 0.75rem 1rem;
+  }
+
+  .lightbox__close {
+    grid-column: 1 / -1;
+    justify-self: end;
+    position: static;
+  }
+
+  .lightbox__figure {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-height: calc(100dvh - 9rem);
+  }
+
+  .lightbox__img {
+    max-height: calc(100dvh - 11rem);
+  }
+
+  .lightbox__nav {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .lightbox__nav--prev {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: end;
+  }
+
+  .lightbox__nav--next {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: start;
+  }
 }
 
 /* Proposals slider */

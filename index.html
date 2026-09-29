@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=59" />
+  <link rel="stylesheet" href="css/styles.css?v=60" />
   <script>
     (function () {
       try {
@@ -336,39 +336,49 @@
         <p class="gallery__lead" data-reveal>Soft light, quiet walks, and the beginning of forever.</p>
       </div>
 
-      <div class="gallery__mosaic" data-reveal>
-        <figure class="frame frame--feature">
-          <div class="frame__mat">
-            <img src="assets/gallery-3.jpg" alt="Caren and Zayrol running joyfully through the forest" width="1600" height="1067" loading="lazy" />
-          </div>
+      <div class="gallery__mosaic" data-reveal data-lightbox-gallery>
+        <figure class="frame frame--feature" data-lightbox-item>
+          <button type="button" class="frame__open" data-lightbox-open aria-label="View Joy in motion">
+            <div class="frame__mat">
+              <img src="assets/gallery-3.jpg" alt="Caren and Zayrol running joyfully through the forest" width="1600" height="1067" loading="lazy" />
+            </div>
+          </button>
           <figcaption><span>01</span> Joy in motion</figcaption>
         </figure>
 
-        <figure class="frame frame--tall frame--tilt-a">
-          <div class="frame__mat frame__mat--butter">
-            <img src="assets/gallery-1.jpg" alt="Caren and Zayrol looking at each other in wedding attire" width="1067" height="1600" loading="lazy" />
-          </div>
+        <figure class="frame frame--tall frame--tilt-a" data-lightbox-item>
+          <button type="button" class="frame__open" data-lightbox-open aria-label="View Together">
+            <div class="frame__mat frame__mat--butter">
+              <img src="assets/gallery-1.jpg" alt="Caren and Zayrol looking at each other in wedding attire" width="1067" height="1600" loading="lazy" />
+            </div>
+          </button>
           <figcaption><span>02</span> Together</figcaption>
         </figure>
 
-        <figure class="frame frame--tall frame--tilt-b">
-          <div class="frame__mat frame__mat--powder">
-            <img src="assets/gallery-2.jpg" alt="Caren seated on a log while Zayrol stands nearby in the pines" width="1067" height="1600" loading="lazy" />
-          </div>
+        <figure class="frame frame--tall frame--tilt-b" data-lightbox-item>
+          <button type="button" class="frame__open" data-lightbox-open aria-label="View Among the pines">
+            <div class="frame__mat frame__mat--powder">
+              <img src="assets/gallery-2.jpg" alt="Caren seated on a log while Zayrol stands nearby in the pines" width="1067" height="1600" loading="lazy" />
+            </div>
+          </button>
           <figcaption><span>03</span> Among the pines</figcaption>
         </figure>
 
-        <figure class="frame frame--wide">
-          <div class="frame__mat">
-            <img src="assets/gallery-4.jpg" alt="Caren and Zayrol walking hand in hand through the pine forest" width="1600" height="1067" loading="lazy" />
-          </div>
+        <figure class="frame frame--wide" data-lightbox-item>
+          <button type="button" class="frame__open" data-lightbox-open aria-label="View Side by side">
+            <div class="frame__mat">
+              <img src="assets/gallery-4.jpg" alt="Caren and Zayrol walking hand in hand through the pine forest" width="1600" height="1067" loading="lazy" />
+            </div>
+          </button>
           <figcaption><span>04</span> Side by side</figcaption>
         </figure>
 
-        <figure class="frame frame--wide frame--accent">
-          <div class="frame__mat frame__mat--butter">
-            <img src="assets/gallery-5.jpg" alt="Caren and Zayrol on a swing under golden light" width="1600" height="1067" loading="lazy" />
-          </div>
+        <figure class="frame frame--wide frame--accent" data-lightbox-item>
+          <button type="button" class="frame__open" data-lightbox-open aria-label="View Golden hour">
+            <div class="frame__mat frame__mat--butter">
+              <img src="assets/gallery-5.jpg" alt="Caren and Zayrol on a swing under golden light" width="1600" height="1067" loading="lazy" />
+            </div>
+          </button>
           <figcaption><span>05</span> Golden hour</figcaption>
         </figure>
       </div>
@@ -560,6 +570,24 @@
     </form>
   </dialog>
 
+  <dialog class="lightbox" data-lightbox aria-label="Photo viewer">
+    <div class="lightbox__shell">
+      <button type="button" class="lightbox__close" data-lightbox-close aria-label="Close photo">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <button type="button" class="lightbox__nav lightbox__nav--prev" data-lightbox-prev aria-label="Previous photo">
+        <span aria-hidden="true">‹</span>
+      </button>
+      <figure class="lightbox__figure">
+        <img class="lightbox__img" data-lightbox-img alt="" />
+        <figcaption class="lightbox__caption" data-lightbox-caption></figcaption>
+      </figure>
+      <button type="button" class="lightbox__nav lightbox__nav--next" data-lightbox-next aria-label="Next photo">
+        <span aria-hidden="true">›</span>
+      </button>
+    </div>
+  </dialog>
+
   <footer class="site-footer">
     <a class="footer__logo" href="#top" aria-label="Caren & Zayrol — back to top">
       <img src="assets/logo-monogram.png" alt="" width="120" height="129" decoding="async" loading="lazy" />
@@ -570,7 +598,7 @@
   </footer>
 
   <script src="js/config.js?v=3"></script>
-  <script src="js/main.js?v=15"></script>
+  <script src="js/main.js?v=16"></script>
   <script src="js/rsvp.js?v=5"></script>
 </body>
 </html>

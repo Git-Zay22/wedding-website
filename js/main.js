@@ -371,4 +371,70 @@
     show(index);
     schedule();
   }
+
+  /* Gallery lightbox */
+  const lightbox = document.querySelector("[data-lightbox]");
+  const lightboxGallery = document.querySelector("[data-lightbox-gallery]");
+  if (lightbox && lightboxGallery && typeof lightbox.showModal === "function") {
+    const items = Array.from(lightboxGallery.querySelectorAll("[data-lightbox-item]"));
+    const imgEl = lightbox.querySelector("[data-lightbox-img]");
+    const captionEl = lightbox.querySelector("[data-lightbox-caption]");
+    const closeBtn = lightbox.querySelector("[data-lightbox-close]");
+    const prevBtn = lightbox.querySelector("[data-lightbox-prev]");
+    const nextBtn = lightbox.querySelector("[data-lightbox-next]");
+    let activeIndex = 0;
+
+    const photos = items.map((item) => {
+      const img = item.querySelector("img");
+      const caption = item.querySelector("figcaption");
+      return {
+        src: img ? img.currentSrc || img.src : "",
+        alt: img ? img.alt : "",
+        caption: caption ? caption.textContent.replace(/\s+/g, " ").trim() : "",
+      };
+    });
+
+    const render = (index) => {
+      if (!photos.length) return;
+      activeIndex = (index + photos.length) % photos.length;
+      const photo = photos[activeIndex];
+      imgEl.src = photo.src;
+      imgEl.alt = photo.alt;
+      captionEl.textContent = photo.caption;
+    };
+
+    const openAt = (index) => {
+      render(index);
+      if (!lightbox.open) lightbox.showModal();
+    };
+
+    const close = () => {
+      if (lightbox.open) lightbox.close();
+    };
+
+    items.forEach((item, index) => {
+      const trigger = item.querySelector("[data-lightbox-open]");
+      if (!trigger) return;
+      trigger.addEventListener("click", () => openAt(index));
+    });
+
+    closeBtn?.addEventListener("click", close);
+    prevBtn?.addEventListener("click", () => render(activeIndex - 1));
+    nextBtn?.addEventListener("click", () => render(activeIndex + 1));
+
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) close();
+    });
+
+    lightbox.addEventListener("keydown", (event) => {
+      if (!lightbox.open) return;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        render(activeIndex - 1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        render(activeIndex + 1);
+      }
+    });
+  }
 })();

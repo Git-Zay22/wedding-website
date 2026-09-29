@@ -289,26 +289,25 @@
 
     const show = (nextIndex) => {
       if (!slides.length) return;
-      const prev = slides[index];
       index = (nextIndex + slides.length) % slides.length;
-      const next = slides[index];
+      const prevIndex = (index - 1 + slides.length) % slides.length;
+      const nextSide = (index + 1) % slides.length;
 
       slides.forEach((slide, i) => {
-        slide.classList.remove("is-active", "is-leaving");
+        slide.classList.remove("is-active", "is-prev", "is-next", "is-leaving", "is-far");
+        slide.hidden = false;
+        slide.setAttribute("aria-hidden", i === index ? "false" : "true");
+
         if (i === index) {
-          slide.hidden = false;
           slide.classList.add("is-active");
-        } else if (slide === prev && prev !== next) {
-          slide.hidden = false;
-          slide.classList.add("is-leaving");
-          window.setTimeout(() => {
-            if (!slide.classList.contains("is-active")) {
-              slide.hidden = true;
-              slide.classList.remove("is-leaving");
-            }
-          }, 700);
+        } else if (slides.length > 1 && i === prevIndex) {
+          slide.classList.add("is-prev");
+        } else if (slides.length > 2 && i === nextSide) {
+          slide.classList.add("is-next");
+        } else if (slides.length === 2 && i !== index) {
+          slide.classList.add("is-prev");
         } else {
-          slide.hidden = true;
+          slide.classList.add("is-far");
         }
       });
 
@@ -356,6 +355,15 @@
 
     if (prevBtn) prevBtn.addEventListener("click", () => goTo(index - 1, true));
     if (nextBtn) nextBtn.addEventListener("click", () => goTo(index + 1, true));
+
+    slides.forEach((slide, i) => {
+      slide.addEventListener("click", (event) => {
+        if (slide.classList.contains("is-prev") || slide.classList.contains("is-next")) {
+          event.preventDefault();
+          goTo(i, true);
+        }
+      });
+    });
 
     proposalsRoot.addEventListener("mouseenter", pause);
     proposalsRoot.addEventListener("mouseleave", resume);

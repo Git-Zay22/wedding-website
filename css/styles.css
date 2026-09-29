@@ -1655,7 +1655,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   }
 }
 
-/* Proposals slider — extruded holographic float */
+/* Proposals slider — coverflow with blurred neighbors */
 
 .proposals {
   overflow: hidden;
@@ -1672,51 +1672,84 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 }
 
 .proposals__stage {
-  width: min(100% - 1.5rem, 30rem);
+  width: min(100% - 1rem, 52rem);
   margin: 0 auto;
   position: relative;
 }
 
 .proposals__viewport {
   position: relative;
-  min-height: 0;
-  padding: 2rem 1rem 1.5rem;
+  min-height: clamp(30rem, 78vw, 40rem);
+  padding: 2rem 0 1.25rem;
   perspective: 1400px;
   transform-style: preserve-3d;
 }
 
 .proposal-slide {
   margin: 0;
-  display: none;
-  position: relative;
+  position: absolute;
+  top: 2rem;
+  left: 50%;
+  width: min(100% - 2rem, 26rem);
+  display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: translate3d(3rem, 1rem, -80px) rotateY(-18deg) rotateX(8deg) scale(0.9);
+  pointer-events: none;
+  transform: translate3d(-50%, 1.25rem, -160px) scale(0.72);
   transform-style: preserve-3d;
+  filter: blur(8px) saturate(0.85);
   transition:
-    opacity 0.8s var(--ease),
-    transform 0.8s var(--ease);
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease),
+    filter 0.7s var(--ease);
+  z-index: 0;
+}
+
+.proposal-slide.is-far {
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(12px);
+  transform: translate3d(-50%, 1.5rem, -200px) scale(0.65);
+}
+
+.proposal-slide.is-prev,
+.proposal-slide.is-next {
+  opacity: 0.55;
+  pointer-events: auto;
+  cursor: pointer;
+  filter: blur(4.5px) brightness(0.92) saturate(0.9);
+  z-index: 1;
+}
+
+.proposal-slide.is-prev {
+  transform: translate3d(calc(-50% - clamp(7rem, 22vw, 13rem)), 0.85rem, -90px) rotateY(28deg) rotateX(4deg) scale(0.78);
+}
+
+.proposal-slide.is-next {
+  transform: translate3d(calc(-50% + clamp(7rem, 22vw, 13rem)), 0.85rem, -90px) rotateY(-28deg) rotateX(4deg) scale(0.78);
+}
+
+.proposal-slide.is-prev:hover,
+.proposal-slide.is-next:hover {
+  opacity: 0.78;
+  filter: blur(2.5px) brightness(0.96) saturate(0.95);
 }
 
 .proposal-slide.is-active {
-  display: flex;
   opacity: 1;
-  transform: translate3d(0, 0, 0) rotateY(-8deg) rotateX(7deg);
-  z-index: 2;
+  pointer-events: auto;
+  filter: none;
+  z-index: 3;
+  transform: translate3d(-50%, 0, 0) rotateY(-6deg) rotateX(5deg) scale(1);
   animation: proposal-float 5.5s ease-in-out infinite;
 }
 
-.proposal-slide.is-leaving {
-  display: flex;
-  position: absolute;
-  inset: 2rem 1rem 1.5rem;
-  width: auto;
+.proposal-slide.is-prev .proposal-slide__badge,
+.proposal-slide.is-next .proposal-slide__badge,
+.proposal-slide.is-far .proposal-slide__badge {
   opacity: 0;
-  transform: translate3d(-3.5rem, 1.2rem, -90px) rotateY(20deg) rotateX(4deg) scale(0.88);
-  pointer-events: none;
-  z-index: 1;
-  animation: none;
+  transform: translateZ(20px) scale(0.9);
 }
 
 .proposal-slide__orbit {
@@ -1842,6 +1875,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
     0 1px 0 rgba(255, 255, 255, 0.35) inset,
     0 14px 28px rgba(28, 39, 48, 0.22);
   transform: translateZ(40px);
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
 }
 
 .proposal-slide__eyebrow {
@@ -1868,7 +1902,9 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   align-items: center;
   justify-content: center;
   gap: 0.85rem;
-  margin-top: 0.5rem;
+  margin-top: 0.35rem;
+  position: relative;
+  z-index: 4;
 }
 
 .proposals__arrow {
@@ -1951,13 +1987,35 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 }
 
 @keyframes proposal-float {
-  0%, 100% { transform: translate3d(0, 0, 0) rotateY(-8deg) rotateX(7deg); }
-  50% { transform: translate3d(0, -0.55rem, 8px) rotateY(-5deg) rotateX(5deg); }
+  0%, 100% { transform: translate3d(-50%, 0, 0) rotateY(-6deg) rotateX(5deg) scale(1); }
+  50% { transform: translate3d(-50%, -0.45rem, 8px) rotateY(-3deg) rotateX(3deg) scale(1); }
 }
 
 @media (max-width: 720px) {
+  .proposals__stage {
+    width: min(100% - 0.5rem, 40rem);
+  }
+
   .proposals__viewport {
-    padding: 1.35rem 0.5rem 1.15rem;
+    min-height: clamp(28rem, 118vw, 36rem);
+    padding-top: 1.35rem;
+  }
+
+  .proposal-slide {
+    width: min(100% - 1rem, 20rem);
+    top: 1.35rem;
+  }
+
+  .proposal-slide.is-prev {
+    transform: translate3d(calc(-50% - clamp(4.5rem, 18vw, 7.5rem)), 1rem, -70px) rotateY(22deg) scale(0.72);
+    opacity: 0.4;
+    filter: blur(5px) brightness(0.9);
+  }
+
+  .proposal-slide.is-next {
+    transform: translate3d(calc(-50% + clamp(4.5rem, 18vw, 7.5rem)), 1rem, -70px) rotateY(-22deg) scale(0.72);
+    opacity: 0.4;
+    filter: blur(5px) brightness(0.9);
   }
 
   .proposal-slide.is-active {
@@ -1980,18 +2038,28 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 }
 
 @keyframes proposal-float-mobile {
-  0%, 100% { transform: translate3d(0, 0, 0) rotateY(-4deg) rotateX(4deg); }
-  50% { transform: translate3d(0, -0.4rem, 6px) rotateY(-2deg) rotateX(3deg); }
+  0%, 100% { transform: translate3d(-50%, 0, 0) rotateY(-3deg) rotateX(3deg) scale(1); }
+  50% { transform: translate3d(-50%, -0.35rem, 6px) rotateY(-1deg) rotateX(2deg) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .proposal-slide,
   .proposal-slide.is-active,
-  .proposal-slide.is-leaving,
+  .proposal-slide.is-prev,
+  .proposal-slide.is-next,
   .proposal-slide__card {
     transition: none;
-    transform: none;
     animation: none;
+  }
+
+  .proposal-slide.is-active {
+    transform: translate3d(-50%, 0, 0);
+    filter: none;
+  }
+
+  .proposal-slide.is-prev,
+  .proposal-slide.is-next {
+    filter: blur(3px);
   }
 
   .proposals__progress span.is-running {

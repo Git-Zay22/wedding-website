@@ -192,7 +192,7 @@
       statusEl.classList.add("is-flash");
       statusHideTimer = setTimeout(() => {
         dismissStatus();
-      }, 4500);
+      }, 10000);
     }
   }
 

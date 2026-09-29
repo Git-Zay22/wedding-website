@@ -250,6 +250,17 @@
     if (!name) {
       issues.push({ label: "Full name", detail: "is required" });
       focusEl = focusEl || form.guestName;
+    } else if (typeof window.resolveRsvpGuestName === "function") {
+      const invitedName = window.resolveRsvpGuestName(name);
+      if (!invitedName) {
+        issues.push({
+          label: "Full name",
+          detail: "must match a name on the guest list",
+        });
+        focusEl = focusEl || form.guestName;
+      } else {
+        form.guestName.value = invitedName;
+      }
     }
 
     if (!email) {

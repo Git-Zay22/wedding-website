@@ -39,6 +39,34 @@ const HEADERS = [
  */
 const SPREADSHEET_ID = "";
 
+/**
+ * Only these invited names may submit an RSVP (case-insensitive full-name match).
+ * "RESERVED" placeholders are intentionally excluded.
+ */
+const GUEST_LIST = [
+  // "FULL NAME HERE",
+];
+
+var GUEST_LIST_MAP_ = null;
+
+function getGuestListMap_() {
+  if (GUEST_LIST_MAP_) return GUEST_LIST_MAP_;
+  GUEST_LIST_MAP_ = {};
+  for (var i = 0; i < GUEST_LIST.length; i++) {
+    var official = String(GUEST_LIST[i] || "").trim();
+    var key = normalizeName_(official);
+    if (!key || key === "reserved") continue;
+    GUEST_LIST_MAP_[key] = official;
+  }
+  return GUEST_LIST_MAP_;
+}
+
+function resolveInvitedGuestName_(guestName) {
+  var key = normalizeName_(guestName);
+  if (!key) return null;
+  return getGuestListMap_()[key] || null;
+}
+
 function doPost(e) {
   try {
     const raw = e.postData && e.postData.contents ? e.postData.contents : "{}";
@@ -101,15 +129,24 @@ function doGet(e) {
 }
 
 function createRsvp_(data) {
-  const guestName = String(data.guestName || "").trim();
+  const guestNameRaw = String(data.guestName || "").trim();
   const email = String(data.email || "")
     .trim()
     .toLowerCase();
   const phone = normalizePhone_(String(data.phone || "").trim());
   const attendance = String(data.attendance || "").trim();
 
-  if (!guestName || !email || !attendance || !phone) {
+  if (!guestNameRaw || !email || !attendance || !phone) {
     return json_({ ok: false, error: "Missing required fields." });
+  }
+
+  const guestName = resolveInvitedGuestName_(guestNameRaw);
+  if (!guestName) {
+    return json_({
+      ok: false,
+      error:
+        "This name is not on the guest list. Please enter your name exactly as it appears on the invitation (capitalization does not matter).",
+    });
   }
 
   if (!isValidEmail_(email)) {
@@ -164,7 +201,7 @@ function lookupByName_(data) {
 }
 
 function updateByName_(data) {
-  const guestName = String(data.guestName || "").trim();
+  const guestNameRaw = String(data.guestName || "").trim();
   const originalGuestName = String(
     data.originalGuestName || data.guestName || ""
   ).trim();
@@ -175,8 +212,17 @@ function updateByName_(data) {
   const phone = normalizePhone_(phoneRaw);
   const attendance = String(data.attendance || "").trim();
 
-  if (!guestName || !email || !attendance || !phone) {
+  if (!guestNameRaw || !email || !attendance || !phone) {
     return json_({ ok: false, error: "Missing required fields." });
+  }
+
+  const guestName = resolveInvitedGuestName_(guestNameRaw);
+  if (!guestName) {
+    return json_({
+      ok: false,
+      error:
+        "This name is not on the guest list. Please enter your name exactly as it appears on the invitation (capitalization does not matter).",
+    });
   }
 
   if (!isValidEmail_(email)) {

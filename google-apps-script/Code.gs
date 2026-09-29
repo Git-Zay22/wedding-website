@@ -15,12 +15,11 @@
  * POST actions:
  * - create / update (JSON body, text/plain) + token
  *
- * SECURITY: Keep SPREADSHEET_ID and GUEST_LIST only in the Apps Script editor.
- * Do not commit real values to GitHub. Local backup (gitignored): secrets.local.gs
+ * SECURITY: Keep SPREADSHEET_ID, GUEST_LIST, and RSVP_TOKEN only in Apps Script
+ * (and RSVP_TOKEN also in Cloudflare Worker secrets). Do not commit real values to GitHub.
+ * Local backups (gitignored): secrets.local.gs / Code.paste.local.gs
  * When updating Apps Script, copy logic from this file but keep your private
- * SPREADSHEET_ID + GUEST_LIST values already in the editor (do not overwrite them with blanks).
- *
- * RSVP_TOKEN must match js/config.js → rsvpToken (set the same value in Apps Script).
+ * SPREADSHEET_ID + GUEST_LIST + RSVP_TOKEN already in the editor.
  */
 
 const SHEET_NAME = "RSVPs";
@@ -40,8 +39,9 @@ const HEADERS = [
 ];
 
 /**
- * Must match window.RSVP_CONFIG.rsvpToken in js/config.js.
- * Set this in the Apps Script editor to the same value.
+ * Shared secret — set ONLY in the Apps Script editor.
+ * Must match the Cloudflare Worker secret RSVP_TOKEN.
+ * Leave empty in the public GitHub template.
  */
 const RSVP_TOKEN = "";
 

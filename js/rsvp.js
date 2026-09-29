@@ -26,12 +26,35 @@
   let scrollLocked = false;
   const requestQueue = [];
   let queueRunning = false;
+  let statusHideTimer = null;
+  let statusFadeTimer = null;
+
+  function clearStatusTimers() {
+    if (statusHideTimer) {
+      clearTimeout(statusHideTimer);
+      statusHideTimer = null;
+    }
+    if (statusFadeTimer) {
+      clearTimeout(statusFadeTimer);
+      statusFadeTimer = null;
+    }
+  }
 
   function clearStatus() {
     if (!statusEl) return;
+    clearStatusTimers();
     statusEl.hidden = true;
-    statusEl.classList.remove("is-error", "is-success", "is-flash");
+    statusEl.classList.remove("is-error", "is-success", "is-flash", "is-fading");
     statusEl.replaceChildren();
+  }
+
+  function dismissStatus() {
+    if (!statusEl || statusEl.hidden) return;
+    clearStatusTimers();
+    statusEl.classList.add("is-fading");
+    statusFadeTimer = setTimeout(() => {
+      clearStatus();
+    }, 450);
   }
 
   function blockBackgroundScroll(event) {
@@ -103,16 +126,31 @@
       return;
     }
 
+    clearStatusTimers();
     statusEl.hidden = false;
-    statusEl.classList.remove("is-error", "is-success", "is-flash");
+    statusEl.classList.remove("is-error", "is-success", "is-flash", "is-fading");
     if (type) statusEl.classList.add(`is-${type}`);
     statusEl.replaceChildren();
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "form-status__close";
+    closeBtn.setAttribute("aria-label", "Dismiss message");
+    closeBtn.textContent = "×";
+    closeBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      dismissStatus();
+    });
+    statusEl.appendChild(closeBtn);
+
+    const body = document.createElement("div");
+    body.className = "form-status__body";
 
     if (items && items.length) {
       const title = document.createElement("p");
       title.className = "form-status__title";
       title.textContent = message || "Please complete the required fields:";
-      statusEl.appendChild(title);
+      body.appendChild(title);
 
       const list = document.createElement("ul");
       list.className = "form-status__list";
@@ -136,10 +174,12 @@
         list.appendChild(li);
       });
 
-      statusEl.appendChild(list);
+      body.appendChild(list);
     } else {
-      statusEl.textContent = message;
+      body.textContent = message;
     }
+
+    statusEl.appendChild(body);
 
     const preferCenter = type === "success" || type === "error";
     statusEl.scrollIntoView({
@@ -150,6 +190,9 @@
       statusEl.classList.remove("is-flash");
       void statusEl.offsetWidth;
       statusEl.classList.add("is-flash");
+      statusHideTimer = setTimeout(() => {
+        dismissStatus();
+      }, 4500);
     }
   }
 

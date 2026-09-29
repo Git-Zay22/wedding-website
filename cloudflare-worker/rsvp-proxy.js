@@ -43,11 +43,12 @@ function json(data, status, origin) {
 /**
  * Apps Script /exec POSTs process doPost, then 302 to googleusercontent /macros/echo.
  * That echo URL must be fetched with GET (POST returns HTML 405 "Page Not Found").
+ * Note: Response.type (opaqueredirect) is browser-only — not available in Workers.
  */
 async function postAppsScript(scriptUrl, bodyText) {
   const headers = { "Content-Type": "text/plain;charset=utf-8" };
 
-  let res = await fetch(scriptUrl, {
+  const res = await fetch(scriptUrl, {
     method: "POST",
     redirect: "manual",
     headers,
@@ -59,16 +60,6 @@ async function postAppsScript(scriptUrl, bodyText) {
     if (loc) {
       return fetch(loc, { method: "GET", redirect: "follow" });
     }
-  }
-
-  // Fallback: some runtimes hide Location; follow redirects (POST→GET on 302).
-  if (res.status === 0 || res.type === "opaqueredirect") {
-    return fetch(scriptUrl, {
-      method: "POST",
-      redirect: "follow",
-      headers,
-      body: bodyText,
-    });
   }
 
   return res;

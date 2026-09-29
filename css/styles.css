@@ -2499,7 +2499,7 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 }
 
 .rsvp-edit-switch {
-  margin: 0;
+  margin-top: 0.35rem;
 }
 
 .rsvp-switch {

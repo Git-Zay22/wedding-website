@@ -352,7 +352,8 @@
 
     lookupBusy = true;
     syncButtonState();
-    setStatus("Looking up your RSVP…");
+    clearStatus();
+    showLoading("Finding your RSVP…");
 
     try {
       if (!isConfigured()) {
@@ -374,16 +375,21 @@
         throw new Error("No RSVP found for that name.");
       }
 
+      hideLoading();
       fillFormFromRecord(data.record);
       setStatus("We found your RSVP — update anything below, then Resend RSVP.", "success");
+      requestAnimationFrame(() => scrollToStatus(true));
       form.email.focus();
     } catch (err) {
       console.error(err);
+      hideLoading();
       editLoaded = false;
       baselineSnapshot = "";
       syncEditUi();
       setStatus(err.message || "Could not find that RSVP.", "error");
+      requestAnimationFrame(() => scrollToStatus(false));
     } finally {
+      hideLoading();
       lookupBusy = false;
       syncButtonState();
     }

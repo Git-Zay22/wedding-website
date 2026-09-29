@@ -91,40 +91,67 @@
 
   function validateClient() {
     const name = form.guestName.value.trim();
+    const email = form.email.value.trim();
     const phone = form.phone.value.trim();
     const phoneDigits = phone.replace(/\D/g, "");
+    const missing = [];
+    let focusEl = null;
 
     if (!name) {
-      setStatus("Please enter your full name.", "error");
-      form.guestName.focus();
-      return false;
+      missing.push("Full name");
+      focusEl = focusEl || form.guestName;
     }
 
-    if (!validateEmailField(true)) {
-      setStatus(
-        form.email.value.trim()
-          ? "Please enter a valid email address."
-          : "Please enter your email address.",
-        "error"
-      );
+    if (!email) {
+      missing.push("Email");
+      focusEl = focusEl || form.email;
+    } else if (!validateEmailField(true)) {
+      setStatus("Please enter a valid email address for Email.", "error");
       form.email.focus();
       return false;
     }
 
-    if (phoneDigits.length < 10) {
-      setStatus("Please enter a valid mobile / WhatsApp number.", "error");
+    if (!phone) {
+      missing.push("Mobile / WhatsApp");
+      focusEl = focusEl || form.phone;
+    } else if (phoneDigits.length < 10) {
+      setStatus("Please enter a valid Mobile / WhatsApp number.", "error");
       form.phone.focus();
       return false;
     }
 
     if (!form.attendance.value) {
-      setStatus("Please choose your attendance.", "error");
-      return false;
+      missing.push("Attendance");
     }
 
     if (form.attendance.value === "Yes" && !form.events.value) {
-      setStatus("Please choose ceremony, reception, or both.", "error");
-      form.events.focus();
+      missing.push("Attending");
+      focusEl = focusEl || form.events;
+    }
+
+    if (!form.commute.value) {
+      missing.push("Will you bring your own car?");
+      focusEl = focusEl || form.commute;
+    }
+
+    if (missing.length) {
+      if (email) validateEmailField(true);
+      else setEmailFieldError("");
+
+      const list =
+        missing.length === 1
+          ? missing[0]
+          : missing.length === 2
+            ? missing.join(" and ")
+            : missing.slice(0, -1).join(", ") + ", and " + missing[missing.length - 1];
+
+      setStatus(
+        missing.length === 1
+          ? `${list} is required.`
+          : `Please fill in the required fields: ${list}.`,
+        "error"
+      );
+      if (focusEl) focusEl.focus();
       return false;
     }
 
@@ -150,12 +177,7 @@
     event.preventDefault();
     setStatus("");
 
-    if (!form.reportValidity() || !validateClient()) {
-      if (!statusEl.textContent) {
-        setStatus("Please fill in the required fields.", "error");
-      }
-      return;
-    }
+    if (!validateClient()) return;
 
     // Honeypot
     if (form.website && form.website.value.trim() !== "") {

@@ -2565,6 +2565,8 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   background: rgba(23, 26, 23, 0.42);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 .rsvp-loading[hidden] {
@@ -2604,8 +2606,11 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   }
 }
 
+html.is-rsvp-loading,
 body.is-rsvp-loading {
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 /* Footer */

@@ -41,35 +41,29 @@ function json(data, status, origin) {
 }
 
 /**
- * Apps Script /exec often 302s to script.googleusercontent.com.
- * Following POST redirects automatically can hang; re-POST to Location instead.
+ * Apps Script /exec POSTs process doPost, then 302 to googleusercontent /macros/echo.
+ * That echo URL must be fetched with GET (POST returns HTML 405 "Page Not Found").
  */
 async function postAppsScript(scriptUrl, bodyText) {
   const headers = { "Content-Type": "text/plain;charset=utf-8" };
-  const init = {
+
+  let res = await fetch(scriptUrl, {
     method: "POST",
     redirect: "manual",
     headers,
     body: bodyText,
-  };
-
-  let res = await fetch(scriptUrl, init);
+  });
 
   if (res.status >= 300 && res.status < 400) {
     const loc = res.headers.get("Location");
     if (loc) {
-      res = await fetch(loc, {
-        method: "POST",
-        redirect: "follow",
-        headers,
-        body: bodyText,
-      });
+      return fetch(loc, { method: "GET", redirect: "follow" });
     }
   }
 
-  // Fallback if manual redirect wasn't exposed
+  // Fallback: some runtimes hide Location; follow redirects (POST→GET on 302).
   if (res.status === 0 || res.type === "opaqueredirect") {
-    res = await fetch(scriptUrl, {
+    return fetch(scriptUrl, {
       method: "POST",
       redirect: "follow",
       headers,

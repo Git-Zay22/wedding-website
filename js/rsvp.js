@@ -23,6 +23,9 @@
   let baselineSnapshot = "";
   let lookupBusy = false;
   let submitBusy = false;
+  let scrollLocked = false;
+  const requestQueue = [];
+  let queueRunning = false;
 
   function clearStatus() {
     if (!statusEl) return;
@@ -31,17 +34,56 @@
     statusEl.replaceChildren();
   }
 
+  function blockBackgroundScroll(event) {
+    if (!scrollLocked) return;
+    event.preventDefault();
+  }
+
   function showLoading(message) {
     if (loadingTextEl) {
       loadingTextEl.textContent = message || "Sending your RSVP…";
     }
     if (loadingEl) loadingEl.hidden = false;
+    document.documentElement.classList.add("is-rsvp-loading");
     document.body.classList.add("is-rsvp-loading");
+    if (!scrollLocked) {
+      scrollLocked = true;
+      document.addEventListener("touchmove", blockBackgroundScroll, { passive: false });
+      document.addEventListener("wheel", blockBackgroundScroll, { passive: false });
+    }
   }
 
   function hideLoading() {
     if (loadingEl) loadingEl.hidden = true;
+    document.documentElement.classList.remove("is-rsvp-loading");
     document.body.classList.remove("is-rsvp-loading");
+    if (scrollLocked) {
+      scrollLocked = false;
+      document.removeEventListener("touchmove", blockBackgroundScroll);
+      document.removeEventListener("wheel", blockBackgroundScroll);
+    }
+  }
+
+  /** Run RSVP network work one-at-a-time so Apps Script / Worker are not flooded. */
+  function enqueueRsvp(task) {
+    return new Promise((resolve, reject) => {
+      requestQueue.push({ task, resolve, reject });
+      drainRsvpQueue();
+    });
+  }
+
+  async function drainRsvpQueue() {
+    if (queueRunning) return;
+    queueRunning = true;
+    while (requestQueue.length) {
+      const job = requestQueue.shift();
+      try {
+        job.resolve(await job.task());
+      } catch (err) {
+        job.reject(err);
+      }
+    }
+    queueRunning = false;
   }
 
   function scrollToStatus(flash) {
@@ -166,19 +208,20 @@
   }
 
   function syncButtonState() {
+    const busy = lookupBusy || submitBusy;
     if (findBtn) {
       findBtn.hidden = false;
-      findBtn.disabled = !editMode || lookupBusy;
+      findBtn.disabled = !editMode || busy;
     }
 
     if (submitBtn) {
       submitBtn.hidden = false;
       if (!editMode) {
         submitBtn.textContent = "Send RSVP";
-        submitBtn.disabled = submitBusy;
+        submitBtn.disabled = busy;
       } else {
         submitBtn.textContent = "Resend RSVP";
-        submitBtn.disabled = submitBusy || !editLoaded || !hasFormChanges();
+        submitBtn.disabled = busy || !editLoaded || !hasFormChanges();
       }
     }
   }
@@ -370,19 +413,21 @@
   }
 
   async function sendAction(payload) {
-    const token = String((config && config.rsvpToken) || "").trim();
-    if (token) payload.token = token;
+    return enqueueRsvp(async () => {
+      const token = String((config && config.rsvpToken) || "").trim();
+      if (token) payload.token = token;
 
-    // All actions (create / update / lookup) use POST so PII is not in the URL.
-    const response = await fetch(config.scriptUrl, {
-      method: "POST",
-      mode: "cors",
-      redirect: "follow",
-      cache: "no-store",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload),
+      // All actions (create / update / lookup) use POST so PII is not in the URL.
+      const response = await fetch(config.scriptUrl, {
+        method: "POST",
+        mode: "cors",
+        redirect: "follow",
+        cache: "no-store",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+      });
+      return parseJsonResponse(response);
     });
-    return parseJsonResponse(response);
   }
 
   async function lookupRsvp() {
@@ -492,12 +537,16 @@
   syncEditUi();
 
   // Warm Apps Script / Worker so the first Find/Send is less likely to cold-start hang.
+  // Goes through the same queue so warm never overlaps a Find/Send.
   function warmRsvpEndpoint() {
     const url = String((config && config.scriptUrl) || "").trim();
     if (!url || !isConfigured()) return;
-    fetch(url, { method: "GET", mode: "cors", cache: "no-store" }).catch(
-      function () {}
-    );
+    if (lookupBusy || submitBusy || requestQueue.length || queueRunning) return;
+    enqueueRsvp(async () => {
+      await fetch(url, { method: "GET", mode: "cors", cache: "no-store" }).catch(
+        function () {}
+      );
+    }).catch(function () {});
   }
   warmRsvpEndpoint();
   const rsvpSection = document.getElementById("rsvp");

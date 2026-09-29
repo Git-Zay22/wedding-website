@@ -1679,18 +1679,19 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 
 .proposals__viewport {
   position: relative;
-  min-height: clamp(30rem, 78vw, 40rem);
-  padding: 2rem 0 1.25rem;
+  min-height: 0;
+  padding: 1.5rem 0 0.5rem;
   perspective: 1400px;
   transform-style: preserve-3d;
+  overflow: visible;
 }
 
 .proposal-slide {
   margin: 0;
   position: absolute;
-  top: 2rem;
+  top: 1.5rem;
   left: 50%;
-  width: min(100% - 2rem, 26rem);
+  width: min(100% - 2rem, 24rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1737,11 +1738,15 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 }
 
 .proposal-slide.is-active {
+  position: relative;
+  top: 0;
+  left: auto;
+  margin: 0 auto;
   opacity: 1;
   pointer-events: auto;
   filter: none;
   z-index: 3;
-  transform: translate3d(-50%, 0, 0) rotateY(-6deg) rotateX(5deg) scale(1);
+  transform: rotateY(-6deg) rotateX(5deg) scale(1);
   animation: proposal-float 5.5s ease-in-out infinite;
 }
 
@@ -1902,9 +1907,9 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   align-items: center;
   justify-content: center;
   gap: 0.85rem;
-  margin-top: 0.35rem;
+  margin-top: 1.75rem;
   position: relative;
-  z-index: 4;
+  z-index: 1;
 }
 
 .proposals__arrow {
@@ -1957,11 +1962,13 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 }
 
 .proposals__progress {
-  margin-top: 1.15rem;
+  margin-top: 1rem;
   height: 2px;
   background: rgba(158, 197, 220, 0.28);
   overflow: hidden;
   border-radius: 999px;
+  position: relative;
+  z-index: 1;
 }
 
 .proposals__progress span {
@@ -1987,8 +1994,8 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
 }
 
 @keyframes proposal-float {
-  0%, 100% { transform: translate3d(-50%, 0, 0) rotateY(-6deg) rotateX(5deg) scale(1); }
-  50% { transform: translate3d(-50%, -0.45rem, 8px) rotateY(-3deg) rotateX(3deg) scale(1); }
+  0%, 100% { transform: rotateY(-6deg) rotateX(5deg) scale(1) translateY(0); }
+  50% { transform: rotateY(-3deg) rotateX(3deg) scale(1) translateY(-0.45rem); }
 }
 
 @media (max-width: 720px) {
@@ -1997,13 +2004,13 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   }
 
   .proposals__viewport {
-    min-height: clamp(28rem, 118vw, 36rem);
-    padding-top: 1.35rem;
+    min-height: 0;
+    padding-top: 1.15rem;
   }
 
   .proposal-slide {
     width: min(100% - 1rem, 20rem);
-    top: 1.35rem;
+    top: 1.15rem;
   }
 
   .proposal-slide.is-prev {
@@ -2035,11 +2042,15 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
     min-width: min(100%, 14rem);
     padding: 0.6rem 1rem 0.7rem;
   }
+
+  .proposals__controls {
+    margin-top: 1.35rem;
+  }
 }
 
 @keyframes proposal-float-mobile {
-  0%, 100% { transform: translate3d(-50%, 0, 0) rotateY(-3deg) rotateX(3deg) scale(1); }
-  50% { transform: translate3d(-50%, -0.35rem, 6px) rotateY(-1deg) rotateX(2deg) scale(1); }
+  0%, 100% { transform: rotateY(-3deg) rotateX(3deg) scale(1) translateY(0); }
+  50% { transform: rotateY(-1deg) rotateX(2deg) scale(1) translateY(-0.35rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2053,7 +2064,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   }
 
   .proposal-slide.is-active {
-    transform: translate3d(-50%, 0, 0);
+    transform: none;
     filter: none;
   }
 

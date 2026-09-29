@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=77" />
+  <link rel="stylesheet" href="css/styles.css?v=78" />
   <script>
     (function () {
       try {
@@ -553,7 +553,7 @@
               <input id="email" name="email" type="email" autocomplete="email" required maxlength="160" placeholder="you@email.com" />
             </div>
             <div class="field">
-              <label for="phone">Mobile / WhatsApp <span class="req" aria-hidden="true">*</span></label>
+              <label for="phone">Mobile <span class="req" aria-hidden="true">*</span></label>
               <input id="phone" name="phone" type="tel" autocomplete="tel" required maxlength="40" placeholder="09XXXXXXXXX" />
             </div>
           </div>
@@ -615,7 +615,7 @@
             Send RSVP
           </button>
 
-          <button class="btn btn--ghost-ink btn--wide" type="button" data-find-rsvp hidden>
+          <button class="btn btn--ghost-ink btn--wide" type="button" data-find-rsvp disabled>
             Find my RSVP
           </button>
 
@@ -625,9 +625,18 @@
               <span class="rsvp-switch__ui" aria-hidden="true"></span>
               <span class="rsvp-switch__copy">
                 <span class="rsvp-switch__title">Already registered? Edit your RSVP</span>
-                <span class="rsvp-switch__hint">Off by default — turn on to look up your name and update.</span>
               </span>
             </label>
+          </div>
+
+          <div class="rsvp-edit-instructions" data-edit-instructions hidden>
+            <p class="rsvp-edit-instructions__title">How to edit your RSVP</p>
+            <ol class="rsvp-edit-instructions__list">
+              <li>Enter the full name used on your original RSVP.</li>
+              <li>Tap <strong>Find my RSVP</strong> to load your reply.</li>
+              <li>Change any details you need to update.</li>
+              <li>Tap <strong>Resend RSVP</strong> to save the changes.</li>
+            </ol>
           </div>
         </form>
       </div>
@@ -685,6 +694,6 @@
 
   <script src="js/config.js?v=3"></script>
   <script src="js/main.js?v=24"></script>
-  <script src="js/rsvp.js?v=13"></script>
+  <script src="js/rsvp.js?v=14"></script>
 </body>
 </html>

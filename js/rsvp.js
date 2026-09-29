@@ -6,6 +6,7 @@
   const submitBtn = form.querySelector("[data-submit]");
   const findBtn = form.querySelector("[data-find-rsvp]");
   const editToggle = form.querySelector("[data-edit-toggle]");
+  const editInstructions = form.querySelector("[data-edit-instructions]");
   const detailsEl = form.querySelector("[data-rsvp-details]");
   const eventsField = form.querySelector("[data-events-field]");
   const eventsSelect = form.events;
@@ -14,6 +15,9 @@
   let editMode = false;
   let editLoaded = false;
   let originalGuestName = "";
+  let baselineSnapshot = "";
+  let lookupBusy = false;
+  let submitBusy = false;
 
   function clearStatus() {
     if (!statusEl) return;
@@ -107,6 +111,41 @@
     syncEventsField();
   }
 
+  function getFormSnapshot() {
+    return JSON.stringify({
+      guestName: form.guestName.value.trim(),
+      email: form.email.value.trim().toLowerCase(),
+      phone: form.phone.value.trim(),
+      attendance: form.attendance.value || "",
+      events: form.events.value || "",
+      commute: form.commute.value || "",
+      allergies: form.allergies.value.trim(),
+      message: form.message.value.trim(),
+    });
+  }
+
+  function hasFormChanges() {
+    return Boolean(editLoaded && baselineSnapshot && getFormSnapshot() !== baselineSnapshot);
+  }
+
+  function syncButtonState() {
+    if (findBtn) {
+      findBtn.hidden = false;
+      findBtn.disabled = !editMode || lookupBusy;
+    }
+
+    if (submitBtn) {
+      submitBtn.hidden = false;
+      if (!editMode) {
+        submitBtn.textContent = "Send RSVP";
+        submitBtn.disabled = submitBusy;
+      } else {
+        submitBtn.textContent = "Resend RSVP";
+        submitBtn.disabled = submitBusy || !editLoaded || !hasFormChanges();
+      }
+    }
+  }
+
   function syncEditUi() {
     form.classList.toggle("is-edit-mode", editMode);
     form.classList.toggle("is-edit-pending", editMode && !editLoaded);
@@ -114,6 +153,7 @@
 
     const pending = editMode && !editLoaded;
     if (detailsEl) detailsEl.hidden = pending;
+    if (editInstructions) editInstructions.hidden = !editMode;
 
     form.email.required = !pending;
     form.phone.required = !pending;
@@ -124,17 +164,14 @@
       eventsSelect.required = !pending && form.attendance.value !== "No";
     }
 
-    if (findBtn) findBtn.hidden = !pending;
-    if (submitBtn) {
-      submitBtn.hidden = pending;
-      submitBtn.textContent = editMode ? "Resend RSVP" : "Send RSVP";
-    }
+    syncButtonState();
   }
 
   function resetEditState(keepName) {
     const keptName = keepName ? form.guestName.value : "";
     editLoaded = false;
     originalGuestName = "";
+    baselineSnapshot = "";
     form.reset();
     if (editToggle) editToggle.checked = editMode;
     if (keepName) form.guestName.value = keptName;
@@ -156,6 +193,7 @@
     form.message.value = record.message || "";
     originalGuestName = record.guestName || form.guestName.value.trim();
     editLoaded = true;
+    baselineSnapshot = getFormSnapshot();
     syncEventsField();
     syncEditUi();
   }
@@ -190,10 +228,10 @@
     }
 
     if (!phone) {
-      issues.push({ label: "Mobile / WhatsApp", detail: "is required" });
+      issues.push({ label: "Mobile", detail: "is required" });
       focusEl = focusEl || form.phone;
     } else if (phoneDigits.length < 10) {
-      issues.push({ label: "Mobile / WhatsApp", detail: "needs a valid number" });
+      issues.push({ label: "Mobile", detail: "needs a valid number" });
       focusEl = focusEl || form.phone;
     }
 
@@ -265,6 +303,8 @@
   }
 
   async function lookupRsvp() {
+    if (!editMode || lookupBusy) return;
+
     clearStatus();
     const guestName = form.guestName.value.trim();
     if (!guestName) {
@@ -275,7 +315,8 @@
       return;
     }
 
-    if (findBtn) findBtn.disabled = true;
+    lookupBusy = true;
+    syncButtonState();
     setStatus("Looking up your RSVP…");
 
     try {
@@ -288,7 +329,6 @@
 
       const data = await lookupByName(guestName);
 
-      // Old Apps Script deployments ignore ?action=lookup and only return the health message.
       if (data && data.message && !data.record) {
         throw new Error(
           "Lookup is not active on the server yet. In Apps Script: Deploy → Manage deployments → Edit → New version → Deploy, then try again."
@@ -305,10 +345,12 @@
     } catch (err) {
       console.error(err);
       editLoaded = false;
+      baselineSnapshot = "";
       syncEditUi();
       setStatus(err.message || "Could not find that RSVP.", "error");
     } finally {
-      if (findBtn) findBtn.disabled = false;
+      lookupBusy = false;
+      syncButtonState();
     }
   }
 
@@ -318,7 +360,6 @@
       clearStatus();
       if (editMode) {
         resetEditState(true);
-        setStatus("Enter the full name on your RSVP, then tap Find my RSVP.");
         form.guestName.focus();
       } else {
         resetEditState(false);
@@ -339,8 +380,18 @@
     }
   });
 
+  form.addEventListener("input", () => {
+    if (editMode && editLoaded) syncButtonState();
+  });
+  form.addEventListener("change", () => {
+    if (editMode && editLoaded) syncButtonState();
+  });
+
   form.querySelectorAll('input[name="attendance"]').forEach((input) => {
-    input.addEventListener("change", syncEventsField);
+    input.addEventListener("change", () => {
+      syncEventsField();
+      if (editMode && editLoaded) syncButtonState();
+    });
   });
   syncEventsField();
   syncEditUi();
@@ -351,6 +402,11 @@
 
     if (editMode && !editLoaded) {
       lookupRsvp();
+      return;
+    }
+
+    if (editMode && !hasFormChanges()) {
+      setStatus("No changes to save. Update a field before Resend RSVP.", "error");
       return;
     }
 
@@ -381,7 +437,8 @@
       source: window.location.href,
     };
 
-    submitBtn.disabled = true;
+    submitBusy = true;
+    syncButtonState();
     setStatus(editMode ? "Updating your RSVP…" : "Sending…");
 
     try {
@@ -413,7 +470,8 @@
       console.error(err);
       setStatus(err.message || "Could not send RSVP. Please try again later.", "error");
     } finally {
-      submitBtn.disabled = false;
+      submitBusy = false;
+      syncButtonState();
     }
   });
 })();

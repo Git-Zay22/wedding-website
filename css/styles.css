@@ -2484,10 +2484,45 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   line-height: 1.35;
 }
 
-.rsvp-switch__hint {
-  font-size: 0.8rem;
-  line-height: 1.4;
+.rsvp-edit-instructions {
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(61, 143, 186, 0.28);
+  background: rgba(214, 236, 248, 0.45);
+}
+
+.rsvp-edit-instructions[hidden] {
+  display: none;
+}
+
+.rsvp-edit-instructions__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+
+.rsvp-edit-instructions__list {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
   color: var(--muted);
+}
+
+.rsvp-edit-instructions__list strong {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.rsvp-form .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Footer */

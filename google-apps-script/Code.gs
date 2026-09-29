@@ -6,7 +6,7 @@
  *
  * Tab name: RSVPs
  * Headers:
- * Timestamp | Name | Email | Phone | Attendance | Events | Guests | Commute | Allergies | Message | Source
+ * Timestamp | Name | Email | Phone | Attendance | Events | Commute | Allergies | Message | Source
  *
  * POST actions:
  * - create (default): append a new RSVP
@@ -24,7 +24,6 @@ const HEADERS = [
   "Phone",
   "Attendance",
   "Events",
-  "Guests",
   "Commute",
   "Allergies",
   "Message",
@@ -118,7 +117,7 @@ function createRsvp_(data) {
     });
   }
 
-  sheet.appendRow(buildRowValues_(data, guestName, email));
+  writeRow_(sheet, sheet.getLastRow() + 1, data, guestName, email, String(data.phone || "").trim());
   return json_({ ok: true });
 }
 
@@ -192,18 +191,20 @@ function updateByName_(data) {
     });
   }
 
-  const guestsKeep = sheet.getRange(found.rowIndex, 7).getValue();
-  sheet
-    .getRange(found.rowIndex, 1, 1, 11)
-    .setValues([
-      buildRowValues_(data, guestName, email, phoneRaw, guestsKeep),
-    ]);
-
+  writeRow_(sheet, found.rowIndex, data, guestName, email, phoneRaw);
   return json_({ ok: true, updated: true });
 }
 
-function buildRowValues_(data, guestName, email, phoneRaw, guestsKeep) {
-  return [
+function sheetHasGuestsColumn_(sheet) {
+  return (
+    String(sheet.getRange(1, 7).getValue() || "")
+      .trim()
+      .toLowerCase() === "guests"
+  );
+}
+
+function buildRowValues_(data, guestName, email, phoneRaw, includeGuests) {
+  const base = [
     data.submittedAt || new Date().toISOString(),
     guestName.slice(0, 120),
     email.slice(0, 160),
@@ -212,12 +213,26 @@ function buildRowValues_(data, guestName, email, phoneRaw, guestsKeep) {
       .slice(0, 40),
     String(data.attendance || "").trim().slice(0, 20),
     String(data.events || "").slice(0, 40),
-    String(guestsKeep != null ? guestsKeep : data.guests || "").slice(0, 10),
+  ];
+
+  if (includeGuests) {
+    base.push("");
+  }
+
+  base.push(
     String(data.commute || data.ownCar || "").slice(0, 40),
     String(data.allergies || "").slice(0, 200),
     String(data.message || "").slice(0, 500),
-    String(data.source || "").slice(0, 300),
-  ];
+    String(data.source || "").slice(0, 300)
+  );
+
+  return base;
+}
+
+function writeRow_(sheet, rowIndex, data, guestName, email, phoneRaw) {
+  const includeGuests = sheetHasGuestsColumn_(sheet);
+  const values = buildRowValues_(data, guestName, email, phoneRaw, includeGuests);
+  sheet.getRange(rowIndex, 1, 1, values.length).setValues([values]);
 }
 
 function normalizePhone_(value) {
@@ -237,30 +252,38 @@ function isValidEmail_(email) {
   );
 }
 
+function recordFromRow_(row, hasGuests) {
+  // With Guests: 0..10 = Timestamp, Name, Email, Phone, Attendance, Events, Guests, Commute, Allergies, Message, Source
+  // Without:     0..9  = Timestamp, Name, Email, Phone, Attendance, Events, Commute, Allergies, Message, Source
+  const commuteIdx = hasGuests ? 7 : 6;
+  return {
+    guestName: String(row[1] || "").trim(),
+    email: String(row[2] || "").trim(),
+    phone: String(row[3] || "").trim(),
+    attendance: String(row[4] || "").trim(),
+    events: String(row[5] || "").trim(),
+    commute: String(row[commuteIdx] || "").trim(),
+    allergies: String(row[commuteIdx + 1] || "").trim(),
+    message: String(row[commuteIdx + 2] || "").trim(),
+  };
+}
+
 function findRowByName_(sheet, nameKey) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2 || !nameKey) return null;
 
+  const hasGuests = sheetHasGuestsColumn_(sheet);
+  const width = hasGuests ? 11 : 10;
   const values = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
   var match = null;
 
   for (var i = 0; i < values.length; i++) {
     if (normalizeName_(values[i][0]) === nameKey) {
       var rowIndex = i + 2;
-      var row = sheet.getRange(rowIndex, 1, 1, 11).getValues()[0];
+      var row = sheet.getRange(rowIndex, 1, 1, width).getValues()[0];
       match = {
         rowIndex: rowIndex,
-        record: {
-          guestName: String(row[1] || "").trim(),
-          email: String(row[2] || "").trim(),
-          phone: String(row[3] || "").trim(),
-          attendance: String(row[4] || "").trim(),
-          events: String(row[5] || "").trim(),
-          guests: String(row[6] || "").trim(),
-          commute: String(row[7] || "").trim(),
-          allergies: String(row[8] || "").trim(),
-          message: String(row[9] || "").trim(),
-        },
+        record: recordFromRow_(row, hasGuests),
       };
     }
   }

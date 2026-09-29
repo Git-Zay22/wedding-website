@@ -8,10 +8,12 @@
  * Headers:
  * Timestamp | Name | Email | Phone | Attendance | Events | Commute | Allergies | Message | Source
  *
- * POST actions:
+ * GET / POST actions:
  * - create (default): append a new RSVP
  * - lookup: { action: "lookup", guestName }
  * - update: { action: "update", guestName, originalGuestName?, email, phone, ... }
+ *
+ * Browser calls should use GET ?payload=<json> (most reliable with Apps Script CORS).
  */
 
 const SHEET_NAME = "RSVPs";
@@ -60,12 +62,29 @@ function doPost(e) {
 function doGet(e) {
   try {
     const params = (e && e.parameter) || {};
-    const action = String(params.action || "")
+    var data = {};
+
+    // Preferred browser path: ?payload={...json...}
+    if (params.payload) {
+      data = JSON.parse(params.payload);
+    }
+
+    const action = String(
+      data.action || params.action || (params.payload ? "create" : "")
+    )
       .trim()
       .toLowerCase();
 
     if (action === "lookup") {
-      return lookupByName_({ guestName: params.guestName || "" });
+      return lookupByName_({
+        guestName: data.guestName || params.guestName || "",
+      });
+    }
+    if (action === "update") {
+      return updateByName_(data);
+    }
+    if (action === "create") {
+      return createRsvp_(data);
     }
 
     return json_({

@@ -270,7 +270,7 @@
     if (!response.ok || data.ok === false) {
       const fallback =
         text && /<!DOCTYPE|<html/i.test(text)
-          ? "Could not reach the RSVP server. Please try again in a moment."
+          ? "Could not reach the RSVP server. Redeploy Apps Script as a Web app with access set to Anyone, then try again."
           : (text && text.slice(0, 160)) ||
             "Something went wrong. Please try again.";
       throw new Error(data.error || fallback);
@@ -278,28 +278,30 @@
     return data;
   }
 
-  async function postAction(payload) {
-    const response = await fetch(config.scriptUrl, {
-      method: "POST",
-      mode: "cors",
-      redirect: "follow",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload),
-    });
-    return parseJsonResponse(response);
-  }
-
-  async function lookupByName(guestName) {
+  async function sendAction(payload) {
     const url = new URL(config.scriptUrl);
-    url.searchParams.set("action", "lookup");
-    url.searchParams.set("guestName", guestName);
+    const action = String(payload.action || "create").toLowerCase();
+
+    if (action === "lookup") {
+      url.searchParams.set("action", "lookup");
+      url.searchParams.set("guestName", payload.guestName || "");
+    } else {
+      // GET + payload avoids Apps Script POST redirect/HTML failures in browsers
+      url.searchParams.set("action", action);
+      url.searchParams.set("payload", JSON.stringify(payload));
+    }
 
     const response = await fetch(url.toString(), {
       method: "GET",
       mode: "cors",
       redirect: "follow",
+      cache: "no-store",
     });
     return parseJsonResponse(response);
+  }
+
+  async function lookupByName(guestName) {
+    return sendAction({ action: "lookup", guestName: guestName });
   }
 
   async function lookupRsvp() {
@@ -455,7 +457,7 @@
         return;
       }
 
-      await postAction(payload);
+      await sendAction(payload);
 
       setStatus(
         editMode

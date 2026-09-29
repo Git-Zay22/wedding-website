@@ -9,6 +9,8 @@
   const editInstructions = form.querySelector("[data-edit-instructions]");
   const detailsEl = form.querySelector("[data-rsvp-details]");
   const eventsField = form.querySelector("[data-events-field]");
+  const loadingEl = document.querySelector("[data-rsvp-loading]");
+  const loadingTextEl = document.querySelector("[data-rsvp-loading-text]");
   const eventsSelect = form.events;
   const config = window.RSVP_CONFIG || {};
 
@@ -22,8 +24,30 @@
   function clearStatus() {
     if (!statusEl) return;
     statusEl.hidden = true;
-    statusEl.classList.remove("is-error", "is-success");
+    statusEl.classList.remove("is-error", "is-success", "is-flash");
     statusEl.replaceChildren();
+  }
+
+  function showLoading(message) {
+    if (loadingTextEl) {
+      loadingTextEl.textContent = message || "Sending your RSVP…";
+    }
+    if (loadingEl) loadingEl.hidden = false;
+    document.body.classList.add("is-rsvp-loading");
+  }
+
+  function hideLoading() {
+    if (loadingEl) loadingEl.hidden = true;
+    document.body.classList.remove("is-rsvp-loading");
+  }
+
+  function scrollToStatus(flash) {
+    if (!statusEl || statusEl.hidden) return;
+    statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!flash) return;
+    statusEl.classList.remove("is-flash");
+    void statusEl.offsetWidth;
+    statusEl.classList.add("is-flash");
   }
 
   function setStatus(message, type, items) {
@@ -35,7 +59,7 @@
     }
 
     statusEl.hidden = false;
-    statusEl.classList.remove("is-error", "is-success");
+    statusEl.classList.remove("is-error", "is-success", "is-flash");
     if (type) statusEl.classList.add(`is-${type}`);
     statusEl.replaceChildren();
 
@@ -72,7 +96,16 @@
       statusEl.textContent = message;
     }
 
-    statusEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const preferCenter = type === "success" || type === "error";
+    statusEl.scrollIntoView({
+      behavior: "smooth",
+      block: preferCenter ? "center" : "nearest",
+    });
+    if (type === "success") {
+      statusEl.classList.remove("is-flash");
+      void statusEl.offsetWidth;
+      statusEl.classList.add("is-flash");
+    }
   }
 
   function isConfigured() {
@@ -441,12 +474,14 @@
 
     submitBusy = true;
     syncButtonState();
-    setStatus(editMode ? "Updating your RSVP…" : "Sending…");
+    clearStatus();
+    showLoading(editMode ? "Updating your RSVP…" : "Sending your RSVP…");
 
     try {
       if (!isConfigured()) {
         await new Promise((r) => setTimeout(r, 700));
         console.info("[RSVP demo]", payload);
+        hideLoading();
         setStatus(
           "Demo mode: RSVP captured in the browser console. Set your Apps Script URL in js/config.js to go live.",
           "success"
@@ -454,6 +489,7 @@
         editMode = false;
         if (editToggle) editToggle.checked = false;
         resetEditState(false);
+        requestAnimationFrame(() => scrollToStatus(true));
         return;
       }
 
@@ -464,6 +500,7 @@
         );
       }
 
+      hideLoading();
       setStatus(
         editMode
           ? "Thank you — your RSVP has been updated."
@@ -473,10 +510,14 @@
       editMode = false;
       if (editToggle) editToggle.checked = false;
       resetEditState(false);
+      requestAnimationFrame(() => scrollToStatus(true));
     } catch (err) {
       console.error(err);
+      hideLoading();
       setStatus(err.message || "Could not send RSVP. Please try again later.", "error");
+      requestAnimationFrame(() => scrollToStatus(false));
     } finally {
+      hideLoading();
       submitBusy = false;
       syncButtonState();
     }

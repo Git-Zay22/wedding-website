@@ -368,6 +368,34 @@
     proposalsRoot.addEventListener("touchstart", pause, { passive: true });
     proposalsRoot.addEventListener("touchend", resume, { passive: true });
 
+    // Pointer tilt for active 3D card
+    if (!reduceMotion) {
+      const onMove = (event) => {
+        const active = proposalsRoot.querySelector(".proposal-slide.is-active [data-proposal-card]");
+        if (!active) return;
+        const rect = active.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width;
+        const y = (event.clientY - rect.top) / rect.height;
+        const rotY = (x - 0.5) * 14;
+        const rotX = (0.5 - y) * 10;
+        active.classList.add("is-tilting");
+        active.style.transform =
+          "translateZ(22px) rotateX(" + rotX.toFixed(2) + "deg) rotateY(" + rotY.toFixed(2) + "deg)";
+      };
+
+      const resetTilt = () => {
+        const cards = proposalsRoot.querySelectorAll("[data-proposal-card]");
+        cards.forEach((card) => {
+          card.classList.remove("is-tilting");
+          card.style.transform = "";
+        });
+      };
+
+      proposalsRoot.addEventListener("pointermove", onMove);
+      proposalsRoot.addEventListener("pointerleave", resetTilt);
+      proposalsRoot.addEventListener("pointercancel", resetTilt);
+    }
+
     show(index);
     schedule();
   }

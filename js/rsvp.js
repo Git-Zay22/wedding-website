@@ -221,18 +221,47 @@
     return true;
   }
 
+  async function parseJsonResponse(response) {
+    const text = await response.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (_) {
+      data = {};
+    }
+    if (!response.ok || data.ok === false) {
+      const fallback =
+        text && /<!DOCTYPE|<html/i.test(text)
+          ? "Could not reach the RSVP server. Please try again in a moment."
+          : (text && text.slice(0, 160)) ||
+            "Something went wrong. Please try again.";
+      throw new Error(data.error || fallback);
+    }
+    return data;
+  }
+
   async function postAction(payload) {
     const response = await fetch(config.scriptUrl, {
       method: "POST",
       mode: "cors",
+      redirect: "follow",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload),
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.error || "Something went wrong. Please try again.");
-    }
-    return data;
+    return parseJsonResponse(response);
+  }
+
+  async function lookupByName(guestName) {
+    const url = new URL(config.scriptUrl);
+    url.searchParams.set("action", "lookup");
+    url.searchParams.set("guestName", guestName);
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      mode: "cors",
+      redirect: "follow",
+    });
+    return parseJsonResponse(response);
   }
 
   async function lookupRsvp() {
@@ -257,10 +286,14 @@
         );
       }
 
-      const data = await postAction({
-        action: "lookup",
-        guestName: guestName,
-      });
+      const data = await lookupByName(guestName);
+
+      // Old Apps Script deployments ignore ?action=lookup and only return the health message.
+      if (data && data.message && !data.record) {
+        throw new Error(
+          "Lookup is not active on the server yet. In Apps Script: Deploy → Manage deployments → Edit → New version → Deploy, then try again."
+        );
+      }
 
       if (!data.record) {
         throw new Error("No RSVP found for that name.");

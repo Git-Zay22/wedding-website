@@ -37,11 +37,24 @@ function doPost(e) {
   }
 }
 
-function doGet() {
-  return json_({
-    ok: true,
-    message: "Caren & Zayrol RSVP endpoint is live. Use POST from the wedding site.",
-  });
+function doGet(e) {
+  try {
+    const params = (e && e.parameter) || {};
+    const action = String(params.action || "")
+      .trim()
+      .toLowerCase();
+
+    if (action === "lookup") {
+      return lookupByName_({ guestName: params.guestName || "" });
+    }
+
+    return json_({
+      ok: true,
+      message: "Caren & Zayrol RSVP endpoint is live. Use POST from the wedding site.",
+    });
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  }
 }
 
 function createRsvp_(data) {

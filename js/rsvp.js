@@ -370,28 +370,10 @@
   }
 
   async function sendAction(payload) {
-    const action = String(payload.action || "create").toLowerCase();
-    const url = new URL(config.scriptUrl);
     const token = String((config && config.rsvpToken) || "").trim();
     if (token) payload.token = token;
 
-    if (action === "lookup") {
-      url.searchParams.set("action", "lookup");
-      url.searchParams.set("guestName", payload.guestName || "");
-      if (payload.email) url.searchParams.set("email", payload.email);
-      if (payload.phone) url.searchParams.set("phone", payload.phone);
-      if (token) url.searchParams.set("token", token);
-
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        mode: "cors",
-        redirect: "follow",
-        cache: "no-store",
-      });
-      return parseJsonResponse(response);
-    }
-
-    // Apps Script CORS: text/plain avoids a preflight; follow redirect for /exec → /userCodeAppPanel
+    // All actions (create / update / lookup) use POST so PII is not in the URL.
     const response = await fetch(config.scriptUrl, {
       method: "POST",
       mode: "cors",

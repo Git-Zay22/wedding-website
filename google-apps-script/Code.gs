@@ -9,11 +9,10 @@
  * Timestamp | Name | Email | Phone | Attendance | Events | Commute | Allergies | Message | Source
  *
  * GET actions:
- * - lookup: guestName + (email and/or phone) + token
  * - health (no action)
  *
  * POST actions:
- * - create / update (JSON body, text/plain) + token
+ * - create / update / lookup (JSON body, text/plain) + token
  *
  * SECURITY: Keep SPREADSHEET_ID, GUEST_LIST, and RSVP_TOKEN only in Apps Script
  * (and RSVP_TOKEN also in Cloudflare Worker secrets). Do not commit real values to GitHub.
@@ -148,26 +147,7 @@ function doPost(e) {
 
 function doGet(e) {
   try {
-    const params = (e && e.parameter) || {};
-    const action = String(params.action || "")
-      .trim()
-      .toLowerCase();
-
-    // Writes are POST-only. GET supports health + authenticated lookup.
-    if (action === "lookup") {
-      var lookupData = {
-        guestName: params.guestName || "",
-        email: params.email || "",
-        phone: params.phone || "",
-        token: params.token || "",
-      };
-      var tokenBlocked = assertRsvpToken_(lookupData);
-      if (tokenBlocked) return tokenBlocked;
-      var limited = assertRateLimit_("lookup", lookupData);
-      if (limited) return limited;
-      return lookupByName_(lookupData);
-    }
-
+    // Health only. Lookup is POST-only so names/contacts are not placed in URLs.
     return json_({
       ok: true,
       message: "Caren & Zayrol RSVP endpoint is live.",

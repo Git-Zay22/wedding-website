@@ -559,7 +559,7 @@
     });
   }
 
-  // iPhone/iPad: prefer Google Maps app deep links; fall back to browser maps.
+  // iPhone/iPad: open Apple Maps app; other devices keep Google Maps https links.
   const mapLinks = document.querySelectorAll("[data-map-app][data-map-query]");
   if (mapLinks.length) {
     const isAppleTouch =
@@ -568,29 +568,20 @@
 
     if (isAppleTouch) {
       mapLinks.forEach((link) => {
-        link.addEventListener("click", (event) => {
-          const mode = link.getAttribute("data-map-app");
-          const query = link.getAttribute("data-map-query");
-          if (!query) return;
+        const mode = link.getAttribute("data-map-app");
+        const query = link.getAttribute("data-map-query");
+        if (!query) return;
 
-          event.preventDefault();
-          const encoded = encodeURIComponent(query);
-          const appUrl =
-            mode === "dir"
-              ? `comgooglemaps://?daddr=${encoded}&directionsmode=driving`
-              : `comgooglemaps://?q=${encoded}`;
-          const webUrl = link.href;
+        const encoded = encodeURIComponent(query);
+        const appleUrl =
+          mode === "dir"
+            ? `https://maps.apple.com/?daddr=${encoded}&dirflg=d`
+            : `https://maps.apple.com/?q=${encoded}`;
 
-          const started = Date.now();
-          window.location.href = appUrl;
-
-          window.setTimeout(() => {
-            // If the app did not take over, open the web maps URL.
-            if (document.visibilityState === "visible" && Date.now() - started < 1600) {
-              window.location.href = webUrl;
-            }
-          }, 900);
-        });
+        link.href = appleUrl;
+        if (mode === "search") {
+          link.textContent = "Open in Maps";
+        }
       });
     }
   }

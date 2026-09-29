@@ -1988,6 +1988,32 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   animation: proposal-progress 10s linear forwards;
 }
 
+.proposals__credit {
+  margin: 1.35rem 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+}
+
+.proposals__credit-label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.proposals__credit-name {
+  font-family: var(--font-script-soft);
+  font-size: clamp(1.85rem, 4.5vw, 2.45rem);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+
 @keyframes proposal-progress {
   from { width: 0%; }
   to { width: 100%; }

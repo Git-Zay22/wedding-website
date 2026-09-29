@@ -1,4 +1,4 @@
 window.RSVP_CONFIG = {
-  scriptUrl: "https://script.google.com/macros/s/AKfycbwv5WqPngw16nSX9jpidvRtBF52sAYJSFSqHBFV9kJvknNxMegoPJfuB7kLo8uv0ds51w/exec",
+  scriptUrl: "https://script.google.com/macros/s/AKfycbyRGGKPqigZG6wenmiO5P_CscC8GgFJcPLmcZl7l3JNEXrqFmgXxFIXEKfzMH2Cr0VM/exec",
   demoMode: false
 };

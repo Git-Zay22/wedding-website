@@ -558,8 +558,14 @@ code {
 
 html:not(.proposals-unlocked) .divider--proposals,
 html:not(.proposals-unlocked) [data-proposals-section],
-html:not(.proposals-unlocked) [data-nav-proposals] {
+html:not(.proposals-unlocked) [data-nav-proposals],
+html:not(.proposals-unlocked) .nav-proposals,
+html:not(.proposals-unlocked) .site-nav a[data-nav-proposals],
+html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
 }
 
 .proposals-gate {

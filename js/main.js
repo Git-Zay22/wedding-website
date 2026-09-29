@@ -13,6 +13,8 @@
   const applyProposalsVisibility = () => {
     if (isProposalsUnlocked()) {
       document.documentElement.classList.add("proposals-unlocked");
+    } else {
+      document.documentElement.classList.remove("proposals-unlocked");
     }
   };
 
@@ -24,7 +26,26 @@
   const gateInput = document.querySelector("[data-proposals-gate-input]");
   const gateError = document.querySelector("[data-proposals-gate-error]");
   const gateCancel = document.querySelector("[data-proposals-gate-cancel]");
+  const proposalsNavLink = document.querySelector("[data-nav-proposals]");
 
+  const clearOwnersHashIfLocked = () => {
+    if (isProposalsUnlocked()) return;
+    const hash = window.location.hash;
+    if (hash === "#owners" || hash === "#proposals") {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  };
+
+  clearOwnersHashIfLocked();
+
+  if (proposalsNavLink) {
+    proposalsNavLink.addEventListener("click", (event) => {
+      if (!isProposalsUnlocked()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+  }
   const openProposalsGate = () => {
     if (!gateDialog || isProposalsUnlocked()) return;
     if (gateError) {
@@ -94,10 +115,16 @@
     });
   }
 
-  // Legacy hash support
+  // Legacy hash support + lock guard
   if (window.location.hash === "#proposals" && isProposalsUnlocked()) {
     history.replaceState(null, "", window.location.pathname + window.location.search + "#owners");
   }
+
+  window.addEventListener("hashchange", () => {
+    if (!isProposalsUnlocked() && (window.location.hash === "#owners" || window.location.hash === "#proposals")) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  });
 
   const header = document.querySelector("[data-header]");
   const nav = document.querySelector("[data-nav]");

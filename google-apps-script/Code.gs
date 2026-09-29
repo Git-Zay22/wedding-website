@@ -159,7 +159,7 @@ function createRsvp_(data) {
   const attendance = String(data.attendance || "").trim();
   // Generic on purpose — do not reveal allowlist / already-registered status.
   const errSave =
-    "We couldn't save this RSVP. Turn on “Already registered? Edit your RSVP” if you already replied.";
+    "Your RSVP couldn't be saved. Please try again.";
 
   if (!guestNameRaw || !email || !attendance || !phone) {
     return json_({ ok: false, error: "Missing required fields." });

@@ -457,7 +457,12 @@
         return;
       }
 
-      await sendAction(payload);
+      const result = await sendAction(payload);
+      if (!result.saved) {
+        throw new Error(
+          "RSVP did not save to the sheet. Paste the latest Code.gs, set SPREADSHEET_ID to your sheet ID, then Deploy → New version."
+        );
+      }
 
       setStatus(
         editMode

@@ -33,8 +33,9 @@ const HEADERS = [
 ];
 
 /**
- * Optional: paste a spreadsheet ID here to force a specific sheet.
- * Leave blank to use the bound spreadsheet, Script Properties, or auto-create.
+ * Optional: paste your Google Sheet ID here (from the sheet URL).
+ * Required if the Apps Script is NOT bound to that sheet.
+ * Example URL: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
  */
 const SPREADSHEET_ID = "";
 
@@ -75,6 +76,9 @@ function doGet(e) {
       .trim()
       .toLowerCase();
 
+    if (action === "info") {
+      return sheetInfo_();
+    }
     if (action === "lookup") {
       return lookupByName_({
         guestName: data.guestName || params.guestName || "",
@@ -137,7 +141,7 @@ function createRsvp_(data) {
   }
 
   writeRow_(sheet, sheet.getLastRow() + 1, data, guestName, email, String(data.phone || "").trim());
-  return json_({ ok: true });
+  return savedJson_(sheet, { ok: true, saved: true });
 }
 
 function lookupByName_(data) {
@@ -211,7 +215,7 @@ function updateByName_(data) {
   }
 
   writeRow_(sheet, found.rowIndex, data, guestName, email, phoneRaw);
-  return json_({ ok: true, updated: true });
+  return savedJson_(sheet, { ok: true, saved: true, updated: true });
 }
 
 function sheetHasGuestsColumn_(sheet) {
@@ -331,17 +335,21 @@ function findDuplicate_(sheet, email, phone, excludeRow) {
 }
 
 function getSpreadsheet_() {
-  // 1) Script bound to a Google Sheet
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (ss) return ss;
-
   var props = PropertiesService.getScriptProperties();
+  var ss = null;
 
-  // 2) Hardcoded spreadsheet ID (if set above)
+  // 1) Explicit spreadsheet ID in Code.gs (best — always write here)
   var configuredId = String(SPREADSHEET_ID || "").trim();
   if (configuredId) {
     ss = SpreadsheetApp.openById(configuredId);
     props.setProperty(PROP_SPREADSHEET_ID, configuredId);
+    return ss;
+  }
+
+  // 2) Script bound to a Google Sheet
+  ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) {
+    props.setProperty(PROP_SPREADSHEET_ID, ss.getId());
     return ss;
   }
 
@@ -360,6 +368,38 @@ function getSpreadsheet_() {
   ss = SpreadsheetApp.create(SPREADSHEET_NAME);
   props.setProperty(PROP_SPREADSHEET_ID, ss.getId());
   return ss;
+}
+
+function sheetInfo_() {
+  var sheet = getSheet_();
+  var ss = sheet.getParent();
+  return json_({
+    ok: true,
+    spreadsheetId: ss.getId(),
+    spreadsheetUrl: ss.getUrl(),
+    spreadsheetName: ss.getName(),
+    sheetName: sheet.getName(),
+    rowCount: sheet.getLastRow(),
+  });
+}
+
+function savedJson_(sheet, extra) {
+  var ss = sheet.getParent();
+  var payload = {
+    ok: true,
+    saved: true,
+    spreadsheetId: ss.getId(),
+    spreadsheetUrl: ss.getUrl(),
+    spreadsheetName: ss.getName(),
+    sheetName: sheet.getName(),
+    rowCount: sheet.getLastRow(),
+  };
+  if (extra) {
+    Object.keys(extra).forEach(function (key) {
+      payload[key] = extra[key];
+    });
+  }
+  return json_(payload);
 }
 
 function ensureHeaders_(sheet) {

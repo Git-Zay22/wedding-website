@@ -2361,10 +2361,15 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 }
 
 .form-status {
-  min-height: 1.5rem;
-  margin: 0;
+  min-height: 0;
+  margin: 0 0 0.85rem;
   font-size: 0.95rem;
   color: var(--sage-deep);
+}
+
+.form-status:empty {
+  display: none;
+  margin: 0;
 }
 
 .form-status.is-error {

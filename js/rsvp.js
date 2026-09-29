@@ -13,6 +13,9 @@
     statusEl.textContent = message;
     statusEl.classList.remove("is-error", "is-success");
     if (type) statusEl.classList.add(`is-${type}`);
+    if (message) {
+      statusEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
 
   function isConfigured() {

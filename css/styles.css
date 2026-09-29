@@ -1,19 +1,19 @@
 /* ==========================================================================
-   Caren & Zayrol — Powder blue + buttermilk yellow
-   Soft pastels, typography-led, full-bleed prenup hero.
+   Caren & Zayrol — Modern 2026 powder blue + buttermilk
+   Vibrant palette, embossed tiles, typography-led prenup hero.
    ========================================================================== */
 
 :root {
-  --cloud: #fbf8ef;
-  --mist: #f3ecd8;
-  --stone: #d5e0e8;
-  --powder: #9ec5dc;
-  --powder-deep: #6a9fbd;
-  --butter: #f0dfa0;
-  --butter-deep: #e2c86a;
-  --ink: #24303a;
-  --ink-soft: #3d4b56;
-  --muted: #6b7782;
+  --cloud: #f7fbff;
+  --mist: #e8f4fb;
+  --stone: #c5dceb;
+  --powder: #6eb4d8;
+  --powder-deep: #3d8fba;
+  --butter: #f5d76e;
+  --butter-deep: #e4b82e;
+  --ink: #1a2833;
+  --ink-soft: #2f4250;
+  --muted: #5a6d7a;
   --white: #ffffff;
 
   /* aliases used across the stylesheet */
@@ -29,23 +29,27 @@
 
   --tile-bg:
     linear-gradient(
-      165deg,
-      rgba(255, 255, 255, 0.88) 0%,
-      rgba(232, 242, 248, 0.72) 48%,
-      rgba(255, 255, 255, 0.78) 100%
+      155deg,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(214, 236, 248, 0.88) 42%,
+      rgba(255, 252, 240, 0.92) 100%
     );
-  --tile-border: rgba(158, 197, 220, 0.55);
-  --tile-border-hi: rgba(255, 255, 255, 0.92);
-  --tile-glow: rgba(106, 159, 189, 0.14);
+  --tile-border: rgba(61, 143, 186, 0.38);
+  --tile-border-hi: rgba(255, 255, 255, 0.98);
+  --tile-glow: rgba(61, 143, 186, 0.22);
+  --tile-emboss-light: rgba(255, 255, 255, 0.95);
+  --tile-emboss-dark: rgba(45, 100, 130, 0.14);
   --tile-shadow:
-    inset 0 1px 0 var(--tile-border-hi),
-    inset 0 0 0 1px rgba(158, 197, 220, 0.18),
-    0 0 0 1px rgba(158, 197, 220, 0.22),
-    0 12px 32px var(--tile-glow);
+    inset 0 2px 0 var(--tile-emboss-light),
+    inset 0 -2px 4px var(--tile-emboss-dark),
+    inset 0 0 0 1px rgba(110, 180, 216, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.7),
+    0 10px 28px var(--tile-glow),
+    0 22px 48px rgba(61, 143, 186, 0.12);
 
-  --radius-sm: 0.65rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.35rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1.1rem;
+  --radius-lg: 1.5rem;
   --radius-pill: 999px;
 
   --space-xs: 0.5rem;
@@ -78,7 +82,7 @@ body {
   font-size: 1.0625rem;
   line-height: 1.65;
   color: var(--ink);
-  background-color: #fdfaf4;
+  background-color: #f4f9fd;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   min-width: 0;
@@ -91,7 +95,7 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-color: #fdfaf4;
+  background-color: #f4f9fd;
   overflow: hidden;
 }
 
@@ -100,8 +104,8 @@ body {
   position: absolute;
   inset: 0;
   background: url("../assets/bg-floral.png?v=5") left top / cover no-repeat;
-  opacity: 0.34;
-  filter: brightness(1.22) saturate(0.62) contrast(0.92);
+  opacity: 0.38;
+  filter: brightness(1.18) saturate(0.92) contrast(0.96) hue-rotate(-4deg);
   transform: scale(1.02);
 }
 
@@ -110,16 +114,18 @@ body {
   position: absolute;
   inset: 0;
   background:
+    radial-gradient(ellipse 70% 45% at 12% 18%, rgba(110, 180, 216, 0.18), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 88% 72%, rgba(245, 215, 110, 0.16), transparent 58%),
     linear-gradient(
       105deg,
-      rgba(253, 250, 244, 0.28) 0%,
-      rgba(253, 250, 244, 0.62) 42%,
-      rgba(253, 250, 244, 0.78) 100%
+      rgba(244, 249, 253, 0.22) 0%,
+      rgba(244, 249, 253, 0.55) 42%,
+      rgba(244, 249, 253, 0.72) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(251, 248, 239, 0.2),
-      rgba(251, 248, 239, 0.45)
+      rgba(232, 244, 251, 0.25),
+      rgba(255, 252, 240, 0.35)
     );
 }
 
@@ -306,9 +312,11 @@ code {
 }
 
 .site-header.is-scrolled {
-  background: rgba(243, 245, 244, 0.86);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 1px 0 rgba(23, 26, 23, 0.06);
+  background: rgba(247, 251, 255, 0.82);
+  backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    0 1px 0 rgba(61, 143, 186, 0.18),
+    0 10px 28px rgba(61, 143, 186, 0.1);
 }
 
 .site-header.is-scrolled .logo,
@@ -677,32 +685,43 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  transition: background 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease);
+  transition: background 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
 
 .btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .btn--primary {
-  background: var(--powder-deep);
+  background: linear-gradient(165deg, #5aa8d0 0%, var(--powder-deep) 55%, #2f7aa3 100%);
   color: var(--cloud);
-  border-color: var(--powder-deep);
+  border-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 4px rgba(20, 70, 100, 0.22),
+    0 8px 22px rgba(61, 143, 186, 0.35);
 }
 
 .btn--primary:hover {
-  background: #547f9c;
-  border-color: #547f9c;
+  background: linear-gradient(165deg, #6eb4d8 0%, #468fb8 55%, #35789f 100%);
+  border-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 4px rgba(20, 70, 100, 0.18),
+    0 12px 28px rgba(61, 143, 186, 0.42);
 }
 
 .btn--ghost {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.12);
   color: var(--cloud);
-  border-color: rgba(243, 245, 244, 0.45);
+  border-color: rgba(243, 251, 255, 0.55);
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn--ghost:hover {
   border-color: var(--cloud);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .btn--wide {
@@ -965,7 +984,10 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   width: 100%;
   background: var(--swatch);
   border: 1px solid var(--tile-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.28),
+    0 8px 18px rgba(61, 143, 186, 0.18);
   border-radius: var(--radius-md);
 }
 
@@ -1297,11 +1319,7 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   padding: 0.7rem 0.7rem 1.85rem;
   border: 1px solid var(--tile-border);
   border-radius: var(--radius-lg);
-  box-shadow:
-    inset 0 1px 0 var(--tile-border-hi),
-    inset 0 0 0 1px rgba(158, 197, 220, 0.16),
-    0 1px 0 rgba(36, 48, 58, 0.03),
-    0 18px 40px rgba(106, 159, 189, 0.14);
+  box-shadow: var(--tile-shadow);
   transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
 }
 
@@ -1309,20 +1327,22 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   content: "";
   position: absolute;
   inset: 0.35rem;
-  border: 1px solid rgba(158, 197, 220, 0.28);
+  border: 1px solid rgba(110, 180, 216, 0.35);
   border-radius: calc(var(--radius-lg) - 0.2rem);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(61, 143, 186, 0.12);
   pointer-events: none;
   z-index: 1;
 }
 
 .frame__mat--powder {
-  background: linear-gradient(165deg, #f4f9fc 0%, #d7e8f2 52%, #eaf3f8 100%);
+  background: linear-gradient(155deg, #f2f9fd 0%, #bfe0f2 48%, #e8f4fb 100%);
   padding-bottom: 1.85rem;
 }
 
 .frame__mat--butter {
-  background: linear-gradient(165deg, #fbf6e4 0%, #f0dfa0 100%);
+  background: linear-gradient(155deg, #fff8df 0%, #f5d76e 55%, #ffe9a8 100%);
   padding-bottom: 1.85rem;
 }
 
@@ -1540,8 +1560,9 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   display: block;
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--powder), var(--butter-deep));
+  background: linear-gradient(90deg, var(--powder-deep), var(--powder), var(--butter-deep));
   transform-origin: left center;
+  box-shadow: 0 0 12px rgba(61, 143, 186, 0.45);
 }
 
 .proposals__stage.is-paused .proposals__progress span {
@@ -1585,19 +1606,20 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   padding: clamp(1.5rem, 4vw, 2.25rem);
   background:
     linear-gradient(
-      165deg,
-      rgba(255, 255, 255, 0.9) 0%,
-      rgba(232, 242, 248, 0.78) 45%,
-      rgba(255, 255, 255, 0.82) 100%
+      155deg,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(214, 236, 248, 0.9) 45%,
+      rgba(255, 252, 240, 0.94) 100%
     );
   border: 1px solid var(--tile-border);
   border-radius: var(--radius-lg);
   box-shadow:
-    inset 0 1px 0 var(--tile-border-hi),
-    inset 0 0 0 1px rgba(158, 197, 220, 0.2),
-    0 0 0 6px rgba(251, 248, 239, 0.72),
-    0 0 0 7px rgba(158, 197, 220, 0.45),
-    0 24px 48px rgba(106, 159, 189, 0.16);
+    inset 0 2px 0 var(--tile-emboss-light),
+    inset 0 -3px 8px var(--tile-emboss-dark),
+    inset 0 0 0 1px rgba(110, 180, 216, 0.3),
+    0 0 0 6px rgba(244, 249, 253, 0.78),
+    0 0 0 7px rgba(61, 143, 186, 0.42),
+    0 24px 52px rgba(61, 143, 186, 0.22);
 }
 
 .rsvp__script {
@@ -1702,10 +1724,11 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   border: 1px solid var(--tile-border);
   border-radius: var(--radius-md);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(232, 242, 248, 0.45));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(214, 236, 248, 0.55));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 1px rgba(158, 197, 220, 0.08);
+    inset 0 2px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 3px rgba(61, 143, 186, 0.1),
+    0 0 0 1px rgba(110, 180, 216, 0.12);
   outline: none;
   font-size: 1rem; /* prevents iOS zoom on focus */
   transition: border-color 0.25s var(--ease), background 0.25s var(--ease), box-shadow 0.25s var(--ease);
@@ -1764,8 +1787,10 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--tile-border);
   border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(232, 242, 248, 0.42));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(214, 236, 248, 0.5));
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 3px rgba(61, 143, 186, 0.1);
   cursor: pointer;
   font-size: 0.92rem;
   font-weight: 400;

@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=83" />
+  <link rel="stylesheet" href="css/styles.css?v=84" />
   <script src="js/boot.js?v=1"></script>
 </head>
 <body>
@@ -534,11 +534,31 @@
         </p>
 
         <form id="rsvp-form" class="rsvp-form" novalidate>
+          <div class="rsvp-edit-switch">
+            <label class="rsvp-switch" for="rsvp-edit-toggle">
+              <input id="rsvp-edit-toggle" type="checkbox" data-edit-toggle />
+              <span class="rsvp-switch__ui" aria-hidden="true"></span>
+              <span class="rsvp-switch__copy">
+                <span class="rsvp-switch__title">Already registered? Edit your RSVP</span>
+              </span>
+            </label>
+          </div>
+
           <div class="form-status" data-status role="status" aria-live="polite" hidden></div>
+
+          <div class="rsvp-edit-instructions" data-edit-instructions hidden>
+            <p class="rsvp-edit-instructions__title">How to edit your RSVP</p>
+            <ol class="rsvp-edit-instructions__list">
+              <li>Enter your complete full name (capitalization does not matter).</li>
+              <li>Enter the email <strong>or</strong> mobile number from your original RSVP.</li>
+              <li>Tap <strong>Find my RSVP</strong> to load your reply.</li>
+              <li>Change any details you need, then tap <strong>Resend RSVP</strong>.</li>
+            </ol>
+          </div>
 
           <div class="field">
             <label for="guestName">Full name <span class="req" aria-hidden="true">*</span></label>
-            <input id="guestName" name="guestName" type="text" autocomplete="name" required maxlength="120" placeholder="Your name" />
+            <input id="guestName" name="guestName" type="text" autocomplete="name" required maxlength="120" placeholder="firstname lastname only" />
           </div>
 
           <div class="field-row" data-rsvp-contact>
@@ -616,26 +636,6 @@
           <button class="btn btn--ghost-ink btn--wide" type="button" data-find-rsvp disabled>
             Find my RSVP
           </button>
-
-          <div class="rsvp-edit-switch">
-            <label class="rsvp-switch" for="rsvp-edit-toggle">
-              <input id="rsvp-edit-toggle" type="checkbox" data-edit-toggle />
-              <span class="rsvp-switch__ui" aria-hidden="true"></span>
-              <span class="rsvp-switch__copy">
-                <span class="rsvp-switch__title">Already registered? Edit your RSVP</span>
-              </span>
-            </label>
-          </div>
-
-          <div class="rsvp-edit-instructions" data-edit-instructions hidden>
-            <p class="rsvp-edit-instructions__title">How to edit your RSVP</p>
-            <ol class="rsvp-edit-instructions__list">
-              <li>Enter your complete full name (capitalization does not matter).</li>
-              <li>Enter the email <strong>or</strong> mobile number from your original RSVP.</li>
-              <li>Tap <strong>Find my RSVP</strong> to load your reply.</li>
-              <li>Change any details you need, then tap <strong>Resend RSVP</strong>.</li>
-            </ol>
-          </div>
         </form>
       </div>
     </section>

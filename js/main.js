@@ -569,25 +569,14 @@
     if (isAppleTouch) {
       mapLinks.forEach((link) => {
         const mode = link.getAttribute("data-map-app");
-        const query = link.getAttribute("data-map-query") || "";
-        const lat = link.getAttribute("data-map-lat");
-        const lng = link.getAttribute("data-map-lng");
-        const encodedName = encodeURIComponent(query);
-        let appleUrl = "";
+        const query = link.getAttribute("data-map-query");
+        if (!query) return;
 
-        if (lat && lng) {
-          appleUrl =
-            mode === "dir"
-              ? `https://maps.apple.com/?daddr=${lat},${lng}&q=${encodedName}&dirflg=d`
-              : `https://maps.apple.com/?ll=${lat},${lng}&q=${encodedName}`;
-        } else if (query) {
-          appleUrl =
-            mode === "dir"
-              ? `https://maps.apple.com/?daddr=${encodedName}&dirflg=d`
-              : `https://maps.apple.com/?q=${encodedName}`;
-        } else {
-          return;
-        }
+        const encoded = encodeURIComponent(query);
+        const appleUrl =
+          mode === "dir"
+            ? `https://maps.apple.com/?daddr=${encoded}&dirflg=d`
+            : `https://maps.apple.com/?q=${encoded}`;
 
         link.href = appleUrl;
         if (mode === "search") {

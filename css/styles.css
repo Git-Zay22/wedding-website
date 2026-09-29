@@ -2369,21 +2369,55 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 .form-status {
   min-height: 0;
   margin: 0 0 0.85rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
   font-size: 0.95rem;
+  line-height: 1.45;
   color: var(--sage-deep);
+  background: rgba(232, 242, 248, 0.55);
 }
 
-.form-status:empty {
+.form-status[hidden] {
   display: none;
   margin: 0;
+  padding: 0;
 }
 
 .form-status.is-error {
-  color: #8b3a3a;
+  color: #6e2b2b;
+  border-color: rgba(192, 57, 43, 0.35);
+  background: rgba(192, 57, 43, 0.08);
 }
 
 .form-status.is-success {
   color: var(--sage-deep);
+  border-color: rgba(110, 180, 216, 0.35);
+  background: rgba(214, 236, 248, 0.65);
+}
+
+.form-status__title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.form-status__list {
+  margin: 0.55rem 0 0;
+  padding: 0 0 0 1.15rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.form-status__list li {
+  margin: 0;
+}
+
+.form-status__req {
+  color: #c0392b;
+  font-weight: 700;
+  margin-left: 0.15em;
 }
 
 /* Footer */

@@ -8,14 +8,60 @@
   const eventsSelect = form.events;
   const config = window.RSVP_CONFIG || {};
 
-  function setStatus(message, type) {
+  function clearStatus() {
     if (!statusEl) return;
-    statusEl.textContent = message;
+    statusEl.hidden = true;
+    statusEl.classList.remove("is-error", "is-success");
+    statusEl.replaceChildren();
+  }
+
+  function setStatus(message, type, items) {
+    if (!statusEl) return;
+
+    if (!message && !(items && items.length)) {
+      clearStatus();
+      return;
+    }
+
+    statusEl.hidden = false;
     statusEl.classList.remove("is-error", "is-success");
     if (type) statusEl.classList.add(`is-${type}`);
-    if (message) {
-      statusEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    statusEl.replaceChildren();
+
+    if (items && items.length) {
+      const title = document.createElement("p");
+      title.className = "form-status__title";
+      title.textContent = message || "Please complete the required fields:";
+      statusEl.appendChild(title);
+
+      const list = document.createElement("ul");
+      list.className = "form-status__list";
+
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        const label = typeof item === "string" ? item : item.label;
+        const detail = typeof item === "string" ? "is required" : item.detail;
+        li.append(document.createTextNode(label + " "));
+
+        const star = document.createElement("span");
+        star.className = "form-status__req";
+        star.setAttribute("aria-hidden", "true");
+        star.textContent = "*";
+        li.appendChild(star);
+
+        if (detail) {
+          li.append(document.createTextNode(" — " + detail));
+        }
+
+        list.appendChild(li);
+      });
+
+      statusEl.appendChild(list);
+    } else {
+      statusEl.textContent = message;
     }
+
+    statusEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function isConfigured() {
@@ -94,63 +140,50 @@
     const email = form.email.value.trim();
     const phone = form.phone.value.trim();
     const phoneDigits = phone.replace(/\D/g, "");
-    const missing = [];
+    const issues = [];
     let focusEl = null;
 
     if (!name) {
-      missing.push("Full name");
+      issues.push({ label: "Full name", detail: "is required" });
       focusEl = focusEl || form.guestName;
     }
 
     if (!email) {
-      missing.push("Email");
+      issues.push({ label: "Email", detail: "is required" });
+      setEmailFieldError("Please enter your email address.");
       focusEl = focusEl || form.email;
-    } else if (!validateEmailField(true)) {
-      setStatus("Please enter a valid email address for Email.", "error");
-      form.email.focus();
-      return false;
+    } else if (!isValidEmail(email)) {
+      issues.push({ label: "Email", detail: "needs a valid address" });
+      setEmailFieldError("Please enter a valid email address (e.g. you@email.com).");
+      focusEl = focusEl || form.email;
+    } else {
+      setEmailFieldError("");
     }
 
     if (!phone) {
-      missing.push("Mobile / WhatsApp");
+      issues.push({ label: "Mobile / WhatsApp", detail: "is required" });
       focusEl = focusEl || form.phone;
     } else if (phoneDigits.length < 10) {
-      setStatus("Please enter a valid Mobile / WhatsApp number.", "error");
-      form.phone.focus();
-      return false;
+      issues.push({ label: "Mobile / WhatsApp", detail: "needs a valid number" });
+      focusEl = focusEl || form.phone;
     }
 
     if (!form.attendance.value) {
-      missing.push("Attendance");
+      issues.push({ label: "Attendance", detail: "is required" });
     }
 
     if (form.attendance.value === "Yes" && !form.events.value) {
-      missing.push("Attending");
+      issues.push({ label: "Attending", detail: "is required" });
       focusEl = focusEl || form.events;
     }
 
     if (!form.commute.value) {
-      missing.push("Will you bring your own car?");
+      issues.push({ label: "Will you bring your own car?", detail: "is required" });
       focusEl = focusEl || form.commute;
     }
 
-    if (missing.length) {
-      if (email) validateEmailField(true);
-      else setEmailFieldError("");
-
-      const list =
-        missing.length === 1
-          ? missing[0]
-          : missing.length === 2
-            ? missing.join(" and ")
-            : missing.slice(0, -1).join(", ") + ", and " + missing[missing.length - 1];
-
-      setStatus(
-        missing.length === 1
-          ? `${list} is required.`
-          : `Please fill in the required fields: ${list}.`,
-        "error"
-      );
+    if (issues.length) {
+      setStatus("Please complete the required fields:", "error", issues);
       if (focusEl) focusEl.focus();
       return false;
     }
@@ -175,7 +208,7 @@
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    setStatus("");
+    clearStatus();
 
     if (!validateClient()) return;
 

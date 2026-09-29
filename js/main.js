@@ -403,38 +403,6 @@
     proposalsRoot.addEventListener("touchstart", pause, { passive: true });
     proposalsRoot.addEventListener("touchend", resume, { passive: true });
 
-    // Pointer tilt for active 3D card
-    if (!reduceMotion) {
-      const onMove = (event) => {
-        const active = proposalsRoot.querySelector(".proposal-slide.is-active [data-proposal-card]");
-        if (!active) return;
-        const rect = active.getBoundingClientRect();
-        const x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-        const y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
-        const rotY = (x - 0.5) * 16;
-        const rotX = (0.5 - y) * 12;
-        active.classList.add("is-tilting");
-        active.style.setProperty("--mx", (x * 100).toFixed(1) + "%");
-        active.style.setProperty("--my", (y * 100).toFixed(1) + "%");
-        active.style.transform =
-          "translateZ(34px) rotateX(" + rotX.toFixed(2) + "deg) rotateY(" + rotY.toFixed(2) + "deg)";
-      };
-
-      const resetTilt = () => {
-        const cards = proposalsRoot.querySelectorAll("[data-proposal-card]");
-        cards.forEach((card) => {
-          card.classList.remove("is-tilting");
-          card.style.transform = "";
-          card.style.removeProperty("--mx");
-          card.style.removeProperty("--my");
-        });
-      };
-
-      proposalsRoot.addEventListener("pointermove", onMove);
-      proposalsRoot.addEventListener("pointerleave", resetTilt);
-      proposalsRoot.addEventListener("pointercancel", resetTilt);
-    }
-
     show(index);
     schedule();
   }

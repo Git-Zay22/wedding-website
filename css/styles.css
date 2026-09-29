@@ -449,34 +449,22 @@ code {
 }
 
 .hero__meta {
-  margin: 0 0 1.35rem;
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.55rem;
-  padding: 0.55rem 1rem;
+  margin: 0 0 1.25rem;
   font-family: var(--font-body);
-  font-size: clamp(0.82rem, 2.4vw, 0.95rem);
+  font-size: clamp(0.88rem, 2.5vw, 1.05rem);
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #fff8e0;
-  background:
-    linear-gradient(
-      165deg,
-      rgba(36, 48, 58, 0.55) 0%,
-      rgba(36, 48, 58, 0.38) 100%
-    );
-  border: 1px solid rgba(245, 215, 110, 0.55);
-  border-radius: var(--radius-pill);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.25),
-    0 8px 22px rgba(10, 20, 30, 0.35);
+  color: var(--champagne);
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
   text-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.45),
-    0 0 12px rgba(245, 215, 110, 0.35);
-  backdrop-filter: blur(8px);
+    0 0 1px #000,
+    1px 0 0 #000,
+    -1px 0 0 #000,
+    0 1px 0 #000,
+    0 -1px 0 #000,
+    0 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 .hero__brand {
@@ -2391,10 +2379,8 @@ html:not(.proposals-unlocked) [data-nav-proposals] {
   }
 
   .hero__meta {
-    font-size: 0.78rem;
-    letter-spacing: 0.1em;
-    padding: 0.5rem 0.85rem;
-    max-width: 100%;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
   }
 
   .btn {

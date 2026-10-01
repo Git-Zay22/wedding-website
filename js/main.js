@@ -334,6 +334,101 @@
   }
 
   // Owners sliders — invitations and proposals, each with its own 10s autoplay
+  const cardViewer = document.querySelector("[data-card-viewer]");
+  const cardViewerImg = cardViewer && cardViewer.querySelector("[data-card-viewer-img]");
+  const cardViewerCaption = cardViewer && cardViewer.querySelector("[data-card-viewer-caption]");
+  let cardViewerRoot = null;
+  let cardViewerIndex = 0;
+  let cardViewerRelease = null;
+
+  const renderCardViewer = () => {
+    if (!cardViewerRoot || !cardViewerImg) return;
+    const viewerSlides = Array.from(cardViewerRoot.querySelectorAll("[data-proposal-slide]"));
+    if (!viewerSlides.length) return;
+    cardViewerIndex = (cardViewerIndex + viewerSlides.length) % viewerSlides.length;
+    const slide = viewerSlides[cardViewerIndex];
+    const img = slide.querySelector("img");
+    const eyebrow = slide.querySelector(".proposal-slide__eyebrow");
+    const role = slide.querySelector(".proposal-slide__role");
+    if (!img) return;
+    cardViewerImg.src = img.currentSrc || img.src;
+    cardViewerImg.alt = img.alt || "";
+    if (cardViewerCaption) {
+      const label = [eyebrow && eyebrow.textContent, role && role.textContent]
+        .map((part) => (part || "").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join(" · ");
+      cardViewerCaption.textContent = label;
+    }
+  };
+
+  const setCardZoom = (zoomed) => {
+    if (!cardViewer) return;
+    cardViewer.classList.toggle("is-zoomed", zoomed);
+    const zoomBtn = cardViewer.querySelector("[data-card-viewer-zoom]");
+    if (zoomBtn) {
+      zoomBtn.textContent = zoomed ? "Fit" : "Zoom";
+      zoomBtn.setAttribute("aria-pressed", zoomed ? "true" : "false");
+    }
+  };
+
+  const closeCardViewer = () => {
+    if (cardViewer && cardViewer.open) cardViewer.close();
+  };
+
+  const openCardViewer = (root, index, release) => {
+    if (!cardViewer || typeof cardViewer.showModal !== "function") return;
+    if (cardViewerRelease) cardViewerRelease();
+    cardViewerRoot = root;
+    cardViewerIndex = index;
+    cardViewerRelease = release;
+    renderCardViewer();
+    if (!cardViewer.open) cardViewer.showModal();
+  };
+
+  if (cardViewer) {
+    const closeBtn = cardViewer.querySelector("[data-card-viewer-close]");
+    const prevBtn = cardViewer.querySelector("[data-card-viewer-prev]");
+    const nextBtn = cardViewer.querySelector("[data-card-viewer-next]");
+    const zoomBtn = cardViewer.querySelector("[data-card-viewer-zoom]");
+    closeBtn?.addEventListener("click", closeCardViewer);
+    zoomBtn?.addEventListener("click", () => {
+      setCardZoom(!cardViewer.classList.contains("is-zoomed"));
+    });
+    cardViewerImg?.addEventListener("click", () => {
+      setCardZoom(!cardViewer.classList.contains("is-zoomed"));
+    });
+    prevBtn?.addEventListener("click", () => {
+      cardViewerIndex -= 1;
+      renderCardViewer();
+    });
+    nextBtn?.addEventListener("click", () => {
+      cardViewerIndex += 1;
+      renderCardViewer();
+    });
+    cardViewer.addEventListener("click", (event) => {
+      if (event.target === cardViewer) closeCardViewer();
+    });
+    cardViewer.addEventListener("close", () => {
+      setCardZoom(false);
+      if (cardViewerRelease) cardViewerRelease();
+      cardViewerRelease = null;
+      cardViewerRoot = null;
+    });
+    cardViewer.addEventListener("keydown", (event) => {
+      if (!cardViewer.open) return;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        cardViewerIndex -= 1;
+        renderCardViewer();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        cardViewerIndex += 1;
+        renderCardViewer();
+      }
+    });
+  }
+
   document.querySelectorAll("[data-proposals]").forEach((proposalsRoot) => {
     const slides = Array.from(proposalsRoot.querySelectorAll("[data-proposal-slide]"));
     const dotsWrap = proposalsRoot.querySelector("[data-proposal-dots]");
@@ -344,6 +439,18 @@
     let index = Math.max(0, slides.findIndex((s) => s.classList.contains("is-active")));
     let timer = null;
     let paused = false;
+    let holdPause = false;
+
+    slides.forEach((slide) => {
+      const orbit = slide.querySelector(".proposal-slide__orbit");
+      if (!orbit || orbit.querySelector("[data-proposal-view]")) return;
+      const viewBtn = document.createElement("button");
+      viewBtn.type = "button";
+      viewBtn.className = "proposal-slide__view";
+      viewBtn.setAttribute("data-proposal-view", "");
+      viewBtn.textContent = "View details";
+      orbit.appendChild(viewBtn);
+    });
 
     if (index < 0) index = 0;
 
@@ -414,6 +521,7 @@
     };
 
     const resume = () => {
+      if (holdPause) return;
       paused = false;
       schedule();
     };
@@ -426,7 +534,17 @@
         if (slide.classList.contains("is-prev") || slide.classList.contains("is-next")) {
           event.preventDefault();
           goTo(i, true);
+          return;
         }
+        if (!slide.classList.contains("is-active")) return;
+        if (!event.target.closest("[data-proposal-card], [data-proposal-view]")) return;
+        event.preventDefault();
+        holdPause = true;
+        pause();
+        openCardViewer(proposalsRoot, i, () => {
+          holdPause = false;
+          resume();
+        });
       });
     });
 

@@ -2,17 +2,19 @@
   const form = document.getElementById("rsvp-form");
   if (!form) return;
 
-  const statusEl = form.querySelector("[data-status]");
+  const statusEl = document.querySelector("[data-status]");
   const submitBtn = form.querySelector("[data-submit]");
   const findBtn = form.querySelector("[data-find-rsvp]");
   const editToggle = form.querySelector("[data-edit-toggle]");
-  const editInstructions = form.querySelector("[data-edit-instructions]");
-  const findHint = form.querySelector("[data-find-hint]");
   const detailsEl = form.querySelector("[data-rsvp-details]");
   const eventsField = form.querySelector("[data-events-field]");
   const loadingEl = document.querySelector("[data-rsvp-loading]");
   const loadingTextEl = document.querySelector("[data-rsvp-loading-text]");
   const eventsSelect = form.events;
+  const skipEmail = form.querySelector("[data-skip-email]");
+  const skipPhone = form.querySelector("[data-skip-phone]");
+  const emailReq = form.querySelector("[data-email-req]");
+  const phoneReq = form.querySelector("[data-phone-req]");
   const config = window.RSVP_CONFIG || {};
 
   let editMode = false;
@@ -28,6 +30,17 @@
   let queueRunning = false;
   let statusHideTimer = null;
   let statusFadeTimer = null;
+  let pinnedNotice = null;
+  let renderedNoticeKey = "";
+  let warningDismissed = false;
+  let nameGuideDismissed = false;
+  let nameGuidePinned = true;
+  let editGuideDismissed = false;
+  let nameFocused = false;
+  let rsvpInView = false;
+  let rsvpSectionVisible = false;
+  let footerInView = false;
+  let sectionLeaveTimer = null;
 
   function clearStatusTimers() {
     if (statusHideTimer) {
@@ -40,21 +53,265 @@
     }
   }
 
-  function clearStatus() {
+  function oneContactSkipped() {
+    return Boolean(skipEmail && skipEmail.checked) !== Boolean(skipPhone && skipPhone.checked);
+  }
+
+  function desiredNotice() {
+    if (pinnedNotice) return pinnedNotice;
+    if (oneContactSkipped() && !warningDismissed) {
+      return {
+        type: "warning",
+        kind: "contact",
+        message:
+          "If you do not have an email address or a mobile number, please turn on the switch beside that field. When you find or edit your RSVP, please turn on the switch for any contact you left out.",
+      };
+    }
+    if (editMode && !editLoaded && !editGuideDismissed) {
+      return { type: "guide", kind: "edit" };
+    }
+    if ((nameFocused || nameGuidePinned) && !nameGuideDismissed) {
+      return { type: "guide", kind: "name" };
+    }
+    return null;
+  }
+
+  function noticeKey(notice) {
+    if (!notice) return "";
+    if (notice.items && notice.items.length) {
+      return notice.type + "|" + notice.message + "|" + notice.items.map((item) => item.label + ":" + item.detail).join("|");
+    }
+    return notice.type + "|" + (notice.kind || "") + "|" + (notice.message || "");
+  }
+
+  function appendStrong(parent, text) {
+    const strong = document.createElement("strong");
+    strong.textContent = text;
+    parent.appendChild(strong);
+  }
+
+  function buildNameGuide() {
+    const wrap = document.createElement("div");
+    wrap.className = "name-guide";
+    wrap.id = "guestName-hint";
+
+    const lead = document.createElement("p");
+    lead.className = "name-guide__lead";
+    lead.textContent = "Please use your real name when you register. Capitalization does not matter.";
+    wrap.appendChild(lead);
+
+    const list = document.createElement("ul");
+    list.className = "name-guide__list";
+    [
+      ["Two given names", "JUAN MIGUEL DELA CRUZ"],
+      ["A suffix, written without a period", "JUAN DELA CRUZ JR"],
+    ].forEach((pair) => {
+      const li = document.createElement("li");
+      const label = document.createElement("span");
+      label.className = "name-guide__label";
+      label.textContent = pair[0];
+      const example = document.createElement("span");
+      example.className = "name-guide__example";
+      example.textContent = pair[1];
+      li.append(label, example);
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function buildEditGuide() {
+    const wrap = document.createElement("div");
+    wrap.className = "rsvp-edit-instructions";
+
+    const title = document.createElement("p");
+    title.className = "rsvp-edit-instructions__title";
+    title.textContent = "How to edit your RSVP";
+    wrap.appendChild(title);
+
+    const list = document.createElement("ol");
+    list.className = "rsvp-edit-instructions__list";
+
+    const steps = [
+      (li) => {
+        li.append("Enter your real full name. Capitalization does not matter. Include both given names if you have two, and write a suffix without a period.");
+      },
+      (li) => {
+        li.append("Enter the email ");
+        appendStrong(li, "or");
+        li.append(" mobile number from your original RSVP.");
+      },
+      (li) => {
+        li.append("Tap ");
+        appendStrong(li, "Find my RSVP");
+        li.append(" to load your reply.");
+      },
+      (li) => {
+        li.append("Change any details you need, then tap ");
+        appendStrong(li, "Resend RSVP");
+        li.append(".");
+      },
+    ];
+
+    steps.forEach((fill) => {
+      const li = document.createElement("li");
+      fill(li);
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function hideNotice() {
     if (!statusEl) return;
-    clearStatusTimers();
+    if (sectionLeaveTimer) {
+      clearTimeout(sectionLeaveTimer);
+      sectionLeaveTimer = null;
+    }
     statusEl.hidden = true;
-    statusEl.classList.remove("is-error", "is-success", "is-flash", "is-fading");
+    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-offsection");
     statusEl.replaceChildren();
+    renderedNoticeKey = "";
+  }
+
+  function concealForSection() {
+    if (!statusEl || statusEl.hidden) return;
+    statusEl.classList.add("is-offsection");
+    if (sectionLeaveTimer) clearTimeout(sectionLeaveTimer);
+    sectionLeaveTimer = setTimeout(() => {
+      sectionLeaveTimer = null;
+      if (rsvpInView) return;
+      statusEl.hidden = true;
+    }, 420);
+  }
+
+  function slideNoticeIn() {
+    if (!statusEl) return;
+    statusEl.hidden = false;
+    statusEl.classList.add("is-offsection");
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (rsvpInView) statusEl.classList.remove("is-offsection");
+      });
+    });
+  }
+
+  function paintNotice(notice) {
+    if (!statusEl) return;
+    const key = noticeKey(notice);
+    const offscreen = statusEl.hidden || statusEl.classList.contains("is-offsection");
+    if (key === renderedNoticeKey && !offscreen && !statusEl.classList.contains("is-fading")) return;
+    if (key === renderedNoticeKey && offscreen) {
+      slideNoticeIn();
+      return;
+    }
+
+    statusEl.hidden = false;
+    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading");
+    statusEl.classList.add("is-" + notice.type);
+    statusEl.replaceChildren();
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "form-status__close";
+    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.textContent = "×";
+    closeBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      dismissCurrentNotice();
+    });
+    statusEl.appendChild(closeBtn);
+
+    const body = document.createElement("div");
+    body.className = "form-status__body";
+
+    if (notice.type === "guide" && notice.kind === "name") {
+      body.appendChild(buildNameGuide());
+    } else if (notice.type === "guide" && notice.kind === "edit") {
+      body.appendChild(buildEditGuide());
+    } else if (notice.items && notice.items.length) {
+      const title = document.createElement("p");
+      title.className = "form-status__title";
+      title.textContent = notice.message || "Please complete the required fields:";
+      body.appendChild(title);
+
+      const list = document.createElement("ul");
+      list.className = "form-status__list";
+      notice.items.forEach((item) => {
+        const li = document.createElement("li");
+        const label = typeof item === "string" ? item : item.label;
+        const detail = typeof item === "string" ? "is required" : item.detail;
+        li.append(document.createTextNode(label + " "));
+
+        const star = document.createElement("span");
+        star.className = "form-status__req";
+        star.setAttribute("aria-hidden", "true");
+        star.textContent = "*";
+        li.appendChild(star);
+
+        if (detail) li.append(document.createTextNode(" — " + detail));
+        list.appendChild(li);
+      });
+      body.appendChild(list);
+    } else {
+      body.textContent = notice.message || "";
+    }
+
+    statusEl.appendChild(body);
+    renderedNoticeKey = key;
+    if (offscreen) slideNoticeIn();
+    else statusEl.classList.remove("is-offsection");
+
+    if (notice.type === "success") {
+      statusEl.classList.remove("is-flash");
+      void statusEl.offsetWidth;
+      statusEl.classList.add("is-flash");
+    }
+  }
+
+  function refreshNotice() {
+    const notice = desiredNotice();
+    if (!notice) {
+      hideNotice();
+      return;
+    }
+    if (!rsvpInView) {
+      concealForSection();
+      return;
+    }
+    paintNotice(notice);
+  }
+
+  function clearStatus() {
+    pinnedNotice = null;
+    clearStatusTimers();
+    renderedNoticeKey = "";
+    refreshNotice();
+  }
+
+  function fadeThenRefresh() {
+    clearStatusTimers();
+    renderedNoticeKey = "";
+    refreshNotice();
+  }
+
+  function dismissCurrentNotice() {
+    const notice = desiredNotice();
+    if (!notice) return;
+    if (notice.type === "error" || notice.type === "success") pinnedNotice = null;
+    else if (notice.type === "warning") warningDismissed = true;
+    else if (notice.kind === "edit") editGuideDismissed = true;
+    else {
+      nameGuideDismissed = true;
+      nameGuidePinned = false;
+    }
+    if (notice.type === "warning" || notice.kind === "edit") nameGuideDismissed = true;
+    fadeThenRefresh();
   }
 
   function dismissStatus() {
-    if (!statusEl || statusEl.hidden) return;
-    clearStatusTimers();
-    statusEl.classList.add("is-fading");
-    statusFadeTimer = setTimeout(() => {
-      clearStatus();
-    }, 450);
+    pinnedNotice = null;
+    fadeThenRefresh();
   }
 
   function blockBackgroundScroll(event) {
@@ -110,9 +367,7 @@
   }
 
   function scrollToStatus(flash) {
-    if (!statusEl || statusEl.hidden) return;
-    statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (!flash) return;
+    if (!statusEl || statusEl.hidden || !flash) return;
     statusEl.classList.remove("is-flash");
     void statusEl.offsetWidth;
     statusEl.classList.add("is-flash");
@@ -127,69 +382,15 @@
     }
 
     clearStatusTimers();
-    statusEl.hidden = false;
-    statusEl.classList.remove("is-error", "is-success", "is-flash", "is-fading");
-    if (type) statusEl.classList.add(`is-${type}`);
-    statusEl.replaceChildren();
-
-    const closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "form-status__close";
-    closeBtn.setAttribute("aria-label", "Dismiss message");
-    closeBtn.textContent = "×";
-    closeBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      dismissStatus();
-    });
-    statusEl.appendChild(closeBtn);
-
-    const body = document.createElement("div");
-    body.className = "form-status__body";
-
-    if (items && items.length) {
-      const title = document.createElement("p");
-      title.className = "form-status__title";
-      title.textContent = message || "Please complete the required fields:";
-      body.appendChild(title);
-
-      const list = document.createElement("ul");
-      list.className = "form-status__list";
-
-      items.forEach((item) => {
-        const li = document.createElement("li");
-        const label = typeof item === "string" ? item : item.label;
-        const detail = typeof item === "string" ? "is required" : item.detail;
-        li.append(document.createTextNode(label + " "));
-
-        const star = document.createElement("span");
-        star.className = "form-status__req";
-        star.setAttribute("aria-hidden", "true");
-        star.textContent = "*";
-        li.appendChild(star);
-
-        if (detail) {
-          li.append(document.createTextNode(" — " + detail));
-        }
-
-        list.appendChild(li);
-      });
-
-      body.appendChild(list);
-    } else {
-      body.textContent = message;
-    }
-
-    statusEl.appendChild(body);
-
-    const preferCenter = type === "success" || type === "error";
-    statusEl.scrollIntoView({
-      behavior: "smooth",
-      block: preferCenter ? "center" : "nearest",
-    });
+    pinnedNotice = {
+      type: type || "error",
+      kind: type || "error",
+      message: message,
+      items: items || null,
+    };
+    renderedNoticeKey = "";
+    refreshNotice();
     if (type === "success") {
-      statusEl.classList.remove("is-flash");
-      void statusEl.offsetWidth;
-      statusEl.classList.add("is-flash");
       statusHideTimer = setTimeout(() => {
         dismissStatus();
       }, 10000);
@@ -234,10 +435,13 @@
   }
 
   function getFormSnapshot() {
+    const contact = contactValues();
     return JSON.stringify({
       guestName: form.guestName.value.trim(),
-      email: form.email.value.trim().toLowerCase(),
-      phone: form.phone.value.trim(),
+      email: contact.email,
+      phone: contact.phone,
+      noEmail: contact.noEmail,
+      noPhone: contact.noPhone,
       attendance: form.attendance.value || "",
       events: form.events.value || "",
       commute: form.commute.value || "",
@@ -276,12 +480,8 @@
 
     const pending = editMode && !editLoaded;
     if (detailsEl) detailsEl.hidden = pending;
-    if (editInstructions) editInstructions.hidden = !editMode;
-    if (findHint) findHint.hidden = !pending;
+    if (!editMode) editGuideDismissed = false;
 
-    // During find, HTML5 must not require both contacts — one of email/phone is enough
-    form.email.required = !pending;
-    form.phone.required = !pending;
     form.commute.required = !pending;
     const yesRadio = form.querySelector('input[name="attendance"][value="Yes"]');
     if (yesRadio) yesRadio.required = !pending;
@@ -289,7 +489,9 @@
       eventsSelect.required = !pending && form.attendance.value !== "No";
     }
 
+    syncContactSkips();
     syncButtonState();
+    refreshNotice();
   }
 
   function resetEditState(keepName) {
@@ -300,6 +502,8 @@
     originalPhone = "";
     baselineSnapshot = "";
     form.reset();
+    delete form.email.dataset.kept;
+    delete form.phone.dataset.kept;
     if (editToggle) editToggle.checked = editMode;
     if (keepName) form.guestName.value = keptName;
     setAttendanceValue("");
@@ -309,8 +513,16 @@
 
   function fillFormFromRecord(record) {
     form.guestName.value = record.guestName || "";
+    delete form.email.dataset.kept;
+    delete form.phone.dataset.kept;
     form.email.value = record.email || "";
     form.phone.value = record.phone || "";
+    if (skipEmail) skipEmail.checked = !String(record.email || "").trim();
+    if (skipPhone) skipPhone.checked = !String(record.phone || "").trim();
+    if (skipEmail && skipPhone && skipEmail.checked && skipPhone.checked) {
+      skipEmail.checked = false;
+      skipPhone.checked = false;
+    }
     setAttendanceValue(record.attendance === "No" ? "No" : record.attendance === "Yes" ? "Yes" : "");
     const eventsValue =
       record.events && record.events !== "Not attending" ? record.events : "";
@@ -324,9 +536,9 @@
       .toLowerCase();
     originalPhone = String(record.phone || "").trim();
     editLoaded = true;
-    baselineSnapshot = getFormSnapshot();
     syncEventsField();
     syncEditUi();
+    baselineSnapshot = getFormSnapshot();
   }
 
   function isValidEmail(value) {
@@ -341,10 +553,73 @@
     return String(value || "").replace(/\D/g, "");
   }
 
+  function contactValues() {
+    const noEmail = Boolean(skipEmail && skipEmail.checked);
+    const noPhone = Boolean(skipPhone && skipPhone.checked);
+    return {
+      noEmail: noEmail,
+      noPhone: noPhone,
+      email: noEmail ? "" : form.email.value.trim().toLowerCase(),
+      phone: noPhone ? "" : form.phone.value.trim(),
+    };
+  }
+
+  function applyContactField(input, reqEl, skipped, pending, placeholder, skippedPlaceholder) {
+    const field = input.closest(".field");
+    if (skipped) {
+      if (input.value) input.dataset.kept = input.value;
+      input.value = "";
+      input.disabled = true;
+      input.required = false;
+      input.placeholder = skippedPlaceholder;
+      if (field) field.classList.add("is-skipped");
+      if (reqEl) reqEl.hidden = true;
+    } else {
+      input.disabled = false;
+      if (input.dataset.kept) {
+        input.value = input.dataset.kept;
+        delete input.dataset.kept;
+      }
+      input.required = !pending;
+      input.placeholder = placeholder;
+      if (field) field.classList.remove("is-skipped");
+      if (reqEl) reqEl.hidden = false;
+    }
+  }
+
+  function syncContactSkips() {
+    const pending = editMode && !editLoaded;
+    applyContactField(
+      form.email,
+      emailReq,
+      Boolean(skipEmail && skipEmail.checked),
+      pending,
+      "you@email.com",
+      "No email address"
+    );
+    applyContactField(
+      form.phone,
+      phoneReq,
+      Boolean(skipPhone && skipPhone.checked),
+      pending,
+      "09XXXXXXXXX",
+      "No mobile number"
+    );
+    refreshNotice();
+  }
+
+  function onSkipChange(changed, other) {
+    if (changed && changed.checked && other) other.checked = false;
+    warningDismissed = false;
+    syncContactSkips();
+    if (editMode && editLoaded) syncButtonState();
+  }
+
   function validateFindFields() {
     const name = form.guestName.value.trim();
-    const email = form.email.value.trim();
-    const phone = form.phone.value.trim();
+    const contact = contactValues();
+    const email = contact.email;
+    const phone = contact.phone;
     const digits = phoneDigits(phone);
     const issues = [];
     let focusEl = null;
@@ -357,12 +632,20 @@
     const hasEmail = Boolean(email);
     const hasPhone = digits.length >= 10;
 
-    if (!hasEmail && !hasPhone) {
+    if (contact.noEmail && contact.noPhone) {
       issues.push({
         label: "Email or Mobile",
-        detail: "enter at least one from your original RSVP",
+        detail: "keep at least one contact",
       });
       focusEl = focusEl || form.email;
+    } else if (!hasEmail && !hasPhone) {
+      issues.push({
+        label: contact.noEmail ? "Mobile" : contact.noPhone ? "Email" : "Email or Mobile",
+        detail: contact.noEmail || contact.noPhone
+          ? "is required"
+          : "enter at least one from your original RSVP",
+      });
+      focusEl = focusEl || (contact.noEmail ? form.phone : form.email);
     } else {
       if (hasEmail && !isValidEmail(email)) {
         issues.push({ label: "Email", detail: "needs a valid address" });
@@ -385,8 +668,9 @@
 
   function validateClient() {
     const name = form.guestName.value.trim();
-    const email = form.email.value.trim();
-    const phone = form.phone.value.trim();
+    const contact = contactValues();
+    const email = contact.email;
+    const phone = contact.phone;
     const digits = phoneDigits(phone);
     const issues = [];
     let focusEl = null;
@@ -396,20 +680,29 @@
       focusEl = focusEl || form.guestName;
     }
 
-    if (!email) {
-      issues.push({ label: "Email", detail: "is required" });
+    if (contact.noEmail && contact.noPhone) {
+      issues.push({ label: "Email or Mobile", detail: "keep at least one" });
       focusEl = focusEl || form.email;
-    } else if (!isValidEmail(email)) {
-      issues.push({ label: "Email", detail: "needs a valid address" });
-      focusEl = focusEl || form.email;
-    }
+    } else {
+      if (!contact.noEmail) {
+        if (!email) {
+          issues.push({ label: "Email", detail: "is required" });
+          focusEl = focusEl || form.email;
+        } else if (!isValidEmail(email)) {
+          issues.push({ label: "Email", detail: "needs a valid address" });
+          focusEl = focusEl || form.email;
+        }
+      }
 
-    if (!phone) {
-      issues.push({ label: "Mobile", detail: "is required" });
-      focusEl = focusEl || form.phone;
-    } else if (digits.length < 10) {
-      issues.push({ label: "Mobile", detail: "needs a valid number" });
-      focusEl = focusEl || form.phone;
+      if (!contact.noPhone) {
+        if (!phone) {
+          issues.push({ label: "Mobile", detail: "is required" });
+          focusEl = focusEl || form.phone;
+        } else if (digits.length < 10) {
+          issues.push({ label: "Mobile", detail: "needs a valid number" });
+          focusEl = focusEl || form.phone;
+        }
+      }
     }
 
     if (!form.attendance.value) {
@@ -480,8 +773,9 @@
     if (!validateFindFields()) return;
 
     const guestName = form.guestName.value.trim();
-    const email = form.email.value.trim().toLowerCase();
-    const phone = form.phone.value.trim();
+    const contact = contactValues();
+    const email = contact.email;
+    const phone = contact.phone;
 
     lookupBusy = true;
     syncButtonState();
@@ -517,7 +811,8 @@
       fillFormFromRecord(data.record);
       setStatus("We found your RSVP — update anything below, then Resend RSVP.", "success");
       requestAnimationFrame(() => scrollToStatus(true));
-      form.email.focus();
+      if (form.email.disabled) form.phone.focus();
+      else form.email.focus();
     } catch (err) {
       console.error(err);
       hideLoading();
@@ -538,6 +833,7 @@
       editMode = Boolean(editToggle.checked);
       clearStatus();
       if (editMode) {
+        editGuideDismissed = false;
         resetEditState(true);
         form.guestName.focus();
       } else {
@@ -559,9 +855,31 @@
     }
   }
 
+  function showNameGuide() {
+    nameFocused = true;
+    nameGuideDismissed = false;
+    refreshNotice();
+  }
+
+  form.guestName.addEventListener("focus", showNameGuide);
+  form.guestName.addEventListener("click", showNameGuide);
+  form.guestName.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      if (document.activeElement === form.guestName) return;
+      nameFocused = false;
+      refreshNotice();
+    }, 0);
+  });
   form.guestName.addEventListener("keydown", onFindEnter);
   form.email.addEventListener("keydown", onFindEnter);
   form.phone.addEventListener("keydown", onFindEnter);
+
+  if (skipEmail) {
+    skipEmail.addEventListener("change", () => onSkipChange(skipEmail, skipPhone));
+  }
+  if (skipPhone) {
+    skipPhone.addEventListener("change", () => onSkipChange(skipPhone, skipEmail));
+  }
 
   form.addEventListener("input", () => {
     if (editMode && editLoaded) syncButtonState();
@@ -579,6 +897,52 @@
   syncEventsField();
   syncEditUi();
 
+  const rsvpSection = document.getElementById("rsvp");
+  const siteFooter = document.querySelector(".site-footer");
+
+  function updateRsvpPresence() {
+    const visible = rsvpSectionVisible && !footerInView;
+    if (visible === rsvpInView) return;
+    rsvpInView = visible;
+    refreshNotice();
+  }
+
+  function readRsvpPresence() {
+    const vh = window.innerHeight || 0;
+    if (rsvpSection) {
+      const section = rsvpSection.getBoundingClientRect();
+      rsvpSectionVisible = section.bottom > vh * 0.12 && section.top < vh;
+    } else {
+      rsvpSectionVisible = true;
+    }
+    if (siteFooter) {
+      const footer = siteFooter.getBoundingClientRect();
+      // A sliver of the footer can show while the form is still on screen.
+      // Fade only once the footer has moved well into the page.
+      footerInView = footer.top < vh * 0.55 && footer.bottom > 0;
+    } else {
+      footerInView = false;
+    }
+    updateRsvpPresence();
+  }
+
+  if (rsvpSection || siteFooter) {
+    let presenceFrame = 0;
+    function schedulePresence() {
+      if (presenceFrame) return;
+      presenceFrame = window.requestAnimationFrame(function () {
+        presenceFrame = 0;
+        readRsvpPresence();
+      });
+    }
+    window.addEventListener("scroll", schedulePresence, { passive: true });
+    window.addEventListener("resize", schedulePresence);
+    readRsvpPresence();
+  } else {
+    rsvpInView = true;
+    refreshNotice();
+  }
+
   // Warm Apps Script / Worker so the first Find/Send is less likely to cold-start hang.
   // Goes through the same queue so warm never overlaps a Find/Send.
   function warmRsvpEndpoint() {
@@ -592,7 +956,6 @@
     }).catch(function () {});
   }
   warmRsvpEndpoint();
-  const rsvpSection = document.getElementById("rsvp");
   if (rsvpSection && "IntersectionObserver" in window) {
     const warmOnce = new IntersectionObserver(
       function (entries) {
@@ -631,14 +994,17 @@
     }
 
     const attending = form.attendance.value === "Yes";
+    const contact = contactValues();
     const payload = {
       action: editMode ? "update" : "create",
       guestName: form.guestName.value.trim(),
       originalGuestName: editMode ? originalGuestName || form.guestName.value.trim() : undefined,
       originalEmail: editMode ? originalEmail : undefined,
       originalPhone: editMode ? originalPhone : undefined,
-      email: form.email.value.trim().toLowerCase(),
-      phone: form.phone.value.trim(),
+      email: contact.email,
+      phone: contact.phone,
+      noEmail: contact.noEmail,
+      noPhone: contact.noPhone,
       attendance: form.attendance.value,
       events: attending ? form.events.value : "Not attending",
       commute: form.commute.value,

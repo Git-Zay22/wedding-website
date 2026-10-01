@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=93" />
+  <link rel="stylesheet" href="css/styles.css?v=110" />
   <script src="js/boot.js?v=1"></script>
 </head>
 <body>
@@ -744,18 +744,6 @@
         </p>
 
         <form id="rsvp-form" class="rsvp-form" novalidate>
-          <div class="form-status" data-status role="status" aria-live="polite" hidden></div>
-
-          <div class="rsvp-edit-instructions" data-edit-instructions hidden>
-            <p class="rsvp-edit-instructions__title">How to edit your RSVP</p>
-            <ol class="rsvp-edit-instructions__list">
-              <li>Enter your complete full name (capitalization does not matter).</li>
-              <li>Enter the email <strong>or</strong> mobile number from your original RSVP.</li>
-              <li>Tap <strong>Find my RSVP</strong> to load your reply.</li>
-              <li>Change any details you need, then tap <strong>Resend RSVP</strong>.</li>
-            </ol>
-          </div>
-
           <div class="field">
             <label for="guestName">Full name <span class="req" aria-hidden="true">*</span></label>
             <input id="guestName" name="guestName" type="text" autocomplete="name" required maxlength="120" placeholder="firstname lastname only" />
@@ -763,17 +751,28 @@
 
           <div class="field-row" data-rsvp-contact>
             <div class="field">
-              <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
+              <div class="field__top">
+                <label for="email">Email <span class="req" data-email-req aria-hidden="true">*</span></label>
+                <label class="contact-skip">
+                  <span class="contact-skip__text">No email</span>
+                  <input type="checkbox" data-skip-email />
+                  <span class="contact-skip__ui" aria-hidden="true"></span>
+                </label>
+              </div>
               <input id="email" name="email" type="email" autocomplete="email" required maxlength="160" placeholder="you@email.com" />
             </div>
             <div class="field">
-              <label for="phone">Mobile <span class="req" aria-hidden="true">*</span></label>
+              <div class="field__top">
+                <label for="phone">Mobile <span class="req" data-phone-req aria-hidden="true">*</span></label>
+                <label class="contact-skip">
+                  <span class="contact-skip__text">No mobile</span>
+                  <input type="checkbox" data-skip-phone />
+                  <span class="contact-skip__ui" aria-hidden="true"></span>
+                </label>
+              </div>
               <input id="phone" name="phone" type="tel" autocomplete="tel" required maxlength="40" placeholder="09XXXXXXXXX" />
             </div>
           </div>
-          <p class="rsvp-find-hint" data-find-hint hidden>
-            To find your RSVP, enter your full name plus the email <em>or</em> mobile number you used before.
-          </p>
 
           <div class="rsvp-form__details" data-rsvp-details>
           <fieldset class="field field--choice">
@@ -873,6 +872,25 @@
     </form>
   </dialog>
 
+  <dialog class="lightbox lightbox--card" data-card-viewer aria-label="Card viewer">
+    <div class="lightbox__shell">
+      <button type="button" class="lightbox__zoom" data-card-viewer-zoom aria-pressed="false">Zoom</button>
+      <button type="button" class="lightbox__close" data-card-viewer-close aria-label="Close card">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <button type="button" class="lightbox__nav lightbox__nav--prev" data-card-viewer-prev aria-label="Previous card">
+        <span aria-hidden="true">‹</span>
+      </button>
+      <figure class="lightbox__figure">
+        <img class="lightbox__img" data-card-viewer-img alt="" />
+        <figcaption class="lightbox__caption" data-card-viewer-caption></figcaption>
+      </figure>
+      <button type="button" class="lightbox__nav lightbox__nav--next" data-card-viewer-next aria-label="Next card">
+        <span aria-hidden="true">›</span>
+      </button>
+    </div>
+  </dialog>
+
   <dialog class="lightbox" data-lightbox aria-label="Photo viewer">
     <div class="lightbox__shell">
       <button type="button" class="lightbox__close" data-lightbox-close aria-label="Close photo">
@@ -898,6 +916,8 @@
     </div>
   </div>
 
+  <div class="rsvp-notice form-status" data-status role="status" aria-live="polite" hidden></div>
+
   <footer class="site-footer">
     <a class="footer__logo" href="#top" aria-label="Caren & Zayrol — back to top">
       <img src="assets/logo-monogram.png" alt="" width="120" height="129" decoding="async" loading="lazy" />
@@ -908,7 +928,7 @@
   </footer>
 
   <script src="js/config.js?v=6"></script>
-  <script src="js/main.js?v=32"></script>
-  <script src="js/rsvp.js?v=29"></script>
+  <script src="js/main.js?v=34"></script>
+  <script src="js/rsvp.js?v=41"></script>
 </body>
 </html>

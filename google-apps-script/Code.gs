@@ -157,32 +157,54 @@ function doGet(e) {
   }
 }
 
+function readContact_(data) {
+  var noEmail = data && (data.noEmail === true || data.noEmail === "true");
+  var noPhone = data && (data.noPhone === true || data.noPhone === "true");
+  var email = noEmail
+    ? ""
+    : String((data && data.email) || "")
+        .trim()
+        .toLowerCase();
+  var phoneRaw = noPhone ? "" : String((data && data.phone) || "").trim();
+  var phone = normalizePhone_(phoneRaw);
+
+  if (noEmail && noPhone) {
+    return { error: "Please provide an email or a mobile number." };
+  }
+  if (email && !isValidEmail_(email)) {
+    return { error: "Please enter a valid email address." };
+  }
+  if (phoneRaw && phone.length < 10) {
+    return { error: "Please enter a valid mobile number." };
+  }
+  if (!email && phone.length < 10) {
+    return { error: "Please provide an email or a mobile number." };
+  }
+
+  return { email: email, phone: phone, phoneRaw: phoneRaw };
+}
+
 function createRsvp_(data) {
   const guestNameRaw = String(data.guestName || "").trim();
-  const email = String(data.email || "")
-    .trim()
-    .toLowerCase();
-  const phone = normalizePhone_(String(data.phone || "").trim());
   const attendance = String(data.attendance || "").trim();
   // Generic on purpose — do not reveal allowlist / already-registered status.
   const errSave =
     "Your RSVP couldn't be saved. Please try again.";
 
-  if (!guestNameRaw || !email || !attendance || !phone) {
+  if (!guestNameRaw || !attendance) {
     return json_({ ok: false, error: "Missing required fields." });
   }
+
+  const contact = readContact_(data);
+  if (contact.error) {
+    return json_({ ok: false, error: contact.error });
+  }
+  const email = contact.email;
+  const phone = contact.phone;
 
   const guestName = resolveInvitedGuestName_(guestNameRaw);
   if (!guestName) {
     return json_({ ok: false, error: errSave });
-  }
-
-  if (!isValidEmail_(email)) {
-    return json_({ ok: false, error: "Please enter a valid email address." });
-  }
-
-  if (phone.length < 10) {
-    return json_({ ok: false, error: "Please enter a valid mobile number." });
   }
 
   const sheet = getSheet_();
@@ -197,7 +219,7 @@ function createRsvp_(data) {
     return json_({ ok: false, error: errSave });
   }
 
-  writeRow_(sheet, sheet.getLastRow() + 1, data, guestName, email, String(data.phone || "").trim());
+  writeRow_(sheet, sheet.getLastRow() + 1, data, guestName, email, contact.phoneRaw);
   return savedJson_(sheet, { ok: true, saved: true });
 }
 
@@ -250,30 +272,25 @@ function updateByName_(data) {
   const originalGuestName = String(
     data.originalGuestName || data.guestName || ""
   ).trim();
-  const email = String(data.email || "")
-    .trim()
-    .toLowerCase();
-  const phoneRaw = String(data.phone || "").trim();
-  const phone = normalizePhone_(phoneRaw);
   const attendance = String(data.attendance || "").trim();
   const errUpdate =
     "We couldn't update this RSVP. Find your RSVP with your name and contact details first, then try again.";
 
-  if (!guestNameRaw || !email || !attendance || !phone) {
+  if (!guestNameRaw || !attendance) {
     return json_({ ok: false, error: "Missing required fields." });
   }
+
+  const contact = readContact_(data);
+  if (contact.error) {
+    return json_({ ok: false, error: contact.error });
+  }
+  const email = contact.email;
+  const phoneRaw = contact.phoneRaw;
+  const phone = contact.phone;
 
   const guestName = resolveInvitedGuestName_(guestNameRaw);
   if (!guestName) {
     return json_({ ok: false, error: errUpdate });
-  }
-
-  if (!isValidEmail_(email)) {
-    return json_({ ok: false, error: "Please enter a valid email address." });
-  }
-
-  if (phone.length < 10) {
-    return json_({ ok: false, error: "Please enter a valid mobile number." });
   }
 
   const sheet = getSheet_();
@@ -363,7 +380,14 @@ function writeRow_(sheet, rowIndex, data, guestName, email, phoneRaw) {
 }
 
 function normalizePhone_(value) {
-  return String(value || "").replace(/\D/g, "");
+  // One key for the same PH mobile: 0917…, 917…, 63 917…, and +63 917….
+  var digits = String(value || "").replace(/\D/g, "");
+  if (digits.indexOf("00") === 0) digits = digits.slice(2);
+  if (digits.indexOf("63") === 0 && (digits.length === 12 || digits.length === 13)) {
+    digits = digits.slice(2);
+  }
+  if (digits.charAt(0) === "0" && digits.length === 11) digits = digits.slice(1);
+  return digits;
 }
 
 function normalizeName_(value) {
@@ -466,8 +490,8 @@ function findDuplicate_(sheet, email, phone, excludeRow) {
       .trim()
       .toLowerCase();
     const existingPhone = normalizePhone_(data.rows[i][3]);
-    if (existingEmail && existingEmail === email) return true;
-    if (existingPhone && existingPhone === phone) return true;
+    if (email && existingEmail === email) return true;
+    if (phone.length >= 10 && existingPhone === phone) return true;
   }
   return false;
 }

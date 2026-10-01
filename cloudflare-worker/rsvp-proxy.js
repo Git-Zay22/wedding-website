@@ -65,6 +65,26 @@ async function postAppsScript(scriptUrl, bodyText) {
   return res;
 }
 
+function contactError(body) {
+  const action = String((body && body.action) || "create")
+    .trim()
+    .toLowerCase();
+  if (action !== "create" && action !== "update") return "";
+
+  if (body.noEmail === true) body.email = "";
+  if (body.noPhone === true) body.phone = "";
+  if (body.noEmail === true && body.noPhone === true) {
+    return "Please provide an email or a mobile number.";
+  }
+
+  const email = String(body.email || "").trim();
+  const phone = String(body.phone || "").replace(/\D/g, "");
+  if (!email && phone.length < 10) {
+    return "Please provide an email or a mobile number.";
+  }
+  return "";
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -99,6 +119,10 @@ export default {
         }
 
         body.token = env.RSVP_TOKEN;
+        const rejected = contactError(body);
+        if (rejected) {
+          return json({ ok: false, error: rejected }, 400, origin);
+        }
         const bodyText = JSON.stringify(body);
 
         const upstream = await postAppsScript(env.SCRIPT_URL, bodyText);

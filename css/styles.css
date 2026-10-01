@@ -375,6 +375,10 @@ code {
   border-radius: var(--radius-pill);
 }
 
+.nav-proposals__short {
+  display: none;
+}
+
 .nav-toggle {
   display: none;
   width: 2.75rem;
@@ -3097,6 +3101,14 @@ body.is-rsvp-loading {
       opacity 0.22s ease,
       transform 0.22s ease,
       visibility 0s linear 0s;
+  }
+
+  .nav-proposals__full {
+    display: none;
+  }
+
+  .nav-proposals__short {
+    display: inline;
   }
 
   .site-nav a {

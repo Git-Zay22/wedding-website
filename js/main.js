@@ -339,7 +339,6 @@
     const dotsWrap = proposalsRoot.querySelector("[data-proposal-dots]");
     const prevBtn = proposalsRoot.querySelector("[data-proposal-prev]");
     const nextBtn = proposalsRoot.querySelector("[data-proposal-next]");
-    const progress = proposalsRoot.querySelector("[data-proposal-progress]");
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const INTERVAL = 10000;
     let index = Math.max(0, slides.findIndex((s) => s.classList.contains("is-active")));
@@ -358,13 +357,6 @@
       if (dotsWrap) dotsWrap.appendChild(btn);
       return btn;
     });
-
-    const setProgress = (running) => {
-      if (!progress) return;
-      progress.classList.remove("is-running");
-      void progress.offsetWidth;
-      if (running && !reduceMotion) progress.classList.add("is-running");
-    };
 
     const show = (nextIndex) => {
       if (!slides.length) return;
@@ -393,8 +385,6 @@
       dots.forEach((dot, i) => {
         dot.classList.toggle("is-active", i === index);
       });
-
-      setProgress(!paused && !reduceMotion);
     };
 
     const stopTimer = () => {
@@ -411,7 +401,6 @@
         show(index + 1);
         schedule();
       }, INTERVAL);
-      setProgress(true);
     };
 
     const goTo = (i, userDriven) => {
@@ -421,14 +410,11 @@
 
     const pause = () => {
       paused = true;
-      proposalsRoot.classList.add("is-paused");
       stopTimer();
-      if (progress) progress.classList.remove("is-running");
     };
 
     const resume = () => {
       paused = false;
-      proposalsRoot.classList.remove("is-paused");
       schedule();
     };
 

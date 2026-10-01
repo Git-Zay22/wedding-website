@@ -1062,6 +1062,194 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   color: var(--muted);
 }
 
+.attire-guide__chapel {
+  margin: 1.75rem auto 0;
+  max-width: 38rem;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.2vw, 1.12rem);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.attire-samples {
+  margin-top: 1.35rem;
+  text-align: left;
+}
+
+.attire-models--do {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.65rem, 1.6vw, 0.9rem);
+}
+
+.attire-model {
+  margin: 0;
+}
+
+.attire-model img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: var(--radius-md);
+  background: #f6f1e8;
+  border: 1px solid var(--tile-border);
+}
+
+.attire-model figcaption {
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.attire-model figcaption strong {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.attire-avoid {
+  margin-top: 1.25rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(192, 57, 43, 0.18);
+  border-radius: var(--radius-md);
+}
+
+.attire-avoid__title {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.attire-avoid__who {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--powder-deep);
+}
+
+.attire-avoid__cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  align-items: start;
+}
+
+.attire-rail__viewport {
+  position: relative;
+  overflow: hidden;
+  padding-top: 0.35rem;
+}
+
+.attire-rail__slide {
+  margin: 0;
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  width: 46%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transform: translateX(-50%) scale(0.7);
+  filter: blur(4px);
+  transition:
+    transform 0.55s var(--ease),
+    opacity 0.55s var(--ease),
+    filter 0.55s var(--ease);
+}
+
+.attire-rail__slide.is-prev,
+.attire-rail__slide.is-next {
+  opacity: 0.72;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 1;
+  filter: blur(1.25px);
+}
+
+.attire-rail__slide.is-prev {
+  transform: translateX(calc(-50% - 70%)) scale(0.78);
+}
+
+.attire-rail__slide.is-next {
+  transform: translateX(calc(-50% + 70%)) scale(0.78);
+}
+
+.attire-rail__slide.is-active {
+  position: relative;
+  top: auto;
+  opacity: 1;
+  z-index: 2;
+  pointer-events: auto;
+  filter: none;
+  transform: translateX(-50%) scale(1);
+}
+
+.attire-rail__slide.is-far {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.62);
+}
+
+.attire-rail__slide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: var(--radius-md);
+  background: #f6f1e8;
+  border: 1px solid var(--tile-border);
+}
+
+.attire-rail__slide figcaption {
+  margin-top: 0.45rem;
+  min-height: 2.7em;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--muted);
+}
+
+.attire-rail__slide:not(.is-active) figcaption {
+  visibility: hidden;
+}
+
+.attire-rail__nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.attire-rail__arrow {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--tile-border);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.attire-rail__arrow:hover,
+.attire-rail__arrow:focus-visible {
+  background: #fff;
+  outline: none;
+}
+
 .map-link {
   display: inline-block;
   margin-top: 1rem;
@@ -3101,6 +3289,14 @@ body.is-rsvp-loading {
 
   .attire-guide__script {
     font-size: clamp(2.4rem, 12vw, 3.25rem);
+  }
+
+  .attire-models--do {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .attire-avoid__cols {
+    grid-template-columns: 1fr;
   }
 
   .info__grid {

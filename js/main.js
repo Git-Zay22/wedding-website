@@ -493,6 +493,82 @@
     schedule();
   }
 
+  document.querySelectorAll("[data-attire-rail]").forEach((rail) => {
+    const slides = Array.from(rail.querySelectorAll("[data-attire-slide]"));
+    const prevBtn = rail.querySelector("[data-attire-prev]");
+    const nextBtn = rail.querySelector("[data-attire-next]");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const INTERVAL = 10000;
+    if (!slides.length) return;
+    let index = 0;
+    let timer = null;
+    let paused = false;
+
+    const show = (nextIndex) => {
+      index = (nextIndex + slides.length) % slides.length;
+      const prevIndex = (index - 1 + slides.length) % slides.length;
+      const nextSide = (index + 1) % slides.length;
+      slides.forEach((slide, i) => {
+        slide.classList.remove("is-active", "is-prev", "is-next", "is-far");
+        if (i === index) slide.classList.add("is-active");
+        else if (slides.length > 1 && i === prevIndex) slide.classList.add("is-prev");
+        else if (slides.length > 2 && i === nextSide) slide.classList.add("is-next");
+        else slide.classList.add("is-far");
+      });
+    };
+
+    const stopTimer = () => {
+      if (timer) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const schedule = () => {
+      stopTimer();
+      if (paused || reduceMotion || slides.length < 2) return;
+      timer = window.setTimeout(() => {
+        show(index + 1);
+        schedule();
+      }, INTERVAL);
+    };
+
+    const goTo = (i) => {
+      show(i);
+      schedule();
+    };
+
+    const pause = () => {
+      paused = true;
+      stopTimer();
+    };
+
+    const resume = () => {
+      paused = false;
+      schedule();
+    };
+
+    if (prevBtn) prevBtn.addEventListener("click", () => goTo(index - 1));
+    if (nextBtn) nextBtn.addEventListener("click", () => goTo(index + 1));
+    slides.forEach((slide, i) => {
+      slide.addEventListener("click", () => {
+        if (!slide.classList.contains("is-active")) goTo(i);
+      });
+    });
+
+    rail.addEventListener("mouseenter", pause);
+    rail.addEventListener("mouseleave", resume);
+    rail.addEventListener("focusin", pause);
+    rail.addEventListener("focusout", (event) => {
+      if (!rail.contains(event.relatedTarget)) resume();
+    });
+    rail.addEventListener("touchstart", pause, { passive: true });
+    rail.addEventListener("touchend", resume, { passive: true });
+
+    show(0);
+    schedule();
+  });
+
   /* Gallery lightbox */
   const lightbox = document.querySelector("[data-lightbox]");
   const lightboxGallery = document.querySelector("[data-lightbox-gallery]");

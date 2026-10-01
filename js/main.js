@@ -1,5 +1,5 @@
 (function () {
-  const PROPOSALS_UNLOCK_KEY = "cz-proposals-unlock";
+  const PROPOSALS_UNLOCK_KEY = "cz-owners-unlock";
   const PROPOSALS_NAMES = new Set(["zayrol", "caren"]);
 
   const isProposalsUnlocked = () => {
@@ -10,12 +10,19 @@
     }
   };
 
+  const loadOwnerCards = () => {
+    document.querySelectorAll("[data-proposals-section] img[data-src]").forEach((img) => {
+      if (!img.getAttribute("src")) img.src = img.getAttribute("data-src");
+    });
+  };
+
   const applyProposalsVisibility = () => {
-    if (isProposalsUnlocked()) {
-      document.documentElement.classList.add("proposals-unlocked");
-    } else {
-      document.documentElement.classList.remove("proposals-unlocked");
-    }
+    const open = isProposalsUnlocked();
+    document.documentElement.classList.toggle("proposals-unlocked", open);
+    document.querySelectorAll("[data-owners-lock]").forEach((el) => {
+      el.hidden = !open;
+    });
+    if (open) loadOwnerCards();
   };
 
   applyProposalsVisibility();

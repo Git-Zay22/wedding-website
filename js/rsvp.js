@@ -34,13 +34,15 @@
   let renderedNoticeKey = "";
   let warningDismissed = false;
   let nameGuideDismissed = false;
-  let nameGuidePinned = true;
+  let nameGuideRequested = true;
   let editGuideDismissed = false;
-  let nameFocused = false;
   let rsvpInView = false;
   let rsvpSectionVisible = false;
   let footerInView = false;
   let sectionLeaveTimer = null;
+  let noticeDeadline = 0;
+  const NOTICE_MS = 10000;
+  const nameGuideBtn = form.querySelector("[data-name-guide]");
 
   function clearStatusTimers() {
     if (statusHideTimer) {
@@ -59,6 +61,9 @@
 
   function desiredNotice() {
     if (pinnedNotice) return pinnedNotice;
+    if (nameGuideRequested && !nameGuideDismissed) {
+      return { type: "guide", kind: "name" };
+    }
     if (oneContactSkipped() && !warningDismissed) {
       return {
         type: "warning",
@@ -69,9 +74,6 @@
     }
     if (editMode && !editLoaded && !editGuideDismissed) {
       return { type: "guide", kind: "edit" };
-    }
-    if ((nameFocused || nameGuidePinned) && !nameGuideDismissed) {
-      return { type: "guide", kind: "name" };
     }
     return null;
   }
@@ -162,6 +164,52 @@
     return wrap;
   }
 
+  function syncNameGuideButton() {
+    if (!nameGuideBtn) return;
+    const open =
+      nameGuideRequested &&
+      !nameGuideDismissed &&
+      statusEl &&
+      !statusEl.hidden &&
+      renderedNoticeKey.indexOf("guide|name") === 0;
+    nameGuideBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function syncNoticeBar() {
+    if (!statusEl || !noticeDeadline) return;
+    const bar = statusEl.querySelector(".form-status__bar > span");
+    if (!bar) return;
+    const remain = Math.max(0, noticeDeadline - Date.now());
+    const scale = Math.min(1, remain / NOTICE_MS);
+    bar.style.transition = "none";
+    bar.style.transform = "scaleX(" + scale + ")";
+    void bar.offsetWidth;
+    if (remain > 0) {
+      bar.style.transition = "transform " + remain + "ms linear";
+      bar.style.transform = "scaleX(0)";
+    }
+  }
+
+  function scheduleNoticeEnd() {
+    const remain = Math.max(0, noticeDeadline - Date.now());
+    statusFadeTimer = setTimeout(() => {
+      if (!statusEl || statusEl.hidden) return;
+      statusEl.classList.add("is-timing-out");
+    }, remain);
+    statusHideTimer = setTimeout(() => {
+      if (statusEl) statusEl.classList.remove("is-timing-out");
+      dismissCurrentNotice();
+    }, remain + 420);
+  }
+
+  function armNoticeTimer() {
+    clearStatusTimers();
+    noticeDeadline = Date.now() + NOTICE_MS;
+    if (statusEl) statusEl.classList.remove("is-timing-out");
+    syncNoticeBar();
+    scheduleNoticeEnd();
+  }
+
   function hideNotice() {
     if (!statusEl) return;
     if (sectionLeaveTimer) {
@@ -169,9 +217,11 @@
       sectionLeaveTimer = null;
     }
     statusEl.hidden = true;
-    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-offsection");
+    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-timing-out", "is-offsection");
     statusEl.replaceChildren();
     renderedNoticeKey = "";
+    noticeDeadline = 0;
+    syncNameGuideButton();
   }
 
   function concealForSection() {
@@ -191,7 +241,10 @@
     statusEl.classList.add("is-offsection");
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (rsvpInView) statusEl.classList.remove("is-offsection");
+        if (rsvpInView) {
+          statusEl.classList.remove("is-offsection");
+          syncNoticeBar();
+        }
       });
     });
   }
@@ -207,7 +260,7 @@
     }
 
     statusEl.hidden = false;
-    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading");
+    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-timing-out");
     statusEl.classList.add("is-" + notice.type);
     statusEl.replaceChildren();
 
@@ -258,9 +311,19 @@
     }
 
     statusEl.appendChild(body);
+
+    const bar = document.createElement("div");
+    bar.className = "form-status__bar";
+    bar.setAttribute("aria-hidden", "true");
+    const barFill = document.createElement("span");
+    bar.appendChild(barFill);
+    statusEl.appendChild(bar);
+
     renderedNoticeKey = key;
     if (offscreen) slideNoticeIn();
     else statusEl.classList.remove("is-offsection");
+    armNoticeTimer();
+    syncNameGuideButton();
 
     if (notice.type === "success") {
       statusEl.classList.remove("is-flash");
@@ -284,6 +347,7 @@
 
   function clearStatus() {
     pinnedNotice = null;
+    nameGuideRequested = false;
     clearStatusTimers();
     renderedNoticeKey = "";
     refreshNotice();
@@ -303,7 +367,7 @@
     else if (notice.kind === "edit") editGuideDismissed = true;
     else {
       nameGuideDismissed = true;
-      nameGuidePinned = false;
+      nameGuideRequested = false;
     }
     if (notice.type === "warning" || notice.kind === "edit") nameGuideDismissed = true;
     fadeThenRefresh();
@@ -390,11 +454,6 @@
     };
     renderedNoticeKey = "";
     refreshNotice();
-    if (type === "success") {
-      statusHideTimer = setTimeout(() => {
-        dismissStatus();
-      }, 10000);
-    }
   }
 
   function isConfigured() {
@@ -856,20 +915,22 @@
   }
 
   function showNameGuide() {
-    nameFocused = true;
+    pinnedNotice = null;
+    clearStatusTimers();
+    nameGuideRequested = true;
     nameGuideDismissed = false;
+    renderedNoticeKey = "";
+    readRsvpPresence();
     refreshNotice();
   }
 
-  form.guestName.addEventListener("focus", showNameGuide);
-  form.guestName.addEventListener("click", showNameGuide);
-  form.guestName.addEventListener("blur", () => {
-    window.setTimeout(() => {
-      if (document.activeElement === form.guestName) return;
-      nameFocused = false;
-      refreshNotice();
-    }, 0);
-  });
+  if (nameGuideBtn) {
+    nameGuideBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      showNameGuide();
+    });
+  }
+
   form.guestName.addEventListener("keydown", onFindEnter);
   form.email.addEventListener("keydown", onFindEnter);
   form.phone.addEventListener("keydown", onFindEnter);
@@ -937,7 +998,10 @@
     }
     window.addEventListener("scroll", schedulePresence, { passive: true });
     window.addEventListener("resize", schedulePresence);
+    window.addEventListener("load", readRsvpPresence);
     readRsvpPresence();
+    // Hash links can land on the form after the first measurement.
+    requestAnimationFrame(readRsvpPresence);
   } else {
     rsvpInView = true;
     refreshNotice();

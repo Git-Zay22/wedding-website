@@ -2635,6 +2635,7 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 }
 
 .field > label,
+.field__name > label,
 .field__top > label:not(.contact-skip),
 .field > legend {
   font-size: 0.8rem;
@@ -2839,18 +2840,21 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   position: fixed;
   z-index: 70;
   isolation: isolate;
-  left: 0;
-  right: 0;
+  left: auto;
+  right: max(0.85rem, env(safe-area-inset-right));
   bottom: max(0.85rem, env(safe-area-inset-bottom));
-  width: min(34rem, calc(100vw - 1.5rem));
-  margin-inline: auto;
+  width: min(24rem, calc(100vw - 1.75rem));
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   min-height: 0;
-  padding: 0.9rem 1rem;
+  padding: 0.85rem 2.15rem 0 0.9rem;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   max-height: min(18rem, 46vh);
-  overflow: auto;
-  font-size: 0.95rem;
+  overflow: hidden;
+  font-size: 0.92rem;
   line-height: 1.45;
   color: var(--sage-deep);
   background: #f7fbfe;
@@ -2872,9 +2876,59 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   padding: 0;
 }
 
-.form-status.is-fading {
-  opacity: 1;
+.form-status.is-fading,
+.form-status.is-timing-out {
+  opacity: 0;
   pointer-events: none;
+}
+
+.form-status__bar {
+  flex: none;
+  height: 4px;
+  margin: 0.7rem -2.15rem 0 -0.9rem;
+  background: rgba(36, 48, 58, 0.1);
+}
+
+.form-status__bar > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(1);
+  background: #3d8fba;
+}
+
+@media (max-width: 720px) {
+  .form-status {
+    right: max(0.55rem, env(safe-area-inset-right));
+    bottom: max(0.55rem, env(safe-area-inset-bottom));
+    width: min(16.75rem, calc(100vw - 1.4rem));
+    max-height: min(16rem, 42vh);
+    padding: 0.65rem 2.05rem 0 0.7rem;
+    font-size: 0.78rem;
+    border-radius: 0.85rem;
+  }
+
+  .form-status__close {
+    width: 1.4rem;
+    height: 1.4rem;
+    top: 0.28rem;
+    right: 0.28rem;
+    font-size: 1rem;
+  }
+
+  .form-status__bar {
+    margin: 0.55rem -2.05rem 0 -0.7rem;
+  }
+
+  .form-status .name-guide__lead,
+  .form-status .rsvp-edit-instructions__list {
+    font-size: 0.76rem;
+  }
+
+  .form-status .name-guide__example {
+    font-size: 0.74rem;
+  }
 }
 
 .form-status.is-guide {
@@ -2933,12 +2987,13 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 }
 
 .form-status__close {
-  position: sticky;
-  top: 0.15rem;
-  float: right;
-  margin: 0 0 0.35rem 0.65rem;
-  width: 1.85rem;
-  height: 1.85rem;
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  float: none;
+  margin: 0;
+  width: 1.65rem;
+  height: 1.65rem;
   display: grid;
   place-items: center;
   margin: 0;
@@ -2963,6 +3018,72 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 
 .form-status__body {
   margin: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+.field__name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.28rem;
+  width: 100%;
+}
+
+.field__name > .rsvp-info {
+  align-self: flex-end;
+}
+
+.field__name > label {
+  margin: 0;
+}
+
+.rsvp-info {
+  width: 1.45rem;
+  height: 1.45rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(61, 143, 186, 0.45);
+  border-radius: 999px;
+  background: #f4faff;
+  color: #2f7eab;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1;
+  cursor: pointer;
+  animation: rsvp-info-glow 2.4s ease-in-out infinite;
+}
+
+.rsvp-info:hover,
+.rsvp-info:focus-visible {
+  outline: none;
+  background: #ffffff;
+}
+
+@keyframes rsvp-info-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(61, 143, 186, 0.18),
+      0 0 8px rgba(90, 168, 210, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(61, 143, 186, 0.08),
+      0 0 16px rgba(90, 168, 210, 0.75);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp-info {
+    animation: none;
+    box-shadow: 0 0 10px rgba(90, 168, 210, 0.45);
+  }
 }
 
 .form-status .name-guide,

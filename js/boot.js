@@ -1,6 +1,6 @@
 (function () {
   try {
-    if (sessionStorage.getItem("cz-proposals-unlock") === "1") {
+    if (sessionStorage.getItem("cz-owners-unlock") === "1") {
       document.documentElement.classList.add("proposals-unlocked");
     }
   } catch (e) {}

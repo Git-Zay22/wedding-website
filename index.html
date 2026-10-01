@@ -16,8 +16,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=110" />
-  <script src="js/boot.js?v=1"></script>
+  <link rel="stylesheet" href="css/styles.css?v=115" />
+  <script src="js/boot.js?v=2"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -43,7 +43,7 @@
       <a href="#attire">Attire</a>
       <a href="#info">Info</a>
       <a href="#gallery">Gallery</a>
-      <a href="#owners" class="nav-proposals" data-nav-proposals aria-label="Proposals and invitations">
+      <a href="#owners" class="nav-proposals" data-nav-proposals data-owners-lock hidden aria-label="Proposals and invitations">
         <span class="nav-proposals__full">Proposals and Invitations</span>
         <span class="nav-proposals__short">Invites</span>
       </a>
@@ -484,9 +484,9 @@
       </div>
     </section>
 
-    <div class="divider divider--proposals" aria-hidden="true"><span></span></div>
+    <div class="divider divider--proposals" data-owners-lock hidden aria-hidden="true"><span></span></div>
 
-    <section id="owners" class="section proposals" aria-label="Proposals and invitations" data-proposals-section>
+    <section id="owners" class="section proposals" aria-label="Proposals and invitations" data-proposals-section data-owners-lock hidden>
       <div class="section__inner">
         <p class="eyebrow" data-reveal>For our people</p>
         <h2 class="section__title" data-reveal>Proposals and Invitations</h2>
@@ -503,7 +503,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/invitations/main-invitation.jpg" alt="Main invitation card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/invitations/main-invitation.jpg" alt="Main invitation card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -518,7 +518,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/invitations/entourage.jpg" alt="Entourage invitation card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/invitations/entourage.jpg" alt="Entourage invitation card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -533,7 +533,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/invitations/finer-details.jpg" alt="Finer details invitation card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/invitations/finer-details.jpg" alt="Finer details invitation card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -548,7 +548,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/invitations/for-ninangs.jpg" alt="Invitation card for ninangs" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/invitations/for-ninangs.jpg" alt="Invitation card for ninangs" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -563,7 +563,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/invitations/for-ninongs.jpg" alt="Invitation card for ninongs" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/invitations/for-ninongs.jpg" alt="Invitation card for ninongs" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -578,7 +578,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/invitations/rsvp.jpg" alt="RSVP invitation card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/invitations/rsvp.jpg" alt="RSVP invitation card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -609,7 +609,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/proposals/maid-of-honor.jpg" alt="Maid of Honor proposal card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/proposals/maid-of-honor.jpg" alt="Maid of Honor proposal card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -624,7 +624,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/proposals/best-man.jpg" alt="Best Man proposal card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/proposals/best-man.jpg" alt="Best Man proposal card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -639,7 +639,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/proposals/bridesmaids.jpg" alt="Bridesmaids proposal card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/proposals/bridesmaids.jpg" alt="Bridesmaids proposal card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -654,7 +654,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/proposals/groomsmen.jpg" alt="Groomsmen proposal card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/proposals/groomsmen.jpg" alt="Groomsmen proposal card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -669,7 +669,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/proposals/ninang.jpg" alt="Ninang proposal card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/proposals/ninang.jpg" alt="Ninang proposal card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -684,7 +684,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/proposals/ninong.jpg" alt="Ninong proposal card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/proposals/ninong.jpg" alt="Ninong proposal card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -699,7 +699,7 @@
                 <span class="proposal-slide__edge" aria-hidden="true"></span>
                 <div class="proposal-slide__holo" aria-hidden="true"></div>
                 <div class="proposal-slide__frame">
-                  <img src="assets/proposals/ring-bearer.jpg" alt="Ring Bearer proposal card" width="1100" height="1556" loading="lazy" />
+                  <img data-src="assets/proposals/ring-bearer.jpg" alt="Ring Bearer proposal card" width="1100" height="1556" loading="lazy" />
                 </div>
               </div>
               <div class="proposal-slide__badge">
@@ -745,7 +745,12 @@
 
         <form id="rsvp-form" class="rsvp-form" novalidate>
           <div class="field">
-            <label for="guestName">Full name <span class="req" aria-hidden="true">*</span></label>
+            <div class="field__name">
+              <button type="button" class="rsvp-info" data-name-guide aria-expanded="false" aria-label="Show the name guide">
+                <span aria-hidden="true">i</span>
+              </button>
+              <label for="guestName">Full name <span class="req" aria-hidden="true">*</span></label>
+            </div>
             <input id="guestName" name="guestName" type="text" autocomplete="name" required maxlength="120" placeholder="firstname lastname only" />
           </div>
 
@@ -928,7 +933,7 @@
   </footer>
 
   <script src="js/config.js?v=6"></script>
-  <script src="js/main.js?v=34"></script>
-  <script src="js/rsvp.js?v=41"></script>
+  <script src="js/main.js?v=35"></script>
+  <script src="js/rsvp.js?v=46"></script>
 </body>
 </html>

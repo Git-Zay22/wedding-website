@@ -2937,10 +2937,18 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   background: #f3f9fd;
 }
 
+.form-status.is-guide .form-status__bar > span {
+  background: #3d8fba;
+}
+
 .form-status.is-warning {
   color: var(--ink-soft);
   border-color: rgba(228, 184, 46, 0.55);
   background: #fff6d6;
+}
+
+.form-status.is-warning .form-status__bar > span {
+  background: #e4b82e;
 }
 
 .form-status.is-error {
@@ -2949,11 +2957,19 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   background: #fff4f2;
 }
 
+.form-status.is-error .form-status__bar > span {
+  background: #c0392b;
+}
+
 .form-status.is-success {
   color: #5c4a12;
   border-color: #e4c15a;
   background: #fff3c4;
   box-shadow: 0 14px 36px rgba(36, 48, 58, 0.16);
+}
+
+.form-status.is-success .form-status__bar > span {
+  background: #e4c15a;
 }
 
 .form-status.is-flash {

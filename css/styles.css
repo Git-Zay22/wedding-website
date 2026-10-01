@@ -1877,10 +1877,56 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   font-size: clamp(1.05rem, 2.2vw, 1.2rem);
 }
 
+.owners-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  width: min(100% - 1.5rem, 76rem);
+  margin: 0 auto;
+  align-items: start;
+}
+
+.owners-pair__title {
+  margin: 0 0 0.35rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  letter-spacing: 0.04em;
+}
+
 .proposals__stage {
   width: min(100% - 1rem, 52rem);
   margin: 0 auto;
   position: relative;
+}
+
+.owners-pair .proposals__stage {
+  width: 100%;
+}
+
+.owners-pair .proposal-slide {
+  width: min(100% - 0.75rem, 17rem);
+}
+
+.owners-pair .proposal-slide.is-prev {
+  transform: translate3d(calc(-50% - clamp(4.25rem, 10vw, 6.5rem)), 0.85rem, -90px) rotateY(28deg) rotateX(4deg) scale(0.78);
+}
+
+.owners-pair .proposal-slide.is-next {
+  transform: translate3d(calc(-50% + clamp(4.25rem, 10vw, 6.5rem)), 0.85rem, -90px) rotateY(-28deg) rotateX(4deg) scale(0.78);
+}
+
+.owners-pair__credit {
+  width: min(100% - 1.5rem, 76rem);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 980px) {
+  .owners-pair {
+    grid-template-columns: 1fr;
+  }
 }
 
 .proposals__viewport {

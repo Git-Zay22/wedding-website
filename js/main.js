@@ -333,9 +333,8 @@
     setInterval(updateRsvpDays, 60000);
   }
 
-  // Proposals slider — 10s autoplay, pause on hover
-  const proposalsRoot = document.querySelector("[data-proposals]");
-  if (proposalsRoot) {
+  // Owners sliders — invitations and proposals, each with its own 10s autoplay
+  document.querySelectorAll("[data-proposals]").forEach((proposalsRoot) => {
     const slides = Array.from(proposalsRoot.querySelectorAll("[data-proposal-slide]"));
     const dotsWrap = proposalsRoot.querySelector("[data-proposal-dots]");
     const prevBtn = proposalsRoot.querySelector("[data-proposal-prev]");
@@ -354,7 +353,7 @@
       btn.type = "button";
       btn.className = "proposals__dot" + (i === index ? " is-active" : "");
       btn.setAttribute("role", "tab");
-      btn.setAttribute("aria-label", "Show proposal " + (i + 1));
+      btn.setAttribute("aria-label", "Show " + (proposalsRoot.getAttribute("data-proposals") || "slide") + " " + (i + 1));
       btn.addEventListener("click", () => goTo(i, true));
       if (dotsWrap) dotsWrap.appendChild(btn);
       return btn;
@@ -491,7 +490,7 @@
     
     show(index);
     schedule();
-  }
+  });
 
   document.querySelectorAll("[data-attire-rail]").forEach((rail) => {
     const slides = Array.from(rail.querySelectorAll("[data-attire-slide]"));

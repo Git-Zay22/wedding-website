@@ -2900,13 +2900,18 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 
 @media (max-width: 720px) {
   .form-status {
+    top: calc(var(--header-h) + 0.45rem);
     right: max(0.55rem, env(safe-area-inset-right));
-    bottom: max(0.55rem, env(safe-area-inset-bottom));
+    bottom: auto;
     width: min(16.75rem, calc(100vw - 1.4rem));
     max-height: min(16rem, 42vh);
     padding: 0.65rem 2.05rem 0 0.7rem;
     font-size: 0.78rem;
     border-radius: 0.85rem;
+  }
+
+  .form-status.is-offsection {
+    transform: translateY(-1.15rem);
   }
 
   .form-status__close {

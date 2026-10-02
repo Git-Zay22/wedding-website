@@ -2967,14 +2967,14 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
 }
 
 .form-status.is-success {
-  color: #5c4a12;
-  border-color: #e4c15a;
-  background: #fff3c4;
-  box-shadow: 0 14px 36px rgba(36, 48, 58, 0.16);
+  color: #1b3022;
+  border-color: #2e5135;
+  background: #eef6f0;
+  box-shadow: 0 14px 36px rgba(27, 48, 34, 0.12);
 }
 
 .form-status.is-success .form-status__bar > span {
-  background: #e4c15a;
+  background: #2e5135;
 }
 
 .form-status.is-flash {
@@ -2985,25 +2985,25 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   0% {
     transform: scale(1);
     box-shadow:
-      0 0 0 1px rgba(255, 220, 100, 0.55),
-      0 0 12px rgba(255, 200, 40, 0.4),
-      0 0 24px rgba(255, 190, 30, 0.18);
+      0 0 0 1px rgba(46, 81, 53, 0.45),
+      0 0 12px rgba(46, 81, 53, 0.28),
+      0 0 24px rgba(27, 48, 34, 0.14);
   }
   40% {
     transform: scale(1.015);
     box-shadow:
-      0 0 0 2px rgba(255, 214, 80, 0.75),
-      0 0 22px rgba(255, 200, 40, 0.7),
-      0 0 44px rgba(255, 190, 30, 0.4),
-      0 10px 22px rgba(92, 74, 18, 0.12);
+      0 0 0 2px rgba(46, 81, 53, 0.6),
+      0 0 22px rgba(46, 81, 53, 0.45),
+      0 0 44px rgba(27, 48, 34, 0.22),
+      0 10px 22px rgba(27, 48, 34, 0.12);
   }
   100% {
     transform: scale(1);
     box-shadow:
-      0 0 0 1px rgba(255, 220, 100, 0.55),
-      0 0 18px rgba(255, 200, 40, 0.55),
-      0 0 36px rgba(255, 190, 30, 0.28),
-      0 10px 22px rgba(92, 74, 18, 0.1);
+      0 0 0 1px rgba(46, 81, 53, 0.45),
+      0 0 18px rgba(46, 81, 53, 0.35),
+      0 0 36px rgba(27, 48, 34, 0.18),
+      0 10px 22px rgba(27, 48, 34, 0.1);
   }
 }
 

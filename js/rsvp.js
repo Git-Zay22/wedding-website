@@ -1087,7 +1087,7 @@
 
     // Honeypot
     if (form.website && form.website.value.trim() !== "") {
-      setStatus("Thanks — your RSVP was received.", "success");
+      setStatus("Thank you. We have received your RSVP.", "success");
       editMode = false;
       if (editToggle) editToggle.checked = false;
       resetEditState(false);
@@ -1146,8 +1146,8 @@
       hideLoading();
       setStatus(
         editMode
-          ? "Thank you — your RSVP has been updated."
-          : "Thank you — your RSVP is on its way to us.",
+          ? "Thank you. Your RSVP has been updated."
+          : "Thank you. We have received your RSVP.",
         "success"
       );
       editMode = false;

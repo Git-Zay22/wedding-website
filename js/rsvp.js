@@ -41,6 +41,8 @@
   let footerInView = false;
   let sectionLeaveTimer = null;
   let noticeDeadline = 0;
+  let noticePaused = false;
+  let noticeRemain = 0;
   const NOTICE_MS = 10000;
   const nameGuideBtn = form.querySelector("[data-name-guide]");
 
@@ -61,9 +63,6 @@
 
   function desiredNotice() {
     if (pinnedNotice) return pinnedNotice;
-    if (nameGuideRequested && !nameGuideDismissed) {
-      return { type: "guide", kind: "name" };
-    }
     if (oneContactSkipped() && !warningDismissed) {
       return {
         type: "warning",
@@ -71,6 +70,9 @@
         message:
           "If you do not have an email address or a mobile number, please turn on the switch beside that field. When you find or edit your RSVP, please turn on the switch for any contact you left out.",
       };
+    }
+    if (nameGuideRequested && !nameGuideDismissed) {
+      return { type: "guide", kind: "name" };
     }
     if (editMode && !editLoaded && !editGuideDismissed) {
       return { type: "guide", kind: "edit" };
@@ -176,7 +178,7 @@
   }
 
   function syncNoticeBar() {
-    if (!statusEl || !noticeDeadline) return;
+    if (!statusEl || !noticeDeadline || noticePaused) return;
     const bar = statusEl.querySelector(".form-status__bar > span");
     if (!bar) return;
     const remain = Math.max(0, noticeDeadline - Date.now());
@@ -202,12 +204,36 @@
     }, remain + 420);
   }
 
+  function pauseNoticeTimer() {
+    if (!statusEl || statusEl.hidden || !noticeDeadline || noticePaused) return;
+    noticeRemain = Math.max(0, noticeDeadline - Date.now());
+    noticePaused = true;
+    clearStatusTimers();
+    statusEl.classList.remove("is-timing-out");
+    const bar = statusEl.querySelector(".form-status__bar > span");
+    if (!bar) return;
+    const transform = getComputedStyle(bar).transform;
+    bar.style.transition = "none";
+    if (transform && transform !== "none") bar.style.transform = transform;
+  }
+
+  function resumeNoticeTimer() {
+    if (!noticePaused || !statusEl || statusEl.hidden) return;
+    noticePaused = false;
+    noticeDeadline = Date.now() + noticeRemain;
+    statusEl.classList.remove("is-timing-out");
+    syncNoticeBar();
+    scheduleNoticeEnd();
+  }
+
   function armNoticeTimer() {
     clearStatusTimers();
+    noticePaused = false;
     noticeDeadline = Date.now() + NOTICE_MS;
     if (statusEl) statusEl.classList.remove("is-timing-out");
     syncNoticeBar();
     scheduleNoticeEnd();
+    if (statusEl && statusEl.matches(":hover")) pauseNoticeTimer();
   }
 
   function hideNotice() {
@@ -221,6 +247,8 @@
     statusEl.replaceChildren();
     renderedNoticeKey = "";
     noticeDeadline = 0;
+    noticePaused = false;
+    noticeRemain = 0;
     syncNameGuideButton();
   }
 
@@ -670,6 +698,10 @@
   function onSkipChange(changed, other) {
     if (changed && changed.checked && other) other.checked = false;
     warningDismissed = false;
+    if (pinnedNotice && pinnedNotice.type === "error") {
+      pinnedNotice = null;
+      renderedNoticeKey = "";
+    }
     syncContactSkips();
     if (editMode && editLoaded) syncButtonState();
   }
@@ -929,6 +961,11 @@
       event.preventDefault();
       showNameGuide();
     });
+  }
+
+  if (statusEl) {
+    statusEl.addEventListener("pointerenter", pauseNoticeTimer);
+    statusEl.addEventListener("pointerleave", resumeNoticeTimer);
   }
 
   form.guestName.addEventListener("keydown", onFindEnter);

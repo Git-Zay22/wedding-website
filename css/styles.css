@@ -2665,6 +2665,26 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   color: var(--muted);
 }
 
+.hashtag-chip {
+  justify-self: start;
+  appearance: none;
+  border: 1px solid rgba(46, 81, 53, 0.35);
+  background: #eef6f0;
+  color: #1b3022;
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.hashtag-chip:hover,
+.hashtag-chip:focus-visible {
+  border-color: #2e5135;
+  background: #e3f0e6;
+}
+
 .field input:not([type="radio"]):not([type="checkbox"]),
 .field select,
 .field textarea {

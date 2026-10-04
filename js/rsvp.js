@@ -534,6 +534,7 @@
       commute: form.commute.value || "",
       allergies: form.allergies.value.trim(),
       message: form.message.value.trim(),
+      hashtag: normalizeHashtag(form.hashtag && form.hashtag.value),
     });
   }
 
@@ -617,6 +618,7 @@
     setSelectValue(form.commute, record.commute || "");
     form.allergies.value = record.allergies || "";
     form.message.value = record.message || "";
+    if (form.hashtag) form.hashtag.value = normalizeHashtag(record.hashtag || "");
     originalGuestName = record.guestName || form.guestName.value.trim();
     originalEmail = String(record.email || "")
       .trim()
@@ -638,6 +640,16 @@
 
   function phoneDigits(value) {
     return String(value || "").replace(/\D/g, "");
+  }
+
+  function normalizeHashtag(value) {
+    let text = String(value || "")
+      .trim()
+      .replace(/\s+/g, "");
+    if (!text) return "";
+    text = text.replace(/[^#A-Za-z0-9_]/g, "").replace(/^#+/, "");
+    if (!text) return "";
+    return ("#" + text).slice(0, 40);
   }
 
   function contactValues() {
@@ -972,6 +984,18 @@
   form.email.addEventListener("keydown", onFindEnter);
   form.phone.addEventListener("keydown", onFindEnter);
 
+  const hashtagSuggestion = form.querySelector("[data-hashtag-suggestion]");
+  if (hashtagSuggestion && form.hashtag) {
+    hashtagSuggestion.addEventListener("click", () => {
+      form.hashtag.value = normalizeHashtag(hashtagSuggestion.textContent);
+      form.hashtag.dispatchEvent(new Event("input", { bubbles: true }));
+      form.hashtag.focus();
+    });
+    form.hashtag.addEventListener("blur", () => {
+      form.hashtag.value = normalizeHashtag(form.hashtag.value);
+    });
+  }
+
   if (skipEmail) {
     skipEmail.addEventListener("change", () => onSkipChange(skipEmail, skipPhone));
   }
@@ -1111,6 +1135,7 @@
       commute: form.commute.value,
       allergies: form.allergies.value.trim(),
       message: form.message.value.trim(),
+      hashtag: normalizeHashtag(form.hashtag && form.hashtag.value),
       submittedAt: new Date().toISOString(),
       source: window.location.href,
     };

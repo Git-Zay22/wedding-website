@@ -6,7 +6,9 @@
  *
  * Tab name: RSVPs
  * Headers:
- * Timestamp | Name | Email | Phone | Attendance | Events | Commute | Allergies | Message | Source
+ * Timestamp | Name | Email | Phone | Attendance | Events | Commute | Allergies | Message | Source | Hashtag
+ * Older sheets may also have Guests after Events. Hashtag is added as a new
+ * last column, so existing cells stay in place.
  *
  * GET actions:
  * - health (no action)
@@ -35,6 +37,7 @@ const HEADERS = [
   "Allergies",
   "Message",
   "Source",
+  "Hashtag",
 ];
 
 /**
@@ -372,10 +375,44 @@ function buildRowValues_(data, guestName, email, phoneRaw, includeGuests) {
   return base;
 }
 
+function headerColumn_(sheet, name) {
+  var lastCol = sheet.getLastColumn();
+  if (!lastCol) return 0;
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var want = String(name || "").trim().toLowerCase();
+  for (var i = 0; i < headers.length; i++) {
+    if (String(headers[i] || "").trim().toLowerCase() === want) return i + 1;
+  }
+  return 0;
+}
+
+function ensureHashtagColumn_(sheet) {
+  var existing = headerColumn_(sheet, "hashtag");
+  if (existing) return existing;
+  // Append only. insertColumn would shift existing RSVP cells.
+  var col = Math.max(sheet.getLastColumn(), 1) + 1;
+  sheet.getRange(1, col).setValue("Hashtag");
+  return col;
+}
+
+function normalizeHashtag_(value) {
+  var text = String(value || "")
+    .trim()
+    .replace(/\s+/g, "");
+  if (!text) return "";
+  text = text.replace(/[^#A-Za-z0-9_]/g, "").replace(/^#+/, "");
+  if (!text) return "";
+  return ("#" + text).slice(0, 40);
+}
+
 function writeRow_(sheet, rowIndex, data, guestName, email, phoneRaw) {
   const includeGuests = sheetHasGuestsColumn_(sheet);
   const values = buildRowValues_(data, guestName, email, phoneRaw, includeGuests);
   sheet.getRange(rowIndex, 1, 1, values.length).setValues([values]);
+  const hashtagCol = ensureHashtagColumn_(sheet);
+  if (hashtagCol > values.length) {
+    sheet.getRange(rowIndex, hashtagCol).setValue(normalizeHashtag_(data.hashtag));
+  }
   invalidateSheetCache_(sheet);
 }
 
@@ -407,10 +444,12 @@ function isValidEmail_(email) {
   );
 }
 
-function recordFromRow_(row, hasGuests) {
+function recordFromRow_(row, hasGuests, hashtagCol) {
   // With Guests: 0..10 = Timestamp, Name, Email, Phone, Attendance, Events, Guests, Commute, Allergies, Message, Source
   // Without:     0..9  = Timestamp, Name, Email, Phone, Attendance, Events, Commute, Allergies, Message, Source
+  // Hashtag is appended after Source and is not part of those indexes.
   const commuteIdx = hasGuests ? 7 : 6;
+  const hashtagIdx = hashtagCol ? hashtagCol - 1 : -1;
   return {
     guestName: String(row[1] || "").trim(),
     email: String(row[2] || "").trim(),
@@ -420,13 +459,14 @@ function recordFromRow_(row, hasGuests) {
     commute: String(row[commuteIdx] || "").trim(),
     allergies: String(row[commuteIdx + 1] || "").trim(),
     message: String(row[commuteIdx + 2] || "").trim(),
+    hashtag: hashtagIdx >= 0 ? String(row[hashtagIdx] || "").trim() : "",
   };
 }
 
 var SHEET_CACHE_TTL_SEC_ = 45;
 
 function sheetCacheKey_(sheet) {
-  return "rsvp_rows:" + sheet.getParent().getId() + ":" + sheet.getName();
+  return "rsvp_rows:v2:" + sheet.getParent().getId() + ":" + sheet.getName();
 }
 
 function invalidateSheetCache_(sheet) {
@@ -437,13 +477,14 @@ function invalidateSheetCache_(sheet) {
 
 function readSheetRows_(sheet) {
   const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { hasGuests: false, rows: [] };
-
   const hasGuests = sheetHasGuestsColumn_(sheet);
-  const width = hasGuests ? 11 : 10;
+  const hashtagCol = headerColumn_(sheet, "hashtag");
+  if (lastRow < 2) return { hasGuests: hasGuests, hashtagCol: hashtagCol, rows: [] };
+
+  const width = Math.max(hasGuests ? 11 : 10, hashtagCol || 0);
   // getRange(row, column, numRows, numColumns)
   const values = sheet.getRange(2, 1, lastRow - 1, width).getValues();
-  return { hasGuests: hasGuests, rows: values };
+  return { hasGuests: hasGuests, hashtagCol: hashtagCol, rows: values };
 }
 
 function readSheetRowsCached_(sheet) {
@@ -471,7 +512,7 @@ function findRowByName_(sheet, nameKey) {
     if (normalizeName_(data.rows[i][1]) === nameKey) {
       match = {
         rowIndex: i + 2,
-        record: recordFromRow_(data.rows[i], data.hasGuests),
+        record: recordFromRow_(data.rows[i], data.hasGuests, data.hashtagCol),
       };
     }
   }
@@ -599,6 +640,7 @@ function getSheet_() {
   }
 
   ensureHeaders_(sheet);
+  ensureHashtagColumn_(sheet);
   return sheet;
 }
 

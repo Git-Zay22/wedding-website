@@ -65,6 +65,16 @@ async function postAppsScript(scriptUrl, bodyText) {
   return res;
 }
 
+function normalizeHashtag(value) {
+  let text = String(value || "")
+    .trim()
+    .replace(/\s+/g, "");
+  if (!text) return "";
+  text = text.replace(/[^#A-Za-z0-9_]/g, "").replace(/^#+/, "");
+  if (!text) return "";
+  return ("#" + text).slice(0, 40);
+}
+
 function contactError(body) {
   const action = String((body && body.action) || "create")
     .trim()
@@ -119,6 +129,12 @@ export default {
         }
 
         body.token = env.RSVP_TOKEN;
+        const action = String(body.action || "create")
+          .trim()
+          .toLowerCase();
+        if (action === "create" || action === "update") {
+          body.hashtag = normalizeHashtag(body.hashtag);
+        }
         const rejected = contactError(body);
         if (rejected) {
           return json({ ok: false, error: rejected }, 400, origin);
@@ -146,3 +162,5 @@ export default {
     }
   },
 };
+
+export { normalizeHashtag, contactError };

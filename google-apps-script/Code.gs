@@ -402,7 +402,7 @@ function normalizeHashtag_(value) {
   if (!text) return "";
   text = text.replace(/[^#A-Za-z0-9_]/g, "").replace(/^#+/, "");
   if (!text) return "";
-  return ("#" + text).slice(0, 40);
+  return "#" + text;
 }
 
 function writeRow_(sheet, rowIndex, data, guestName, email, phoneRaw) {

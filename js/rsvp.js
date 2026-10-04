@@ -649,7 +649,7 @@
     if (!text) return "";
     text = text.replace(/[^#A-Za-z0-9_]/g, "").replace(/^#+/, "");
     if (!text) return "";
-    return ("#" + text).slice(0, 40);
+    return "#" + text;
   }
 
   function contactValues() {
@@ -984,13 +984,7 @@
   form.email.addEventListener("keydown", onFindEnter);
   form.phone.addEventListener("keydown", onFindEnter);
 
-  const hashtagSuggestion = form.querySelector("[data-hashtag-suggestion]");
-  if (hashtagSuggestion && form.hashtag) {
-    hashtagSuggestion.addEventListener("click", () => {
-      form.hashtag.value = normalizeHashtag(hashtagSuggestion.textContent);
-      form.hashtag.dispatchEvent(new Event("input", { bubbles: true }));
-      form.hashtag.focus();
-    });
+  if (form.hashtag) {
     form.hashtag.addEventListener("blur", () => {
       form.hashtag.value = normalizeHashtag(form.hashtag.value);
     });

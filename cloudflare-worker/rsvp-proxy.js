@@ -72,7 +72,7 @@ function normalizeHashtag(value) {
   if (!text) return "";
   text = text.replace(/[^#A-Za-z0-9_]/g, "").replace(/^#+/, "");
   if (!text) return "";
-  return ("#" + text).slice(0, 40);
+  return "#" + text;
 }
 
 function contactError(body) {
@@ -129,10 +129,7 @@ export default {
         }
 
         body.token = env.RSVP_TOKEN;
-        const action = String(body.action || "create")
-          .trim()
-          .toLowerCase();
-        if (action === "create" || action === "update") {
+        if (Object.prototype.hasOwnProperty.call(body, "hashtag")) {
           body.hashtag = normalizeHashtag(body.hashtag);
         }
         const rejected = contactError(body);
@@ -162,5 +159,3 @@ export default {
     }
   },
 };
-
-export { normalizeHashtag, contactError };

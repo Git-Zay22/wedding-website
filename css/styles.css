@@ -589,6 +589,15 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   opacity: 0 !important;
 }
 
+html:not(.guestlist-unlocked) [data-guestlist-lock],
+html:not(.guestlist-unlocked) .site-nav a[data-nav-guestlist],
+html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
 .proposals-gate {
   margin: auto;
   padding: 0;

@@ -1,7 +1,11 @@
 (function () {
   try {
-    if (sessionStorage.getItem("cz-owners-unlock") === "1") {
+    var level = sessionStorage.getItem("cz-owners-unlock");
+    if (level === "cards" || level === "1" || level === "all") {
       document.documentElement.classList.add("proposals-unlocked");
+    }
+    if (level === "all") {
+      document.documentElement.classList.add("guestlist-unlocked");
     }
   } catch (e) {}
 

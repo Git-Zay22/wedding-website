@@ -30,7 +30,7 @@
 
   let unlocked = false;
   try {
-    unlocked = sessionStorage.getItem(UNLOCK_KEY) === "1";
+    unlocked = sessionStorage.getItem(UNLOCK_KEY) === "all";
   } catch (e) {
     unlocked = false;
   }

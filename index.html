@@ -16,8 +16,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=134" />
-  <script src="js/boot.js?v=2"></script>
+  <link rel="stylesheet" href="css/styles.css?v=135" />
+  <script src="js/boot.js?v=3"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -47,7 +47,7 @@
         <span class="nav-proposals__full">Proposals and Invitations</span>
         <span class="nav-proposals__short">Invites</span>
       </a>
-      <a href="#guestlist" class="nav-proposals" data-nav-guestlist data-owners-lock hidden>Guestlist</a>
+      <a href="#guestlist" class="nav-proposals" data-nav-guestlist data-owners-lock data-guestlist-lock hidden>Guestlist</a>
       <a class="nav-cta" href="#rsvp">RSVP</a>
     </nav>
   </header>
@@ -729,9 +729,9 @@
       </p>
     </section>
 
-    <div class="divider divider--proposals" data-owners-lock hidden aria-hidden="true"><span></span></div>
+    <div class="divider divider--proposals" data-owners-lock data-guestlist-lock hidden aria-hidden="true"><span></span></div>
 
-    <section id="guestlist" class="section guestlist" aria-label="Guestlist" data-proposals-section data-owners-lock hidden>
+    <section id="guestlist" class="section guestlist" aria-label="Guestlist" data-proposals-section data-owners-lock data-guestlist-lock hidden>
       <div class="section__inner">
         <p class="eyebrow" data-reveal>Replies</p>
         <h2 class="section__title" data-reveal>Guestlist</h2>
@@ -1013,8 +1013,8 @@
   </footer>
 
   <script src="js/config.js?v=6"></script>
-  <script src="js/main.js?v=36"></script>
-  <script src="js/guestlist.js?v=7"></script>
+  <script src="js/main.js?v=37"></script>
+  <script src="js/guestlist.js?v=8"></script>
   <script src="js/rsvp.js?v=52"></script>
 </body>
 </html>

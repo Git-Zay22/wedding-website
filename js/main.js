@@ -1,14 +1,21 @@
 (function () {
   const PROPOSALS_UNLOCK_KEY = "cz-owners-unlock";
-  const PROPOSALS_NAMES = new Set(["zayrol", "caren"]);
+  const CARDS_NAMES = new Set(["zayrol", "caren"]);
+  const FULL_NAMES = new Set(["groom", "bride"]);
 
-  const isProposalsUnlocked = () => {
+  const ownersLevel = () => {
     try {
-      return sessionStorage.getItem(PROPOSALS_UNLOCK_KEY) === "1";
+      const value = sessionStorage.getItem(PROPOSALS_UNLOCK_KEY);
+      if (value === "all") return "all";
+      if (value === "cards" || value === "1") return "cards";
+      return "";
     } catch (e) {
-      return false;
+      return "";
     }
   };
+
+  const isProposalsUnlocked = () => ownersLevel() !== "";
+  const isGuestlistUnlocked = () => ownersLevel() === "all";
 
   const loadOwnerCards = () => {
     document.querySelectorAll("[data-proposals-section] img[data-src]").forEach((img) => {
@@ -17,12 +24,14 @@
   };
 
   const applyProposalsVisibility = () => {
-    const open = isProposalsUnlocked();
-    document.documentElement.classList.toggle("proposals-unlocked", open);
+    const cards = isProposalsUnlocked();
+    const guestlist = isGuestlistUnlocked();
+    document.documentElement.classList.toggle("proposals-unlocked", cards);
+    document.documentElement.classList.toggle("guestlist-unlocked", guestlist);
     document.querySelectorAll("[data-owners-lock]").forEach((el) => {
-      el.hidden = !open;
+      el.hidden = el.hasAttribute("data-guestlist-lock") ? !guestlist : !cards;
     });
-    if (open) loadOwnerCards();
+    if (cards) loadOwnerCards();
   };
 
   applyProposalsVisibility();
@@ -36,9 +45,9 @@
   const ownersNavLinks = document.querySelectorAll("a[data-owners-lock]");
 
   const clearOwnersHashIfLocked = () => {
-    if (isProposalsUnlocked()) return;
     const hash = window.location.hash;
-    if (hash === "#owners" || hash === "#proposals" || hash === "#guestlist") {
+    const cardsHash = hash === "#owners" || hash === "#proposals";
+    if ((cardsHash && !isProposalsUnlocked()) || (hash === "#guestlist" && !isGuestlistUnlocked())) {
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   };
@@ -47,7 +56,8 @@
 
   ownersNavLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
-      if (!isProposalsUnlocked()) {
+      const allowed = link.hasAttribute("data-guestlist-lock") ? isGuestlistUnlocked() : isProposalsUnlocked();
+      if (!allowed) {
         event.preventDefault();
         event.stopPropagation();
       }
@@ -72,11 +82,13 @@
     if (gateDialog && gateDialog.open) gateDialog.close();
   };
 
-  const verifyProposalsGate = (raw) => {
+  const ownersAccessFor = (raw) => {
     const normalized = String(raw || "")
       .trim()
       .toLowerCase();
-    return PROPOSALS_NAMES.has(normalized);
+    if (FULL_NAMES.has(normalized)) return "all";
+    if (CARDS_NAMES.has(normalized)) return "cards";
+    return "";
   };
 
   if (unlockTrigger) {
@@ -102,9 +114,10 @@
       event.preventDefault();
       if (!gateInput) return;
 
-      if (verifyProposalsGate(gateInput.value)) {
+      const access = ownersAccessFor(gateInput.value);
+      if (access) {
         try {
-          sessionStorage.setItem(PROPOSALS_UNLOCK_KEY, "1");
+          sessionStorage.setItem(PROPOSALS_UNLOCK_KEY, access);
         } catch (e) {}
         closeProposalsGate();
         const base = window.location.pathname + window.location.search;
@@ -128,7 +141,9 @@
   }
 
   window.addEventListener("hashchange", () => {
-    if (!isProposalsUnlocked() && (window.location.hash === "#owners" || window.location.hash === "#proposals" || window.location.hash === "#guestlist")) {
+    const hash = window.location.hash;
+    const cardsHash = hash === "#owners" || hash === "#proposals";
+    if ((cardsHash && !isProposalsUnlocked()) || (hash === "#guestlist" && !isGuestlistUnlocked())) {
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   });

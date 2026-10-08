@@ -2257,10 +2257,44 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-guestlist] {
 }
 
 .guestlist__scroll {
+  position: relative;
   overflow: auto;
   border: 1px solid rgba(36, 48, 58, 0.1);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.62);
+}
+
+.guestlist__loading {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background: rgba(247, 251, 255, 0.84);
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.guestlist__loading[hidden] {
+  display: none;
+}
+
+.guestlist__spinner {
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 2px solid rgba(61, 143, 186, 0.28);
+  border-top-color: var(--powder-deep);
+  border-radius: 50%;
+  animation: guestlist-spin 0.7s linear infinite;
+}
+
+@keyframes guestlist-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .guestlist__table {

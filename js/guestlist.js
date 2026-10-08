@@ -239,42 +239,154 @@
   }
 
   const url = String(config.scriptUrl || "").trim();
+  const scrollEl = root.querySelector("[data-guestlist-scroll]");
+  const loadingEl = root.querySelector("[data-guestlist-loading]");
+  const POLL_MS = 15000;
+  const REFRESH_DELAY_MS = 2000;
+  let shownKey = "";
+  let pollTimer = 0;
+  let refreshTimer = 0;
+  let lastCheck = 0;
+  let refreshing = false;
+
   if (!url) {
     countEl.textContent = "Guestlist is not configured.";
     return;
   }
 
-  fetch(url, {
-    method: "POST",
-    mode: "cors",
-    redirect: "follow",
-    cache: "no-store",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: "list" }),
-  })
-    .then(async (response) => {
-      const text = await response.text();
-      let data = {};
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch (e) {
-        data = {};
-      }
-      if (!response.ok || !data || data.ok === false || !Array.isArray(data.rows)) {
-        countEl.textContent = "Could not load the guestlist.";
-        setStatus(
-          data.error === "Missing required fields."
-            ? "Paste the latest Apps Script, deploy a new version, then reload this page."
-            : data.error || "Paste the latest Apps Script, deploy a new version, then reload this page."
-        );
+  function rosterKey(list) {
+    return list
+      .map((row) =>
+        [row.submittedAt, row.guestName, row.email, row.phone, row.attendance, row.events, row.commute, row.allergies, row.hashtag, row.message].join("\u001f")
+      )
+      .sort()
+      .join("\u001e");
+  }
+
+  function placeLoading() {
+    if (!loadingEl || !scrollEl || loadingEl.hidden) return;
+    const box = scrollEl.getBoundingClientRect();
+    const top = Math.max(box.top, 0);
+    const bottom = Math.min(box.bottom, window.innerHeight);
+    const height = bottom - top;
+    if (height < 48 || box.width < 48) {
+      loadingEl.style.position = "";
+      loadingEl.style.top = "";
+      loadingEl.style.left = "";
+      loadingEl.style.width = "";
+      loadingEl.style.height = "";
+      return;
+    }
+    loadingEl.style.position = "fixed";
+    loadingEl.style.top = top + "px";
+    loadingEl.style.left = box.left + "px";
+    loadingEl.style.width = box.width + "px";
+    loadingEl.style.height = height + "px";
+  }
+
+  function setTableLoading(on) {
+    if (loadingEl) loadingEl.hidden = !on;
+    if (scrollEl) scrollEl.setAttribute("aria-busy", on ? "true" : "false");
+    window.removeEventListener("scroll", placeLoading, true);
+    window.removeEventListener("resize", placeLoading);
+    if (!on || !loadingEl) {
+      if (loadingEl) loadingEl.style.cssText = "";
+      return;
+    }
+    placeLoading();
+    window.addEventListener("scroll", placeLoading, true);
+    window.addEventListener("resize", placeLoading);
+  }
+
+  function requestList() {
+    lastCheck = Date.now();
+    return fetch(url, {
+      method: "POST",
+      mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "list" }),
+    })
+      .then(async (response) => {
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (e) {
+          data = {};
+        }
+        if (!response.ok || !data || data.ok === false || !Array.isArray(data.rows)) {
+          return { ok: false, error: data && data.error ? data.error : "" };
+        }
+        return { ok: true, rows: data.rows };
+      })
+      .catch(() => ({ ok: false, error: "" }));
+  }
+
+  function showLoadError(error) {
+    countEl.textContent = "Could not load the guestlist.";
+    setStatus(
+      error === "Missing required fields."
+        ? "Paste the latest Apps Script, deploy a new version, then reload this page."
+        : error || "The guestlist could not be reached. Please try again."
+    );
+  }
+
+  function schedulePoll() {
+    window.clearTimeout(pollTimer);
+    pollTimer = window.setTimeout(checkForNew, POLL_MS);
+  }
+
+  function checkForNew() {
+    if (refreshing || document.hidden) {
+      schedulePoll();
+      return;
+    }
+    if (Date.now() - lastCheck < 10000) {
+      schedulePoll();
+      return;
+    }
+    requestList().then((result) => {
+      if (!result.ok) {
+        schedulePoll();
         return;
       }
-      rows = data.rows;
-      setStatus("");
-      render();
-    })
-    .catch(() => {
-      countEl.textContent = "Could not load the guestlist.";
-      setStatus("The guestlist could not be reached. Please try again.");
+      const nextKey = rosterKey(result.rows);
+      if (!shownKey || nextKey === shownKey) {
+        schedulePoll();
+        return;
+      }
+      refreshing = true;
+      setTableLoading(true);
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        rows = result.rows;
+        shownKey = nextKey;
+        setStatus("");
+        render();
+        setTableLoading(false);
+        refreshing = false;
+        schedulePoll();
+      }, REFRESH_DELAY_MS);
     });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden || refreshing) return;
+    window.clearTimeout(pollTimer);
+    checkForNew();
+  });
+
+  requestList().then((result) => {
+    if (!result.ok) {
+      showLoadError(result.error);
+      return;
+    }
+    rows = result.rows;
+    shownKey = rosterKey(rows);
+    setStatus("");
+    render();
+    schedulePoll();
+  });
 })();

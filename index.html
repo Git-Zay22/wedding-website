@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=131" />
+  <link rel="stylesheet" href="css/styles.css?v=134" />
   <script src="js/boot.js?v=2"></script>
 </head>
 <body>
@@ -759,7 +759,11 @@
             <input type="search" data-guestlist-search placeholder="Name, email, mobile, hashtag…" autocomplete="off" />
           </label>
         </div>
-        <div class="guestlist__scroll">
+        <div class="guestlist__scroll" data-guestlist-scroll>
+          <div class="guestlist__loading" data-guestlist-loading hidden>
+            <span class="guestlist__spinner" aria-hidden="true"></span>
+            <span>Updating the guestlist…</span>
+          </div>
           <table class="guestlist__table">
             <thead>
               <tr>
@@ -1010,7 +1014,7 @@
 
   <script src="js/config.js?v=6"></script>
   <script src="js/main.js?v=36"></script>
-  <script src="js/guestlist.js?v=5"></script>
+  <script src="js/guestlist.js?v=7"></script>
   <script src="js/rsvp.js?v=52"></script>
 </body>
 </html>

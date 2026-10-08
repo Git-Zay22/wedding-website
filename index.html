@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=120" />
+  <link rel="stylesheet" href="css/styles.css?v=131" />
   <script src="js/boot.js?v=2"></script>
 </head>
 <body>
@@ -47,6 +47,7 @@
         <span class="nav-proposals__full">Proposals and Invitations</span>
         <span class="nav-proposals__short">Invites</span>
       </a>
+      <a href="#guestlist" class="nav-proposals" data-nav-guestlist data-owners-lock hidden>Guestlist</a>
       <a class="nav-cta" href="#rsvp">RSVP</a>
     </nav>
   </header>
@@ -728,6 +729,75 @@
       </p>
     </section>
 
+    <div class="divider divider--proposals" data-owners-lock hidden aria-hidden="true"><span></span></div>
+
+    <section id="guestlist" class="section guestlist" aria-label="Guestlist" data-proposals-section data-owners-lock hidden>
+      <div class="section__inner">
+        <p class="eyebrow" data-reveal>Replies</p>
+        <h2 class="section__title" data-reveal>Guestlist</h2>
+      </div>
+      <div class="guestlist__panel" data-guestlist>
+        <div class="guestlist__head">
+          <p class="guestlist__count" data-guestlist-count>Loading replies…</p>
+        </div>
+        <div class="guestlist__tools">
+          <label class="guestlist__length">
+            <span class="guestlist__search-label">Show</span>
+            <select data-guestlist-length>
+              <option value="15" selected>15</option>
+              <option value="20">20</option>
+              <option value="25">25</option>
+              <option value="30">30</option>
+              <option value="35">35</option>
+              <option value="40">40</option>
+              <option value="45">45</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+          <label class="guestlist__search">
+            <span class="guestlist__search-label">Search</span>
+            <input type="search" data-guestlist-search placeholder="Name, email, mobile, hashtag…" autocomplete="off" />
+          </label>
+        </div>
+        <div class="guestlist__scroll">
+          <table class="guestlist__table">
+            <thead>
+              <tr>
+                <th data-col="submittedAt"><button type="button" data-guestlist-sort="submittedAt">Submitted</button></th>
+                <th data-col="guestName"><button type="button" data-guestlist-sort="guestName">Name</button></th>
+                <th data-col="email"><button type="button" data-guestlist-sort="email">Email</button></th>
+                <th data-col="phone"><button type="button" data-guestlist-sort="phone">Mobile</button></th>
+                <th data-col="attendance"><button type="button" data-guestlist-sort="attendance">Attendance</button></th>
+                <th data-col="events"><button type="button" data-guestlist-sort="events">Attending</button></th>
+                <th data-col="commute"><button type="button" data-guestlist-sort="commute">Car</button></th>
+                <th data-col="allergies"><button type="button" data-guestlist-sort="allergies">Allergy</button></th>
+                <th data-col="hashtag"><button type="button" data-guestlist-sort="hashtag">Hashtag</button></th>
+                <th data-col="message"><button type="button" data-guestlist-sort="message">Message</button></th>
+                <th data-col="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody data-guestlist-body></tbody>
+          </table>
+        </div>
+        <div class="guestlist__pager">
+          <button type="button" data-guestlist-prev>Previous</button>
+          <p data-guestlist-range>Showing 0 of 0</p>
+          <button type="button" data-guestlist-next>Next</button>
+        </div>
+        <p class="guestlist__status" data-guestlist-status role="status"></p>
+      </div>
+      <dialog class="guestlist-detail" data-guestlist-detail aria-labelledby="guestlist-detail-title">
+        <div class="guestlist-detail__panel">
+          <button type="button" class="guestlist-detail__close" data-guestlist-detail-close aria-label="Close details">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <p class="guestlist-detail__eyebrow">RSVP</p>
+          <h3 id="guestlist-detail-title" class="guestlist-detail__title" data-guestlist-detail-name></h3>
+          <dl class="guestlist-detail__list" data-guestlist-detail-list></dl>
+        </div>
+      </dialog>
+    </section>
+
     <div class="divider" aria-hidden="true"><span></span></div>
 
     <section id="rsvp" class="section rsvp">
@@ -939,7 +1009,8 @@
   </footer>
 
   <script src="js/config.js?v=6"></script>
-  <script src="js/main.js?v=35"></script>
+  <script src="js/main.js?v=36"></script>
+  <script src="js/guestlist.js?v=5"></script>
   <script src="js/rsvp.js?v=52"></script>
 </body>
 </html>

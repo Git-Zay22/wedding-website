@@ -33,26 +33,26 @@
   const gateInput = document.querySelector("[data-proposals-gate-input]");
   const gateError = document.querySelector("[data-proposals-gate-error]");
   const gateCancel = document.querySelector("[data-proposals-gate-cancel]");
-  const proposalsNavLink = document.querySelector("[data-nav-proposals]");
+  const ownersNavLinks = document.querySelectorAll("a[data-owners-lock]");
 
   const clearOwnersHashIfLocked = () => {
     if (isProposalsUnlocked()) return;
     const hash = window.location.hash;
-    if (hash === "#owners" || hash === "#proposals") {
+    if (hash === "#owners" || hash === "#proposals" || hash === "#guestlist") {
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   };
 
   clearOwnersHashIfLocked();
 
-  if (proposalsNavLink) {
-    proposalsNavLink.addEventListener("click", (event) => {
+  ownersNavLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
       if (!isProposalsUnlocked()) {
         event.preventDefault();
         event.stopPropagation();
       }
     });
-  }
+  });
   const openProposalsGate = () => {
     if (!gateDialog || isProposalsUnlocked()) return;
     if (gateError) {
@@ -128,7 +128,7 @@
   }
 
   window.addEventListener("hashchange", () => {
-    if (!isProposalsUnlocked() && (window.location.hash === "#owners" || window.location.hash === "#proposals")) {
+    if (!isProposalsUnlocked() && (window.location.hash === "#owners" || window.location.hash === "#proposals" || window.location.hash === "#guestlist")) {
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   });

@@ -14,7 +14,8 @@
  * - health (no action)
  *
  * POST actions:
- * - create / update / lookup (JSON body, text/plain) + token
+ * - create / update / lookup / list (JSON body, text/plain) + token
+ * list returns every saved RSVP and is for the owners page only.
  *
  * SECURITY: Keep SPREADSHEET_ID, GUEST_LIST, and RSVP_TOKEN only in Apps Script
  * (and RSVP_TOKEN also in Cloudflare Worker secrets). Do not commit real values to GitHub.
@@ -135,6 +136,9 @@ function doPost(e) {
     var limited = assertRateLimit_(action || "create", data);
     if (limited) return limited;
 
+    if (action === "list") {
+      return listRsvps_();
+    }
     if (action === "lookup") {
       return lookupByName_(data);
     }
@@ -461,6 +465,24 @@ function recordFromRow_(row, hasGuests, hashtagCol) {
     message: String(row[commuteIdx + 2] || "").trim(),
     hashtag: hashtagIdx >= 0 ? String(row[hashtagIdx] || "").trim() : "",
   };
+}
+
+function listRsvps_() {
+  var sheet = getSheet_();
+  var data = readSheetRows_(sheet);
+  var sourceIdx = (data.hasGuests ? 7 : 6) + 3;
+  var rows = [];
+
+  for (var i = 0; i < data.rows.length; i++) {
+    var row = data.rows[i];
+    var record = recordFromRow_(row, data.hasGuests, data.hashtagCol);
+    if (!record.guestName && !record.email && !record.phone) continue;
+    record.submittedAt = String(row[0] || "").trim();
+    record.source = String(row[sourceIdx] || "").trim();
+    rows.push(record);
+  }
+
+  return json_({ ok: true, count: rows.length, rows: rows });
 }
 
 var SHEET_CACHE_TTL_SEC_ = 45;

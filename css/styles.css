@@ -575,11 +575,14 @@ html.hero-phone .hero {
 }
 
 html:not(.proposals-unlocked) .divider--proposals,
+html:not(.proposals-unlocked) [data-owners-lock],
 html:not(.proposals-unlocked) [data-proposals-section],
 html:not(.proposals-unlocked) [data-nav-proposals],
 html:not(.proposals-unlocked) .nav-proposals,
 html:not(.proposals-unlocked) .site-nav a[data-nav-proposals],
-html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
+html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals],
+html:not(.proposals-unlocked) .site-nav a[data-nav-guestlist],
+html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
@@ -2052,6 +2055,314 @@ html:not(.proposals-unlocked) .site-nav.is-open a[data-nav-proposals] {
   width: min(100% - 1.5rem, 76rem);
   margin-left: auto;
   margin-right: auto;
+}
+
+.guestlist__panel {
+  width: min(100% - 1.5rem, 76rem);
+  margin: 1.25rem auto 0;
+}
+
+.guestlist__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+}
+
+.guestlist__count,
+.guestlist__status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.guestlist__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin: 0.85rem 0 0.75rem;
+}
+
+.guestlist__length,
+.guestlist__search {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.guestlist__length select {
+  width: 5.5rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid rgba(36, 48, 58, 0.14);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font: inherit;
+}
+
+.guestlist__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.guestlist__pager p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.guestlist__pager button {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(36, 48, 58, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.guestlist__pager button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.guestlist__table th[data-col="actions"],
+.guestlist__table td[data-col="actions"] {
+  display: none;
+}
+
+.guestlist__table .guestlist__view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.25rem;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--powder-deep);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.guestlist-detail {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  max-width: min(26rem, calc(100vw - 1.5rem));
+  width: calc(100vw - 1.5rem);
+  background: transparent;
+}
+
+.guestlist-detail::backdrop {
+  background: rgba(36, 48, 58, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.guestlist-detail__panel {
+  position: relative;
+  margin: 0;
+  padding: 1.25rem 1.15rem 1.15rem;
+  max-height: min(80vh, 36rem);
+  overflow: auto;
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  box-shadow: var(--tile-shadow);
+  border-radius: var(--radius-lg);
+}
+
+.guestlist-detail__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.guestlist-detail__eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--butter-deep);
+}
+
+.guestlist-detail__title {
+  margin: 0 2rem 0.9rem 0;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.guestlist-detail__list {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.guestlist-detail__list dt {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.guestlist-detail__list dd {
+  margin: 0.15rem 0 0;
+  color: var(--ink);
+}
+
+.guestlist-detail .guestlist__message {
+  width: 100%;
+  max-height: none;
+}
+
+.guestlist__search-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.guestlist__search input {
+  width: min(100%, 22rem);
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(36, 48, 58, 0.14);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font: inherit;
+}
+
+.guestlist__scroll {
+  overflow: auto;
+  border: 1px solid rgba(36, 48, 58, 0.1);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.guestlist__table {
+  width: 100%;
+  min-width: 68rem;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.guestlist__table th,
+.guestlist__table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(36, 48, 58, 0.08);
+}
+
+.guestlist__table th {
+  position: sticky;
+  top: 0;
+  background: #f7f4ee;
+  z-index: 1;
+}
+
+.guestlist__table button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.guestlist__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .guestlist__tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .guestlist__length,
+  .guestlist__search,
+  .guestlist__search input {
+    width: 100%;
+  }
+
+  .guestlist__table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .guestlist__table th,
+  .guestlist__table td {
+    display: none;
+  }
+
+  .guestlist__table th[data-col="guestName"],
+  .guestlist__table td[data-col="guestName"],
+  .guestlist__table th[data-col="actions"],
+  .guestlist__table td[data-col="actions"],
+  .guestlist__table td.guestlist__empty {
+    display: table-cell;
+  }
+
+  .guestlist__table th[data-col="actions"],
+  .guestlist__table td[data-col="actions"] {
+    width: 5.5rem;
+    text-align: right;
+  }
+}
+
+.guestlist__message {
+  display: block;
+  width: 16rem;
+  min-height: 4.5rem;
+  max-height: 9rem;
+  resize: vertical;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(36, 48, 58, 0.14);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.guestlist__empty {
+  color: var(--muted);
+}
+
+.guestlist__status {
+  margin-top: 0.65rem;
 }
 
 @media (max-width: 980px) {

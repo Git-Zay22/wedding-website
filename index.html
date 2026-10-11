@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=153" />
+  <link rel="stylesheet" href="css/styles.css?v=155" />
   <script src="js/boot.js?v=3"></script>
 </head>
 <body>
@@ -825,9 +825,8 @@
               </button>
               <label for="guestName">Full name <span class="req" aria-hidden="true">*</span></label>
             </div>
-            <input id="guestName" name="guestName" type="text" autocomplete="off" required maxlength="120" aria-autocomplete="list" aria-controls="guestName-suggestions" aria-expanded="false" aria-describedby="guestName-desc" />
+            <input id="guestName" name="guestName" type="text" autocomplete="off" required maxlength="120" placeholder="firstname lastname only" aria-autocomplete="list" aria-controls="guestName-suggestions" aria-expanded="false" />
             <ul id="guestName-suggestions" class="name-suggestions" data-name-suggestions role="listbox" hidden></ul>
-            <p class="field__hint" id="guestName-desc">firstname lastname only</p>
           </div>
 
           <div class="field-row" data-rsvp-contact>
@@ -1025,6 +1024,6 @@
   <script src="js/config.js?v=6"></script>
   <script src="js/main.js?v=39"></script>
   <script src="js/guestlist.js?v=8"></script>
-  <script src="js/rsvp.js?v=69"></script>
+  <script src="js/rsvp.js?v=70"></script>
 </body>
 </html>

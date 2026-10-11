@@ -1455,6 +1455,7 @@
     const el = event.target;
     if (!el || !el.closest) return false;
     if (assistEl.contains(el)) return true;
+    if (statusEl && statusEl.contains(el)) return true;
     const target = form.querySelector(".is-assist-target");
     return !!(target && target.contains(el));
   }
@@ -1552,13 +1553,41 @@
     form.querySelectorAll(".is-assist-target").forEach((el) => el.classList.remove("is-assist-target"));
   }
 
-  function placeAssist() {}
+  const statusHome = statusEl ? { parent: statusEl.parentNode, next: statusEl.nextSibling } : null;
+
+  function restoreAssistNotice() {
+    if (!statusEl || !statusHome) return;
+    statusEl.classList.remove("is-following");
+    if (statusEl.parentNode !== statusHome.parent) statusHome.parent.insertBefore(statusEl, statusHome.next);
+  }
+
+  function assistAnchor(anchor) {
+    if (!anchor) return null;
+    if (anchor.matches && (anchor.matches("button") || anchor.matches("input, select, textarea"))) return anchor;
+    const choice = anchor.querySelector(".choice-row");
+    if (choice) return choice;
+    const control = anchor.querySelector("input:not([type='checkbox']):not([type='radio']), select, textarea");
+    if (control) return control;
+    return null;
+  }
+
+  function placeAssist(anchor) {
+    if (!statusEl || !statusEl.classList.contains("is-assist-notice")) return;
+    if (!assistMobileQuery.matches) {
+      restoreAssistNotice();
+      return;
+    }
+    const spot = assistAnchor(anchor);
+    if (!spot || !spot.parentNode) return;
+    spot.parentNode.insertBefore(statusEl, spot);
+    statusEl.classList.add("is-following");
+  }
 
   function scrollAssist(field) {
-    const target = field;
+    const target = assistMobileQuery.matches && statusEl && statusEl.classList.contains("is-following") ? statusEl : field;
     if (!target) return;
     assistHoldScroll = true;
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.scrollIntoView({ behavior: "smooth", block: assistMobileQuery.matches ? "start" : "center" });
     let idle = 0;
     const finish = () => {
       window.clearTimeout(idle);
@@ -1669,6 +1698,7 @@
     assistShaking = false;
     document.documentElement.classList.remove("is-rsvp-assist");
     form.classList.remove("is-assist-on");
+    restoreAssistNotice();
     assistEl.classList.remove("is-shaking");
     if (statusEl) statusEl.classList.remove("is-shaking");
     clearAssistTarget();

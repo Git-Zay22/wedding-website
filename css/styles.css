@@ -3620,15 +3620,15 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
     order: 0;
   }
 
-  #guestName-suggestions {
+  .field:has(#guestName) .form-status.is-following {
     order: 1;
   }
 
-  #guestName {
+  #guestName-suggestions {
     order: 2;
   }
 
-  #guestName-desc {
+  #guestName {
     order: 3;
   }
 }
@@ -3643,6 +3643,28 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 @media (min-width: 721px) {
   .form-status.is-assist-notice {
     width: 22rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .form-status.is-assist-notice.is-following {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    margin: 0 0 0.55rem;
+    z-index: 3;
+    scroll-margin-top: calc(var(--header-h) + 0.6rem);
+  }
+
+  .rsvp-form.is-assist-on .field.is-assist-target,
+  .rsvp-form.is-assist-on .rsvp-optional.is-assist-target,
+  .rsvp-form.is-assist-on > .btn.is-assist-target {
+    scroll-margin: 0.75rem 0 1.5rem;
   }
 }
 

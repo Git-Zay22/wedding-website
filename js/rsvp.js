@@ -949,6 +949,7 @@
 
   if (findBtn) {
     findBtn.addEventListener("click", () => {
+      if (assistOn) stopAssist();
       lookupRsvp();
     });
   }
@@ -1281,6 +1282,7 @@
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (assistOn) stopAssist();
     clearStatus();
 
     if (editMode && !editLoaded) {

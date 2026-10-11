@@ -1563,12 +1563,16 @@
 
   function assistAnchor(anchor) {
     if (!anchor) return null;
-    if (anchor.matches && (anchor.matches("button") || anchor.matches("input, select, textarea"))) return anchor;
-    const choice = anchor.querySelector(".choice-row");
-    if (choice) return choice;
-    const control = anchor.querySelector("input:not([type='checkbox']):not([type='radio']), select, textarea");
-    if (control) return control;
-    return null;
+    if (anchor.matches && anchor.matches("button")) return anchor;
+    const label = anchor.querySelector("legend, label");
+    if (!label) return anchor;
+    if (label.tagName === "LEGEND") {
+      const fieldset = label.closest("fieldset");
+      if (fieldset) return fieldset;
+    }
+    const row = label.parentElement;
+    if (row && row.classList.contains("field__top")) return row;
+    return label;
   }
 
   function placeAssist(anchor) {

@@ -3616,12 +3616,22 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
     flex-direction: column;
   }
 
-  .field:has(#guestName) .field__name {
+  .field:has(#guestName) .form-status.is-following {
     order: 0;
   }
 
-  .field:has(#guestName) .form-status.is-following {
+  .field:has(#guestName) .field__name {
     order: 1;
+  }
+
+  .field__name > .form-status.is-following {
+    align-self: stretch;
+    width: 100%;
+    order: 1;
+  }
+
+  .field__name > label {
+    order: 2;
   }
 
   #guestName-suggestions {
@@ -3830,6 +3840,10 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
   align-items: flex-start;
   gap: 0.28rem;
   width: 100%;
+}
+
+.rsvp-form > .rsvp-help-inline {
+  justify-self: end;
 }
 
 .field__name > .rsvp-help-inline {

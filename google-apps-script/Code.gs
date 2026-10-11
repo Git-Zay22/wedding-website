@@ -14,8 +14,9 @@
  * - health (no action)
  *
  * POST actions:
- * - create / update / lookup / list (JSON body, text/plain) + token
+ * - create / update / lookup / list / suggest (JSON body, text/plain) + token
  * list returns every saved RSVP and is for the owners page only.
+ * suggest returns a few invited names that closely match what was typed.
  *
  * SECURITY: Keep SPREADSHEET_ID, GUEST_LIST, and RSVP_TOKEN only in Apps Script
  * (and RSVP_TOKEN also in Cloudflare Worker secrets). Do not commit real values to GitHub.
@@ -83,6 +84,79 @@ function resolveInvitedGuestName_(guestName) {
   return getGuestListMap_()[key] || null;
 }
 
+function foldName_(value) {
+  return normalizeName_(value).replace(/ñ/g, "n");
+}
+
+function suggestWords_(value) {
+  var folded = foldName_(value);
+  return folded ? folded.split(" ") : [];
+}
+
+function suggestMatches_(official, queryWords) {
+  var words = suggestWords_(official);
+  if (!words.length || !queryWords.length) return false;
+  var start = 0;
+  for (var q = 0; q < queryWords.length; q++) {
+    var found = false;
+    for (var w = start; w < words.length; w++) {
+      if (words[w].indexOf(queryWords[q]) === 0) {
+        start = w + 1;
+        found = true;
+        break;
+      }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
+function suggestLastName_(official) {
+  var words = String(official || "").trim().split(/\s+/);
+  var suffixes = { jr: true, sr: true, ii: true, iii: true, iv: true };
+  var end = words.length;
+  while (end > 1 && suffixes[String(words[end - 1] || "").toLowerCase().replace(/\./g, "")]) {
+    end--;
+  }
+  return String(words[Math.max(end - 1, 0)] || "").toLowerCase();
+}
+
+function suggestRank_(official, queryWords) {
+  var folded = suggestWords_(official).join(" ");
+  var query = queryWords.join(" ");
+  if (folded === query) return 0;
+  if (folded.indexOf(query) === 0) return 1;
+  var words = folded.split(" ");
+  if (words[0].indexOf(queryWords[0]) === 0) return 2;
+  return 3;
+}
+
+function suggestInvitedNames_(data) {
+  var queryWords = suggestWords_(data && data.guestName);
+  if (!queryWords.length || queryWords.join(" ").length > 80) {
+    return json_({ ok: true, names: [] });
+  }
+  var seen = {};
+  var names = [];
+  for (var i = 0; i < GUEST_LIST.length; i++) {
+    var official = String(GUEST_LIST[i] || "").trim();
+    var key = normalizeName_(official);
+    if (!key || key === "reserved" || seen[key]) continue;
+    if (!suggestMatches_(official, queryWords)) continue;
+    seen[key] = true;
+    names.push(official);
+  }
+  names.sort(function (a, b) {
+    var rank = suggestRank_(a, queryWords) - suggestRank_(b, queryWords);
+    if (rank) return rank;
+    var last = suggestLastName_(a).localeCompare(suggestLastName_(b));
+    if (last) return last;
+    return String(a).localeCompare(String(b));
+  });
+  if (names.length > 6) names = names.slice(0, 6);
+  return json_({ ok: true, names: names });
+}
+
 function assertRsvpToken_(data) {
   var expected = String(RSVP_TOKEN || "").trim();
   if (!expected) return null;
@@ -133,9 +207,14 @@ function doPost(e) {
     var tokenBlocked = assertRsvpToken_(data);
     if (tokenBlocked) return tokenBlocked;
 
-    var limited = assertRateLimit_(action || "create", data);
-    if (limited) return limited;
+    if (action !== "suggest") {
+      var limited = assertRateLimit_(action || "create", data);
+      if (limited) return limited;
+    }
 
+    if (action === "suggest") {
+      return suggestInvitedNames_(data);
+    }
     if (action === "list") {
       return listRsvps_();
     }

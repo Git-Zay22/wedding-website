@@ -16,7 +16,6 @@
   const emailReq = form.querySelector("[data-email-req]");
   const phoneReq = form.querySelector("[data-phone-req]");
   const config = window.RSVP_CONFIG || {};
-
   let editMode = false;
   let editLoaded = false;
   let originalGuestName = "";
@@ -88,12 +87,6 @@
     return notice.type + "|" + (notice.kind || "") + "|" + (notice.message || "");
   }
 
-  function appendStrong(parent, text) {
-    const strong = document.createElement("strong");
-    strong.textContent = text;
-    parent.appendChild(strong);
-  }
-
   function buildNameGuide() {
     const wrap = document.createElement("div");
     wrap.className = "name-guide";
@@ -136,30 +129,14 @@
     const list = document.createElement("ol");
     list.className = "rsvp-edit-instructions__list";
 
-    const steps = [
-      (li) => {
-        li.append("Enter your real full name. Capitalization does not matter. Include both given names if you have two, and write a suffix without a period.");
-      },
-      (li) => {
-        li.append("Enter the email ");
-        appendStrong(li, "or");
-        li.append(" mobile number from your original RSVP.");
-      },
-      (li) => {
-        li.append("Tap ");
-        appendStrong(li, "Find my RSVP");
-        li.append(" to load your reply.");
-      },
-      (li) => {
-        li.append("Change any details you need, then tap ");
-        appendStrong(li, "Resend RSVP");
-        li.append(".");
-      },
-    ];
-
-    steps.forEach((fill) => {
+    [
+      "Enter your real full name. Capitalization does not matter. Include both given names if you have two, and write a suffix without a period.",
+      "Enter the email or mobile number from your original RSVP.",
+      "Tap Find my RSVP to load your reply.",
+      "Change any details you need, then tap Resend RSVP.",
+    ].forEach((text) => {
       const li = document.createElement("li");
-      fill(li);
+      li.textContent = text;
       list.appendChild(li);
     });
     wrap.appendChild(list);
@@ -744,9 +721,7 @@
     } else if (!hasEmail && !hasPhone) {
       issues.push({
         label: contact.noEmail ? "Mobile" : contact.noPhone ? "Email" : "Email or Mobile",
-        detail: contact.noEmail || contact.noPhone
-          ? "is required"
-          : "enter at least one from your original RSVP",
+        detail: contact.noEmail || contact.noPhone ? "is required" : "enter at least one from your original RSVP",
       });
       focusEl = focusEl || (contact.noEmail ? form.phone : form.email);
     } else {
@@ -980,7 +955,160 @@
     statusEl.addEventListener("pointerleave", resumeNoticeTimer);
   }
 
-  form.guestName.addEventListener("keydown", onFindEnter);
+  const nameSuggestionsEl = form.querySelector("[data-name-suggestions]");
+  let nameSuggestTimer = 0;
+  let nameSuggestRequest = 0;
+  let nameSuggestIndex = -1;
+
+  function hideNameSuggestions() {
+    if (!nameSuggestionsEl) return;
+    nameSuggestionsEl.hidden = true;
+    nameSuggestionsEl.replaceChildren();
+    nameSuggestIndex = -1;
+    form.guestName.setAttribute("aria-expanded", "false");
+    form.guestName.removeAttribute("aria-activedescendant");
+  }
+
+  function splitSuggestedName(name) {
+    const words = String(name || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const suffixes = new Set(["jr", "sr", "ii", "iii", "iv"]);
+    let end = words.length;
+    while (end > 1 && suffixes.has(words[end - 1].toLowerCase().replace(/\./g, ""))) end -= 1;
+    const lastStart = Math.max(end - 1, 0);
+    return {
+      given: words.slice(0, lastStart).join(" "),
+      last: words.slice(lastStart).join(" "),
+    };
+  }
+
+  function chooseNameSuggestion(name) {
+    form.guestName.value = name;
+    hideNameSuggestions();
+    form.guestName.focus();
+    form.guestName.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function renderNameSuggestions(names) {
+    if (!nameSuggestionsEl) return;
+    const typed = form.guestName.value.trim().toLowerCase();
+    const unique = [];
+    (names || []).forEach((name) => {
+      const text = String(name || "").trim();
+      if (!text || unique.indexOf(text) !== -1) return;
+      unique.push(text);
+    });
+    if (!unique.length || (unique.length === 1 && unique[0].toLowerCase() === typed)) {
+      hideNameSuggestions();
+      return;
+    }
+    nameSuggestionsEl.replaceChildren();
+    unique.forEach((name, index) => {
+      const item = document.createElement("li");
+      item.setAttribute("role", "presentation");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "name-suggestions__option";
+      button.setAttribute("role", "option");
+      button.id = "guestName-option-" + index;
+      button.setAttribute("data-name", name);
+      const parts = splitSuggestedName(name);
+      if (parts.given) {
+        const given = document.createElement("span");
+        given.className = "name-suggestions__given";
+        given.textContent = parts.given;
+        button.appendChild(given);
+      }
+      const last = document.createElement("span");
+      last.className = "name-suggestions__last";
+      last.textContent = parts.last;
+      button.appendChild(last);
+      button.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        chooseNameSuggestion(name);
+      });
+      item.appendChild(button);
+      nameSuggestionsEl.appendChild(item);
+    });
+    nameSuggestIndex = -1;
+    nameSuggestionsEl.hidden = false;
+    form.guestName.setAttribute("aria-expanded", "true");
+  }
+
+  function moveNameSuggestion(step) {
+    if (!nameSuggestionsEl) return;
+    const options = nameSuggestionsEl.querySelectorAll(".name-suggestions__option");
+    if (!options.length) return;
+    nameSuggestIndex = (nameSuggestIndex + step + options.length) % options.length;
+    options.forEach((option, index) => {
+      option.classList.toggle("is-active", index === nameSuggestIndex);
+    });
+    form.guestName.setAttribute("aria-activedescendant", options[nameSuggestIndex].id);
+  }
+
+  function requestNameSuggestions() {
+    const query = form.guestName.value.trim();
+    window.clearTimeout(nameSuggestTimer);
+    nameSuggestRequest += 1;
+    if (query.length < 1 || !isConfigured()) {
+      hideNameSuggestions();
+      return;
+    }
+    const requestId = nameSuggestRequest;
+    nameSuggestTimer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(config.scriptUrl, {
+          method: "POST",
+          mode: "cors",
+          redirect: "follow",
+          cache: "no-store",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "suggest", guestName: query }),
+        });
+        const data = await parseJsonResponse(response);
+        if (requestId !== nameSuggestRequest || form.guestName.value.trim() !== query) return;
+        if (!data || data.ok === false || !Array.isArray(data.names)) {
+          hideNameSuggestions();
+          return;
+        }
+        renderNameSuggestions(data.names);
+      } catch (err) {
+        if (requestId === nameSuggestRequest) hideNameSuggestions();
+      }
+    }, 160);
+  }
+
+  form.guestName.addEventListener("input", requestNameSuggestions);
+  form.guestName.addEventListener("blur", () => {
+    window.setTimeout(hideNameSuggestions, 120);
+  });
+  document.addEventListener("click", (event) => {
+    if (!nameSuggestionsEl || nameSuggestionsEl.hidden) return;
+    if (event.target === form.guestName || nameSuggestionsEl.contains(event.target)) return;
+    hideNameSuggestions();
+  });
+  form.guestName.addEventListener("keydown", (event) => {
+    const open = nameSuggestionsEl && !nameSuggestionsEl.hidden;
+    if (open && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+      event.preventDefault();
+      moveNameSuggestion(event.key === "ArrowDown" ? 1 : -1);
+      return;
+    }
+    if (open && event.key === "Escape") {
+      event.preventDefault();
+      hideNameSuggestions();
+      return;
+    }
+    if (open && event.key === "Enter" && nameSuggestIndex >= 0) {
+      event.preventDefault();
+      const chosen = nameSuggestionsEl.querySelectorAll(".name-suggestions__option")[nameSuggestIndex];
+      if (chosen) chooseNameSuggestion(chosen.getAttribute("data-name") || "");
+      return;
+    }
+    onFindEnter(event);
+  });
   form.email.addEventListener("keydown", onFindEnter);
   form.phone.addEventListener("keydown", onFindEnter);
 
@@ -1163,12 +1291,7 @@
       }
 
       hideLoading();
-      setStatus(
-        editMode
-          ? "Thank you. Your RSVP has been updated."
-          : "Thank you. We have received your RSVP.",
-        "success"
-      );
+      setStatus(editMode ? "Thank you. Your RSVP has been updated." : "Thank you. We have received your RSVP.", "success");
       editMode = false;
       if (editToggle) editToggle.checked = false;
       resetEditState(false);
@@ -1184,4 +1307,254 @@
       syncButtonState();
     }
   });
+
+  const assistStart = document.querySelector("[data-rsvp-assist-start]");
+  const assistEl = document.createElement("div");
+  assistEl.className = "rsvp-assist";
+  assistEl.setAttribute("data-rsvp-assist", "");
+  assistEl.setAttribute("role", "status");
+  assistEl.setAttribute("aria-live", "polite");
+  assistEl.hidden = true;
+  const assistStepEl = document.createElement("p");
+  assistStepEl.className = "rsvp-assist__step";
+  const assistTitleEl = document.createElement("p");
+  assistTitleEl.className = "rsvp-assist__title";
+  const assistTextEl = document.createElement("p");
+  assistTextEl.className = "rsvp-assist__text";
+  const assistActions = document.createElement("div");
+  assistActions.className = "rsvp-assist__actions";
+  const assistBack = document.createElement("button");
+  assistBack.type = "button";
+  assistBack.className = "btn btn--ghost-ink rsvp-assist__back";
+  assistBack.setAttribute("data-rsvp-assist-back", "");
+  assistBack.textContent = "Back";
+  const assistSkip = document.createElement("button");
+  assistSkip.type = "button";
+  assistSkip.className = "btn btn--ghost-ink rsvp-assist__skip";
+  assistSkip.setAttribute("data-rsvp-assist-skip", "");
+  assistSkip.textContent = "Skip guide";
+  assistActions.append(assistBack, assistSkip);
+  assistEl.append(assistStepEl, assistTitleEl, assistTextEl, assistActions);
+  document.body.appendChild(assistEl);
+
+  let assistOn = false;
+  let assistKey = "";
+  let assistPin = -1;
+  let assistPinDirty = false;
+  const assistMobileQuery = window.matchMedia("(max-width: 720px)");
+
+  function assistSteps() {
+    const contact = contactValues();
+    const digits = phoneDigits(contact.phone);
+    const steps = [
+      {
+        key: "name",
+        title: "Full name",
+        text: "Type your first name and your last name. If your name appears, tap it.",
+        field: form.guestName.closest(".field"),
+        focus: form.guestName,
+        done: () => form.guestName.value.trim().split(/\s+/).filter(Boolean).length >= 2,
+      },
+      {
+        key: "email",
+        title: "Email",
+        text: contact.noPhone ? "Type your email address. This one is needed because mobile is turned off." : "Type your email address. If you do not have email, turn on No email.",
+        field: form.email.closest(".field"),
+        focus: form.email,
+        done: () => contact.noEmail || isValidEmail(contact.email),
+      },
+      {
+        key: "phone",
+        title: "Mobile",
+        text: contact.noEmail ? "Type your mobile number, starting with 09. This one is needed because email is turned off." : "Type your mobile number, starting with 09. If you do not have a mobile number, turn on No mobile.",
+        field: form.phone.closest(".field"),
+        focus: form.phone,
+        done: () => contact.noPhone || digits.length >= 10,
+      },
+    ];
+
+    if (!(editMode && !editLoaded)) {
+      steps.push({
+        key: "attendance",
+        title: "Attendance",
+        text: "Choose Joyfully attending or Regretfully decline.",
+        field: form.querySelector('input[name="attendance"]').closest(".field"),
+        focus: form.querySelector('input[name="attendance"]'),
+        done: () => Boolean(form.attendance.value),
+      });
+      steps.push({
+        key: "events",
+        title: "Attending",
+        text: "Choose where you will join us.",
+        field: eventsField,
+        focus: eventsSelect,
+        done: () => form.attendance.value === "No" || Boolean(form.events.value),
+      });
+      steps.push({
+        key: "commute",
+        title: "Your car",
+        text: "Tell us how you will get to the wedding.",
+        field: form.commute.closest(".field"),
+        focus: form.commute,
+        done: () => Boolean(form.commute.value),
+      });
+    }
+    return steps;
+  }
+
+  function clearAssistTarget() {
+    form.querySelectorAll(".is-assist-target").forEach((el) => el.classList.remove("is-assist-target"));
+  }
+
+  function placeAssist(anchor) {
+    if (!anchor || !anchor.parentElement) return;
+    if (assistMobileQuery.matches || anchor.matches("button")) {
+      anchor.insertAdjacentElement("beforebegin", assistEl);
+      return;
+    }
+    const spot = anchor.closest("[data-rsvp-contact]") || anchor;
+    spot.insertAdjacentElement("afterend", assistEl);
+  }
+
+  function scrollAssist(field) {
+    const target = assistMobileQuery.matches ? assistEl : field;
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function setAssistBack(index) {
+    const atStart = index <= 0;
+    assistBack.disabled = atStart;
+    assistBack.setAttribute("aria-disabled", atStart ? "true" : "false");
+  }
+
+  function paintAssist(step, index, total) {
+    clearAssistTarget();
+    if (step.field) step.field.classList.add("is-assist-target");
+    placeAssist(step.field);
+    setAssistBack(index);
+    assistStepEl.textContent = "Step " + (index + 1) + " of " + total;
+    assistTitleEl.textContent = step.title;
+    assistTextEl.textContent = step.text;
+    assistEl.hidden = false;
+    if (step.focus && document.activeElement !== step.focus) step.focus.focus({ preventScroll: true });
+    scrollAssist(step.field);
+  }
+
+  function previousAssistIndex(steps, fromIndex) {
+    for (let i = fromIndex - 1; i >= 0; i -= 1) {
+      if (steps[i].key === "events" && form.attendance.value === "No") continue;
+      return i;
+    }
+    return -1;
+  }
+
+  function refreshAssist() {
+    if (!assistOn) return;
+    const steps = assistSteps();
+    let index = steps.findIndex((step) => !step.done());
+    if (assistPin >= 0) {
+      if (assistPin >= steps.length) assistPin = steps.length - 1;
+      const pinned = steps[assistPin];
+      if (pinned && !(assistPinDirty && pinned.done())) {
+        index = assistPin;
+      } else {
+        assistPin = -1;
+        assistPinDirty = false;
+        index = steps.findIndex((step) => !step.done());
+      }
+    }
+    const next = index === -1 ? null : steps[index];
+    const nextKey = next ? next.key : "send";
+    if (nextKey === assistKey && assistEl.hidden === false) {
+      if (next) assistTextEl.textContent = next.text;
+      return;
+    }
+    assistKey = nextKey;
+    if (nextKey !== "name") hideNameSuggestions();
+    if (!next) {
+      clearAssistTarget();
+      const findTarget = editMode && !editLoaded;
+      setAssistBack(steps.length);
+      assistStepEl.textContent = "Last step";
+      assistTitleEl.textContent = findTarget ? "Find your RSVP" : "Send your RSVP";
+      assistTextEl.textContent = findTarget ? "Tap Find my RSVP. Allergy, hashtag, and a message can wait until after we find you." : "The required parts are done. Allergy, hashtag, and a message are optional. When you are ready, tap Send RSVP.";
+      assistEl.hidden = false;
+      const target = findTarget ? findBtn : submitBtn;
+      if (target) {
+        target.classList.add("is-assist-target");
+        placeAssist(target);
+        scrollAssist(target);
+      }
+      return;
+    }
+    paintAssist(next, index, steps.length);
+  }
+
+  function assistGoBack() {
+    if (!assistOn || assistBack.disabled) return;
+    const steps = assistSteps();
+    const current = assistKey === "send" ? steps.length : steps.findIndex((step) => step.key === assistKey);
+    const prev = previousAssistIndex(steps, current);
+    if (prev < 0) return;
+    assistPin = prev;
+    assistPinDirty = false;
+    assistKey = "";
+    refreshAssist();
+  }
+
+  function stopAssist() {
+    assistOn = false;
+    assistKey = "";
+    assistPin = -1;
+    assistPinDirty = false;
+    form.classList.remove("is-assist-on");
+    clearAssistTarget();
+    if (submitBtn) submitBtn.classList.remove("is-assist-target");
+    if (findBtn) findBtn.classList.remove("is-assist-target");
+    assistEl.hidden = true;
+  }
+
+  function startAssist() {
+    assistOn = true;
+    assistKey = "";
+    assistPin = -1;
+    assistPinDirty = false;
+    nameGuideDismissed = true;
+    nameGuideRequested = false;
+    pinnedNotice = null;
+    form.classList.add("is-assist-on");
+    refreshNotice();
+    refreshAssist();
+  }
+
+  if (assistStart) {
+    assistStart.addEventListener("click", (event) => {
+      event.preventDefault();
+      startAssist();
+    });
+  }
+  assistSkip.addEventListener("click", (event) => {
+    event.preventDefault();
+    stopAssist();
+  });
+  assistBack.addEventListener("click", (event) => {
+    event.preventDefault();
+    assistGoBack();
+  });
+  if (typeof assistMobileQuery.addEventListener === "function") {
+    assistMobileQuery.addEventListener("change", () => {
+      if (!assistOn) return;
+      assistKey = "";
+      refreshAssist();
+    });
+  }
+  form.addEventListener("input", () => {
+    if (assistPin >= 0) assistPinDirty = true;
+    refreshAssist();
+  });
+  form.addEventListener("change", () => {
+    if (assistPin >= 0) assistPinDirty = true;
+    refreshAssist();
+  });
+
 })();

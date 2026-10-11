@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=135" />
+  <link rel="stylesheet" href="css/styles.css?v=143" />
   <script src="js/boot.js?v=3"></script>
 </head>
 <body>
@@ -816,6 +816,10 @@
         <p class="rsvp__closes" data-rsvp-deadline>
           RSVP closes in <strong data-rsvp-days>—</strong> <span data-rsvp-days-label>days</span>.
         </p>
+        <p class="rsvp-help">
+          <button type="button" class="rsvp-help__link" data-rsvp-assist-start>Help me fill out this form</button>
+          <span class="rsvp-help__note">We will show you one question at a time.</span>
+        </p>
 
         <form id="rsvp-form" class="rsvp-form" novalidate>
           <div class="field">
@@ -825,7 +829,9 @@
               </button>
               <label for="guestName">Full name <span class="req" aria-hidden="true">*</span></label>
             </div>
-            <input id="guestName" name="guestName" type="text" autocomplete="name" required maxlength="120" placeholder="firstname lastname only" />
+            <input id="guestName" name="guestName" type="text" autocomplete="off" required maxlength="120" aria-autocomplete="list" aria-controls="guestName-suggestions" aria-expanded="false" aria-describedby="guestName-desc" />
+            <ul id="guestName-suggestions" class="name-suggestions" data-name-suggestions role="listbox" hidden></ul>
+            <p class="field__hint" id="guestName-desc">firstname lastname only</p>
           </div>
 
           <div class="field-row" data-rsvp-contact>
@@ -1013,8 +1019,8 @@
   </footer>
 
   <script src="js/config.js?v=6"></script>
-  <script src="js/main.js?v=37"></script>
+  <script src="js/main.js?v=39"></script>
   <script src="js/guestlist.js?v=8"></script>
-  <script src="js/rsvp.js?v=52"></script>
+  <script src="js/rsvp.js?v=60"></script>
 </body>
 </html>

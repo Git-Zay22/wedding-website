@@ -2925,6 +2925,108 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   font-weight: 500;
 }
 
+.rsvp-help {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.rsvp-help__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--powder-deep);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.rsvp-help__link:hover,
+.rsvp-help__link:focus {
+  color: var(--ink);
+  outline: none;
+}
+
+.rsvp-help__note {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.rsvp-form.is-assist-on .field,
+.rsvp-form.is-assist-on > .btn,
+.rsvp-form.is-assist-on .rsvp-edit-switch {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.rsvp-form.is-assist-on .field.is-assist-target,
+.rsvp-form.is-assist-on > .btn.is-assist-target {
+  opacity: 1;
+  pointer-events: auto;
+  outline: 3px solid var(--powder-deep);
+  outline-offset: 6px;
+  border-radius: 1rem;
+  scroll-margin: 5.5rem 0 2rem;
+}
+
+.rsvp-assist {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  margin: 0.2rem 0;
+  padding: 1rem 1.1rem 0.95rem;
+  border: 2px solid var(--powder-deep);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 16px 40px rgba(26, 40, 51, 0.18);
+  pointer-events: auto;
+  scroll-margin-top: 5.5rem;
+}
+
+.rsvp-assist[hidden] {
+  display: none;
+}
+
+.rsvp-assist__step {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--powder-deep);
+}
+
+.rsvp-assist__title {
+  margin: 0.25rem 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.rsvp-assist__text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.rsvp-assist__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.rsvp-assist__back[disabled] {
+  opacity: 0.45;
+}
+
 .rsvp-form {
   display: grid;
   gap: 1.15rem;
@@ -3017,6 +3119,51 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   font-size: 0.88rem;
   line-height: 1.45;
   color: var(--muted);
+}
+
+.name-suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+  display: grid;
+  gap: 0.15rem;
+  border: 1px solid rgba(61, 143, 186, 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.name-suggestions[hidden] {
+  display: none;
+}
+
+.name-suggestions__option {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  text-align: left;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.name-suggestions__option.is-active,
+.name-suggestions__option:hover,
+.name-suggestions__option:focus {
+  background: rgba(214, 236, 248, 0.85);
+  outline: none;
+}
+
+.name-suggestions__last {
+  font-weight: 600;
 }
 
 .field input:not([type="radio"]):not([type="checkbox"]),
@@ -4179,6 +4326,10 @@ body.is-rsvp-loading {
 
   .field-row {
     grid-template-columns: 1fr;
+  }
+
+  .field-row > .rsvp-assist {
+    grid-column: 1 / -1;
   }
 
   .choice-row {

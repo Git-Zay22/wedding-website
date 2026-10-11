@@ -14,6 +14,8 @@
   const skipEmail = form.querySelector("[data-skip-email]");
   const skipPhone = form.querySelector("[data-skip-phone]");
   const emailReq = form.querySelector("[data-email-req]");
+  const emailCheckEl = form.querySelector("[data-email-check]");
+  const phoneCheckEl = form.querySelector("[data-phone-check]");
   const phoneReq = form.querySelector("[data-phone-req]");
   const config = window.RSVP_CONFIG || {};
   let editMode = false;
@@ -33,7 +35,12 @@
   let renderedNoticeKey = "";
   let warningDismissed = false;
   let nameGuideDismissed = false;
-  let nameGuideRequested = true;
+  let nameGuideRequested = false;
+  let assistOn = false;
+  let emailGuideReady = false;
+  let emailGuideTimer = 0;
+  let phoneGuideReady = false;
+  let phoneGuideTimer = 0;
   let editGuideDismissed = false;
   let rsvpInView = false;
   let rsvpSectionVisible = false;
@@ -61,6 +68,7 @@
   }
 
   function desiredNotice() {
+    if (assistOn) return { type: "guide", kind: "assist" };
     if (pinnedNotice) return pinnedNotice;
     if (oneContactSkipped() && !warningDismissed) {
       return {
@@ -220,7 +228,7 @@
       sectionLeaveTimer = null;
     }
     statusEl.hidden = true;
-    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-timing-out", "is-offsection");
+    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-timing-out", "is-offsection", "is-assist-notice", "is-shaking");
     statusEl.replaceChildren();
     renderedNoticeKey = "";
     noticeDeadline = 0;
@@ -265,7 +273,7 @@
     }
 
     statusEl.hidden = false;
-    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-timing-out");
+    statusEl.classList.remove("is-error", "is-success", "is-warning", "is-guide", "is-flash", "is-fading", "is-timing-out", "is-assist-notice", "is-shaking");
     statusEl.classList.add("is-" + notice.type);
     statusEl.replaceChildren();
 
@@ -283,7 +291,11 @@
     const body = document.createElement("div");
     body.className = "form-status__body";
 
-    if (notice.type === "guide" && notice.kind === "name") {
+    if (notice.type === "guide" && notice.kind === "assist") {
+      statusEl.classList.add("is-assist-notice");
+      assistEl.hidden = false;
+      body.appendChild(assistEl);
+    } else if (notice.type === "guide" && notice.kind === "name") {
       body.appendChild(buildNameGuide());
     } else if (notice.type === "guide" && notice.kind === "edit") {
       body.appendChild(buildEditGuide());
@@ -317,17 +329,26 @@
 
     statusEl.appendChild(body);
 
-    const bar = document.createElement("div");
-    bar.className = "form-status__bar";
-    bar.setAttribute("aria-hidden", "true");
-    const barFill = document.createElement("span");
-    bar.appendChild(barFill);
-    statusEl.appendChild(bar);
+    const persistent = notice.kind === "assist";
+    if (!persistent) {
+      const bar = document.createElement("div");
+      bar.className = "form-status__bar";
+      bar.setAttribute("aria-hidden", "true");
+      const barFill = document.createElement("span");
+      bar.appendChild(barFill);
+      statusEl.appendChild(bar);
+    }
 
     renderedNoticeKey = key;
     if (offscreen) slideNoticeIn();
     else statusEl.classList.remove("is-offsection");
-    armNoticeTimer();
+    if (persistent) {
+      clearStatusTimers();
+      noticeDeadline = 0;
+      noticePaused = false;
+    } else {
+      armNoticeTimer();
+    }
     syncNameGuideButton();
 
     if (notice.type === "success") {
@@ -367,6 +388,10 @@
   function dismissCurrentNotice() {
     const notice = desiredNotice();
     if (!notice) return;
+    if (notice.kind === "assist") {
+      stopAssist();
+      return;
+    }
     if (notice.type === "error" || notice.type === "success") pinnedNotice = null;
     else if (notice.type === "warning") warningDismissed = true;
     else if (notice.kind === "edit") editGuideDismissed = true;
@@ -610,13 +635,17 @@
   function isValidEmail(value) {
     const email = String(value || "").trim();
     if (!email || email.length > 160) return false;
-    return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(
-      email
-    );
+    if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(email)) {
+      return false;
+    }
+    const tld = email.slice(email.lastIndexOf(".") + 1);
+    return /^[a-zA-Z]{2,}$/.test(tld);
   }
 
-  function phoneDigits(value) {
-    return String(value || "").replace(/\D/g, "");
+  function isValidPhone(value) {
+    const compact = String(value || "").trim().replace(/[\s-]/g, "");
+    if (/^09\d{9}$/.test(compact)) return true;
+    return /^\+63\d{10}$/.test(compact);
   }
 
   function normalizeHashtag(value) {
@@ -700,7 +729,6 @@
     const contact = contactValues();
     const email = contact.email;
     const phone = contact.phone;
-    const digits = phoneDigits(phone);
     const issues = [];
     let focusEl = null;
 
@@ -710,7 +738,7 @@
     }
 
     const hasEmail = Boolean(email);
-    const hasPhone = digits.length >= 10;
+    const hasPhone = isValidPhone(phone);
 
     if (contact.noEmail && contact.noPhone) {
       issues.push({
@@ -730,7 +758,7 @@
         focusEl = focusEl || form.email;
       }
       if (phone && !hasPhone) {
-        issues.push({ label: "Mobile", detail: "needs a valid number" });
+        issues.push({ label: "Mobile", detail: "use 09 and 11 digits, or +63" });
         focusEl = focusEl || form.phone;
       }
     }
@@ -749,7 +777,6 @@
     const contact = contactValues();
     const email = contact.email;
     const phone = contact.phone;
-    const digits = phoneDigits(phone);
     const issues = [];
     let focusEl = null;
 
@@ -776,8 +803,8 @@
         if (!phone) {
           issues.push({ label: "Mobile", detail: "is required" });
           focusEl = focusEl || form.phone;
-        } else if (digits.length < 10) {
-          issues.push({ label: "Mobile", detail: "needs a valid number" });
+        } else if (!isValidPhone(phone)) {
+          issues.push({ label: "Mobile", detail: "use 09 and 11 digits, or +63" });
           focusEl = focusEl || form.phone;
         }
       }
@@ -933,20 +960,10 @@
     }
   }
 
-  function showNameGuide() {
-    pinnedNotice = null;
-    clearStatusTimers();
-    nameGuideRequested = true;
-    nameGuideDismissed = false;
-    renderedNoticeKey = "";
-    readRsvpPresence();
-    refreshNotice();
-  }
-
   if (nameGuideBtn) {
     nameGuideBtn.addEventListener("click", (event) => {
       event.preventDefault();
-      showNameGuide();
+      startAssist();
     });
   }
 
@@ -956,9 +973,10 @@
   }
 
   const nameSuggestionsEl = form.querySelector("[data-name-suggestions]");
-  let nameSuggestTimer = 0;
   let nameSuggestRequest = 0;
   let nameSuggestIndex = -1;
+  let nameSuggestController = null;
+  let nameSuggestSeen = [];
 
   function hideNameSuggestions() {
     if (!nameSuggestionsEl) return;
@@ -1048,36 +1066,82 @@
     form.guestName.setAttribute("aria-activedescendant", options[nameSuggestIndex].id);
   }
 
+  function foldedNameWords(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ñ/g, "n")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .filter(Boolean);
+  }
+
+  function nameMatchesQuery(name, query) {
+    const words = foldedNameWords(name);
+    const queryWords = foldedNameWords(query);
+    if (!words.length || !queryWords.length) return false;
+    let start = 0;
+    for (let q = 0; q < queryWords.length; q += 1) {
+      let found = false;
+      for (let w = start; w < words.length; w += 1) {
+        if (words[w].indexOf(queryWords[q]) === 0) {
+          start = w + 1;
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+    return true;
+  }
+
+  function rememberSuggestedNames(names) {
+    names.forEach((name) => {
+      const text = String(name || "").trim();
+      if (text && nameSuggestSeen.indexOf(text) === -1) nameSuggestSeen.push(text);
+    });
+    if (nameSuggestSeen.length > 48) nameSuggestSeen = nameSuggestSeen.slice(-48);
+  }
+
   function requestNameSuggestions() {
     const query = form.guestName.value.trim();
-    window.clearTimeout(nameSuggestTimer);
     nameSuggestRequest += 1;
+    if (nameSuggestController) nameSuggestController.abort();
+    nameSuggestController = null;
     if (query.length < 1 || !isConfigured()) {
       hideNameSuggestions();
       return;
     }
+    const local = nameSuggestSeen.filter((name) => nameMatchesQuery(name, query));
+    if (local.length) renderNameSuggestions(local);
+    else hideNameSuggestions();
     const requestId = nameSuggestRequest;
-    nameSuggestTimer = window.setTimeout(async () => {
-      try {
-        const response = await fetch(config.scriptUrl, {
-          method: "POST",
-          mode: "cors",
-          redirect: "follow",
-          cache: "no-store",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "suggest", guestName: query }),
-        });
-        const data = await parseJsonResponse(response);
+    const controller = new AbortController();
+    nameSuggestController = controller;
+    fetch(config.scriptUrl, {
+      method: "POST",
+      mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "suggest", guestName: query }),
+      signal: controller.signal,
+    })
+      .then((response) => parseJsonResponse(response))
+      .then((data) => {
         if (requestId !== nameSuggestRequest || form.guestName.value.trim() !== query) return;
         if (!data || data.ok === false || !Array.isArray(data.names)) {
           hideNameSuggestions();
           return;
         }
+        rememberSuggestedNames(data.names);
         renderNameSuggestions(data.names);
-      } catch (err) {
+      })
+      .catch((err) => {
+        if (err && err.name === "AbortError") return;
         if (requestId === nameSuggestRequest) hideNameSuggestions();
-      }
-    }, 160);
+      });
   }
 
   form.guestName.addEventListener("input", requestNameSuggestions);
@@ -1308,7 +1372,6 @@
     }
   });
 
-  const assistStart = document.querySelector("[data-rsvp-assist-start]");
   const assistEl = document.createElement("div");
   assistEl.className = "rsvp-assist";
   assistEl.setAttribute("data-rsvp-assist", "");
@@ -1321,6 +1384,20 @@
   assistTitleEl.className = "rsvp-assist__title";
   const assistTextEl = document.createElement("p");
   assistTextEl.className = "rsvp-assist__text";
+  const assistExamples = document.createElement("ul");
+  assistExamples.className = "rsvp-assist__examples";
+  [
+    ["Two given names", "JUAN MIGUEL DELA CRUZ"],
+    ["A suffix, written without a period", "JUAN DELA CRUZ JR"],
+  ].forEach((pair) => {
+    const li = document.createElement("li");
+    const label = document.createElement("span");
+    label.textContent = pair[0];
+    const example = document.createElement("span");
+    example.textContent = pair[1];
+    li.append(label, example);
+    assistExamples.appendChild(li);
+  });
   const assistActions = document.createElement("div");
   assistActions.className = "rsvp-assist__actions";
   const assistBack = document.createElement("button");
@@ -1333,19 +1410,79 @@
   assistSkip.className = "btn btn--ghost-ink rsvp-assist__skip";
   assistSkip.setAttribute("data-rsvp-assist-skip", "");
   assistSkip.textContent = "Skip guide";
-  assistActions.append(assistBack, assistSkip);
-  assistEl.append(assistStepEl, assistTitleEl, assistTextEl, assistActions);
+  const assistNext = document.createElement("button");
+  assistNext.type = "button";
+  assistNext.className = "btn btn--ghost-ink rsvp-assist__next";
+  assistNext.setAttribute("data-rsvp-assist-next", "");
+  assistNext.textContent = "Next";
+  assistNext.hidden = true;
+  assistActions.append(assistBack, assistNext, assistSkip);
+  assistEl.append(assistStepEl, assistTitleEl, assistTextEl, assistExamples, assistActions);
   document.body.appendChild(assistEl);
 
-  let assistOn = false;
   let assistKey = "";
   let assistPin = -1;
   let assistPinDirty = false;
+  let optionalGuidePassed = false;
+  let assistScrollY = 0;
+  let assistHoldScroll = false;
+  let assistShaking = false;
   const assistMobileQuery = window.matchMedia("(max-width: 720px)");
+
+  function shakeAssist() {
+    const card = statusEl && statusEl.classList.contains("is-assist-notice") ? statusEl : assistEl;
+    if (!assistOn || assistShaking || !card || card.hidden) return;
+    assistShaking = true;
+    card.classList.add("is-shaking");
+    window.setTimeout(() => {
+      card.classList.remove("is-shaking");
+      assistShaking = false;
+    }, 480);
+  }
+
+  function assistScrollKeys(event) {
+    const key = event.key;
+    if (key !== " " && key !== "ArrowUp" && key !== "ArrowDown" && key !== "PageUp" && key !== "PageDown" && key !== "Home" && key !== "End") {
+      return false;
+    }
+    const editable = event.target && event.target.closest && event.target.closest("input, textarea, select, button, a");
+    if (editable && (key === " " || key === "ArrowUp" || key === "ArrowDown")) return false;
+    return true;
+  }
+
+  function assistGestureOnFocus(event) {
+    if (event.type !== "touchmove") return false;
+    const el = event.target;
+    if (!el || !el.closest) return false;
+    if (assistEl.contains(el)) return true;
+    const target = form.querySelector(".is-assist-target");
+    return !!(target && target.contains(el));
+  }
+
+  function onAssistNudge(event) {
+    if (!assistOn) return;
+    if (assistGestureOnFocus(event)) return;
+    if (event.type === "keydown" && !assistScrollKeys(event)) return;
+    if (event.cancelable) event.preventDefault();
+    shakeAssist();
+  }
+
+  function onAssistScroll() {
+    if (!assistOn || assistHoldScroll) return;
+    if (Math.abs(window.scrollY - assistScrollY) < 3) return;
+    assistHoldScroll = true;
+    window.scrollTo(0, assistScrollY);
+    assistHoldScroll = false;
+    shakeAssist();
+  }
+
+  window.addEventListener("wheel", onAssistNudge, { passive: false, capture: true });
+  window.addEventListener("touchmove", onAssistNudge, { passive: false, capture: true });
+  window.addEventListener("keydown", onAssistNudge, true);
+  window.addEventListener("scroll", onAssistScroll, { passive: true });
 
   function assistSteps() {
     const contact = contactValues();
-    const digits = phoneDigits(contact.phone);
     const steps = [
       {
         key: "name",
@@ -1361,15 +1498,15 @@
         text: contact.noPhone ? "Type your email address. This one is needed because mobile is turned off." : "Type your email address. If you do not have email, turn on No email.",
         field: form.email.closest(".field"),
         focus: form.email,
-        done: () => contact.noEmail || isValidEmail(contact.email),
+        done: () => contact.noEmail || (emailGuideReady && isValidEmail(contact.email)),
       },
       {
         key: "phone",
         title: "Mobile",
-        text: contact.noEmail ? "Type your mobile number, starting with 09. This one is needed because email is turned off." : "Type your mobile number, starting with 09. If you do not have a mobile number, turn on No mobile.",
+        text: contact.noEmail ? "Type 09 and 11 digits, or +63. This one is needed because email is turned off." : "Type 09 and 11 digits, or +63. If you do not have a mobile number, turn on No mobile.",
         field: form.phone.closest(".field"),
         focus: form.phone,
-        done: () => contact.noPhone || digits.length >= 10,
+        done: () => contact.noPhone || (phoneGuideReady && isValidPhone(contact.phone)),
       },
     ];
 
@@ -1398,6 +1535,15 @@
         focus: form.commute,
         done: () => Boolean(form.commute.value),
       });
+      const optionalGroup = form.querySelector("[data-rsvp-optional]");
+      steps.push({
+        key: "optional",
+        title: "Optional notes",
+        text: "Allergy, hashtag, and a message are optional. Fill in any you want, or leave them blank, then tap Next.",
+        field: optionalGroup,
+        focus: form.allergies,
+        done: () => optionalGuidePassed,
+      });
     }
     return steps;
   }
@@ -1406,19 +1552,24 @@
     form.querySelectorAll(".is-assist-target").forEach((el) => el.classList.remove("is-assist-target"));
   }
 
-  function placeAssist(anchor) {
-    if (!anchor || !anchor.parentElement) return;
-    if (assistMobileQuery.matches || anchor.matches("button")) {
-      anchor.insertAdjacentElement("beforebegin", assistEl);
-      return;
-    }
-    const spot = anchor.closest("[data-rsvp-contact]") || anchor;
-    spot.insertAdjacentElement("afterend", assistEl);
-  }
+  function placeAssist() {}
 
   function scrollAssist(field) {
-    const target = assistMobileQuery.matches ? assistEl : field;
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    const target = field;
+    if (!target) return;
+    assistHoldScroll = true;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    let idle = 0;
+    const finish = () => {
+      window.clearTimeout(idle);
+      idle = window.setTimeout(() => {
+        window.removeEventListener("scroll", finish);
+        assistScrollY = window.scrollY;
+        assistHoldScroll = false;
+      }, 140);
+    };
+    window.addEventListener("scroll", finish, { passive: true });
+    finish();
   }
 
   function setAssistBack(index) {
@@ -1435,6 +1586,8 @@
     assistStepEl.textContent = "Step " + (index + 1) + " of " + total;
     assistTitleEl.textContent = step.title;
     assistTextEl.textContent = step.text;
+    assistExamples.hidden = step.key !== "name";
+    assistNext.hidden = step.key !== "optional";
     assistEl.hidden = false;
     if (step.focus && document.activeElement !== step.focus) step.focus.focus({ preventScroll: true });
     scrollAssist(step.field);
@@ -1477,7 +1630,9 @@
       setAssistBack(steps.length);
       assistStepEl.textContent = "Last step";
       assistTitleEl.textContent = findTarget ? "Find your RSVP" : "Send your RSVP";
-      assistTextEl.textContent = findTarget ? "Tap Find my RSVP. Allergy, hashtag, and a message can wait until after we find you." : "The required parts are done. Allergy, hashtag, and a message are optional. When you are ready, tap Send RSVP.";
+      assistTextEl.textContent = findTarget ? "Tap Find my RSVP." : "When you are ready, tap Send RSVP.";
+      assistExamples.hidden = true;
+      assistNext.hidden = true;
       assistEl.hidden = false;
       const target = findTarget ? findBtn : submitBtn;
       if (target) {
@@ -1496,6 +1651,7 @@
     const current = assistKey === "send" ? steps.length : steps.findIndex((step) => step.key === assistKey);
     const prev = previousAssistIndex(steps, current);
     if (prev < 0) return;
+    if (steps[prev] && steps[prev].key === "optional") optionalGuidePassed = false;
     assistPin = prev;
     assistPinDirty = false;
     assistKey = "";
@@ -1507,11 +1663,20 @@
     assistKey = "";
     assistPin = -1;
     assistPinDirty = false;
+    optionalGuidePassed = false;
+    assistNext.hidden = true;
+    assistHoldScroll = false;
+    assistShaking = false;
+    document.documentElement.classList.remove("is-rsvp-assist");
     form.classList.remove("is-assist-on");
+    assistEl.classList.remove("is-shaking");
+    if (statusEl) statusEl.classList.remove("is-shaking");
     clearAssistTarget();
     if (submitBtn) submitBtn.classList.remove("is-assist-target");
     if (findBtn) findBtn.classList.remove("is-assist-target");
     assistEl.hidden = true;
+    if (nameGuideBtn) nameGuideBtn.setAttribute("aria-expanded", "false");
+    refreshNotice();
   }
 
   function startAssist() {
@@ -1519,19 +1684,18 @@
     assistKey = "";
     assistPin = -1;
     assistPinDirty = false;
+    optionalGuidePassed = false;
+    assistShaking = false;
     nameGuideDismissed = true;
     nameGuideRequested = false;
     pinnedNotice = null;
+    document.documentElement.classList.add("is-rsvp-assist");
     form.classList.add("is-assist-on");
+    if (nameGuideBtn) nameGuideBtn.setAttribute("aria-expanded", "true");
+    renderedNoticeKey = "";
+    readRsvpPresence();
     refreshNotice();
     refreshAssist();
-  }
-
-  if (assistStart) {
-    assistStart.addEventListener("click", (event) => {
-      event.preventDefault();
-      startAssist();
-    });
   }
   assistSkip.addEventListener("click", (event) => {
     event.preventDefault();
@@ -1541,11 +1705,152 @@
     event.preventDefault();
     assistGoBack();
   });
+  assistNext.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (!assistOn || assistKey !== "optional") return;
+    optionalGuidePassed = true;
+    assistPin = -1;
+    assistPinDirty = false;
+    assistKey = "";
+    refreshAssist();
+  });
   if (typeof assistMobileQuery.addEventListener === "function") {
     assistMobileQuery.addEventListener("change", () => {
       if (!assistOn) return;
       assistKey = "";
       refreshAssist();
+    });
+  }
+  function setEmailCheck(state) {
+    if (!emailCheckEl) return;
+    emailCheckEl.classList.remove("is-checking", "is-valid", "is-invalid");
+    if (!state) {
+      emailCheckEl.hidden = true;
+      emailCheckEl.textContent = "";
+      emailCheckEl.removeAttribute("aria-label");
+      return;
+    }
+    emailCheckEl.hidden = false;
+    emailCheckEl.classList.add("is-" + state);
+    if (state === "checking") {
+      emailCheckEl.textContent = "";
+      emailCheckEl.setAttribute("aria-label", "Checking email");
+    } else if (state === "valid") {
+      emailCheckEl.textContent = "✓";
+      emailCheckEl.setAttribute("aria-label", "Valid email");
+    } else {
+      emailCheckEl.textContent = "×";
+      emailCheckEl.setAttribute("aria-label", "Invalid email");
+    }
+  }
+
+  function finishEmailCheck() {
+    const value = form.email.value.trim();
+    if (!value || form.email.disabled) {
+      emailGuideReady = false;
+      setEmailCheck("");
+    } else if (isValidEmail(value)) {
+      emailGuideReady = true;
+      setEmailCheck("valid");
+    } else {
+      emailGuideReady = false;
+      setEmailCheck("invalid");
+    }
+    if (assistOn) refreshAssist();
+  }
+
+  function queueEmailCheck() {
+    emailGuideReady = false;
+    window.clearTimeout(emailGuideTimer);
+    const value = form.email.value.trim();
+    if (!value || form.email.disabled) {
+      setEmailCheck("");
+      return;
+    }
+    setEmailCheck("checking");
+    emailGuideTimer = window.setTimeout(finishEmailCheck, 650);
+  }
+
+  function setPhoneCheck(state) {
+    if (!phoneCheckEl) return;
+    phoneCheckEl.classList.remove("is-checking", "is-valid", "is-invalid");
+    if (!state) {
+      phoneCheckEl.hidden = true;
+      phoneCheckEl.textContent = "";
+      phoneCheckEl.removeAttribute("aria-label");
+      return;
+    }
+    phoneCheckEl.hidden = false;
+    phoneCheckEl.classList.add("is-" + state);
+    if (state === "checking") {
+      phoneCheckEl.textContent = "";
+      phoneCheckEl.setAttribute("aria-label", "Checking mobile");
+    } else if (state === "valid") {
+      phoneCheckEl.textContent = "✓";
+      phoneCheckEl.setAttribute("aria-label", "Valid mobile");
+    } else {
+      phoneCheckEl.textContent = "×";
+      phoneCheckEl.setAttribute("aria-label", "Invalid mobile");
+    }
+  }
+
+  function finishPhoneCheck() {
+    const value = form.phone.value.trim();
+    if (!value || form.phone.disabled) {
+      phoneGuideReady = false;
+      setPhoneCheck("");
+    } else if (isValidPhone(value)) {
+      phoneGuideReady = true;
+      setPhoneCheck("valid");
+    } else {
+      phoneGuideReady = false;
+      setPhoneCheck("invalid");
+    }
+    if (assistOn) refreshAssist();
+  }
+
+  function queuePhoneCheck() {
+    phoneGuideReady = false;
+    window.clearTimeout(phoneGuideTimer);
+    const value = form.phone.value.trim();
+    if (!value || form.phone.disabled) {
+      setPhoneCheck("");
+      return;
+    }
+    setPhoneCheck("checking");
+    phoneGuideTimer = window.setTimeout(finishPhoneCheck, 650);
+  }
+
+  form.email.addEventListener("input", queueEmailCheck);
+  form.email.addEventListener("blur", () => {
+    window.clearTimeout(emailGuideTimer);
+    finishEmailCheck();
+  });
+  if (skipEmail) {
+    skipEmail.addEventListener("change", () => {
+      if (skipEmail.checked) {
+        emailGuideReady = false;
+        window.clearTimeout(emailGuideTimer);
+        setEmailCheck("");
+        return;
+      }
+      queueEmailCheck();
+    });
+  }
+  form.phone.addEventListener("input", queuePhoneCheck);
+  form.phone.addEventListener("blur", () => {
+    window.clearTimeout(phoneGuideTimer);
+    finishPhoneCheck();
+  });
+  if (skipPhone) {
+    skipPhone.addEventListener("change", () => {
+      if (skipPhone.checked) {
+        phoneGuideReady = false;
+        window.clearTimeout(phoneGuideTimer);
+        setPhoneCheck("");
+        return;
+      }
+      queuePhoneCheck();
     });
   }
   form.addEventListener("input", () => {

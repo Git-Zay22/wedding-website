@@ -37,6 +37,12 @@
   if (!unlocked) return;
 
   const countEl = root.querySelector("[data-guestlist-count]");
+  const progressEl = root.querySelector("[data-guestlist-progress]");
+  const invitedEl = root.querySelector("[data-guestlist-invited]");
+  const registeredEl = root.querySelector("[data-guestlist-registered]");
+  const pendingEl = root.querySelector("[data-guestlist-pending]");
+  const trackEl = root.querySelector("[data-guestlist-track]");
+  const fillEl = root.querySelector("[data-guestlist-fill]");
   const bodyEl = root.querySelector("[data-guestlist-body]");
   const statusEl = root.querySelector("[data-guestlist-status]");
   const searchEl = root.querySelector("[data-guestlist-search]");
@@ -51,6 +57,7 @@
   const config = window.RSVP_CONFIG || {};
 
   let rows = [];
+  let invitedTotal = null;
   let query = "";
   let sortKey = "submittedAt";
   let sortDir = "desc";
@@ -139,6 +146,41 @@
     }
     if (prevEl) prevEl.disabled = page <= 0 || !total;
     if (nextEl) nextEl.disabled = page >= pages - 1 || !total;
+    renderProgress();
+  }
+
+  function rememberInvited(result) {
+    if (result && Object.prototype.hasOwnProperty.call(result, "invitedCount") && result.invitedCount != null && result.invitedCount !== "") {
+      const fromApi = Number(result.invitedCount);
+      if (Number.isFinite(fromApi) && fromApi >= 0) {
+        invitedTotal = fromApi;
+        return;
+      }
+    }
+    const fallback = Number(config.invitedCount);
+    if (Number.isFinite(fallback) && fallback >= 0) invitedTotal = fallback;
+  }
+
+  function renderProgress() {
+    if (!progressEl) return;
+    const registered = rows.length;
+    const known = typeof invitedTotal === "number";
+    const invited = known ? invitedTotal : 0;
+    const pending = known ? Math.max(0, invited - registered) : 0;
+    const pct = known && invited > 0 ? Math.min(100, (registered / invited) * 100) : 0;
+    if (invitedEl) invitedEl.textContent = known ? String(invited) : "—";
+    if (registeredEl) registeredEl.textContent = String(registered);
+    if (pendingEl) pendingEl.textContent = known ? String(pending) : "—";
+    if (fillEl) fillEl.style.width = pct + "%";
+    if (trackEl) {
+      trackEl.setAttribute("aria-valuemax", String(known ? invited : 0));
+      trackEl.setAttribute("aria-valuenow", String(known ? Math.min(registered, invited) : 0));
+      trackEl.setAttribute(
+        "aria-valuetext",
+        known ? registered + " of " + invited + " registered" : registered + " registered"
+      );
+    }
+    progressEl.hidden = false;
   }
 
   function actionCell(row) {
@@ -319,7 +361,11 @@
         if (!response.ok || !data || data.ok === false || !Array.isArray(data.rows)) {
           return { ok: false, error: data && data.error ? data.error : "" };
         }
-        return { ok: true, rows: data.rows };
+        return {
+          ok: true,
+          rows: data.rows,
+          invitedCount: Object.prototype.hasOwnProperty.call(data, "invitedCount") ? data.invitedCount : undefined,
+        };
       })
       .catch(() => ({ ok: false, error: "" }));
   }
@@ -362,6 +408,7 @@
       window.clearTimeout(refreshTimer);
       refreshTimer = window.setTimeout(() => {
         rows = result.rows;
+        rememberInvited(result);
         shownKey = nextKey;
         setStatus("");
         render();
@@ -384,6 +431,7 @@
       return;
     }
     rows = result.rows;
+    rememberInvited(result);
     shownKey = rosterKey(rows);
     setStatus("");
     render();

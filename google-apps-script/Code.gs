@@ -561,7 +561,17 @@ function listRsvps_() {
     rows.push(record);
   }
 
-  return json_({ ok: true, count: rows.length, rows: rows });
+  var invitedCount = Object.keys(getGuestListMap_()).length;
+  var pendingCount = invitedCount > rows.length ? invitedCount - rows.length : 0;
+
+  return json_({
+    ok: true,
+    count: rows.length,
+    invitedCount: invitedCount,
+    registeredCount: rows.length,
+    pendingCount: pendingCount,
+    rows: rows,
+  });
 }
 
 var SHEET_CACHE_TTL_SEC_ = 45;

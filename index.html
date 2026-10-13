@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=158" />
+  <link rel="stylesheet" href="css/styles.css?v=159" />
   <script src="js/boot.js?v=3"></script>
 </head>
 <body>
@@ -740,6 +740,33 @@
         <div class="guestlist__head">
           <p class="guestlist__count" data-guestlist-count>Loading replies…</p>
         </div>
+        <div class="guestlist__progress" data-guestlist-progress hidden>
+          <dl class="guestlist__stats">
+            <div>
+              <dt>On the list</dt>
+              <dd data-guestlist-invited>0</dd>
+            </div>
+            <div>
+              <dt>Registered</dt>
+              <dd data-guestlist-registered>0</dd>
+            </div>
+            <div>
+              <dt>Not yet registered</dt>
+              <dd data-guestlist-pending>0</dd>
+            </div>
+          </dl>
+          <div
+            class="guestlist__track"
+            data-guestlist-track
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="0"
+            aria-valuenow="0"
+            aria-label="RSVP progress"
+          >
+            <span class="guestlist__track-fill" data-guestlist-fill></span>
+          </div>
+        </div>
         <div class="guestlist__tools">
           <label class="guestlist__length">
             <span class="guestlist__search-label">Show</span>
@@ -1023,7 +1050,7 @@
 
   <script src="js/config.js?v=6"></script>
   <script src="js/main.js?v=39"></script>
-  <script src="js/guestlist.js?v=8"></script>
+  <script src="js/guestlist.js?v=9"></script>
   <script src="js/rsvp.js?v=74"></script>
 </body>
 </html>

@@ -618,6 +618,56 @@
     schedule();
   });
 
+  const attireTabs = document.querySelector("[data-attire-tabs]");
+  if (attireTabs) {
+    const attireGate = attireTabs.querySelector("[data-attire-gate]");
+    const attireTabList = attireTabs.querySelector(".attire-tabs");
+    const attireTabButtons = Array.from(attireTabs.querySelectorAll("[data-attire-tab]"));
+    const attirePanels = Array.from(attireTabs.querySelectorAll("[data-attire-panel]"));
+    let attireChosen = false;
+
+    const showAttireTab = (name) => {
+      attireChosen = true;
+      if (attireGate) attireGate.hidden = true;
+      if (attireTabList) attireTabList.hidden = false;
+      attireTabButtons.forEach((tab) => {
+        const on = tab.getAttribute("data-attire-tab") === name;
+        tab.classList.toggle("is-active", on);
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+        tab.tabIndex = on ? 0 : -1;
+      });
+      attirePanels.forEach((panel) => {
+        panel.hidden = panel.getAttribute("data-attire-panel") !== name;
+      });
+    };
+
+    const openAttireChoice = (name) => {
+      showAttireTab(name);
+      const hash = name === "sponsors" ? "#ninong-ninang" : "#attire";
+      if (window.location.hash !== hash) {
+        history.replaceState(null, "", window.location.pathname + window.location.search + hash);
+      }
+    };
+
+    attireTabs.querySelectorAll("[data-attire-choice]").forEach((button) => {
+      button.addEventListener("click", () => {
+        openAttireChoice(button.getAttribute("data-attire-choice"));
+      });
+    });
+
+    attireTabButtons.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        openAttireChoice(tab.getAttribute("data-attire-tab"));
+      });
+    });
+
+    window.addEventListener("hashchange", () => {
+      if (!attireChosen) return;
+      if (window.location.hash === "#ninong-ninang") showAttireTab("sponsors");
+      else if (window.location.hash === "#attire") showAttireTab("guests");
+    });
+  }
+
   document.querySelectorAll("[data-attire-rail]").forEach((rail) => {
     const slides = Array.from(rail.querySelectorAll("[data-attire-slide]"));
     const prevBtn = rail.querySelector("[data-attire-prev]");

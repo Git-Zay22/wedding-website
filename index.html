@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=159" />
+  <link rel="stylesheet" href="css/styles.css?v=162" />
   <script src="js/boot.js?v=3"></script>
 </head>
 <body>
@@ -242,11 +242,23 @@
           <article class="detail detail--attire">
             <p class="detail__label">Attire</p>
             <h3 class="detail__title">Formal or semi-formal</h3>
-            <p class="detail__place">Shades of dark green</p>
             <p class="detail__addr"><a href="#attire">See attire guide</a></p>
           </article>
 
-          <div class="attire-guide" id="attire">
+          <div class="attire-guide" id="attire" data-attire-tabs>
+            <div class="attire-gate" data-attire-gate>
+              <p class="attire-guide__script">Attire Guide</p>
+              <p class="attire-guide__invite">Please choose who you are, and we will open the matching guide.</p>
+              <div class="attire-gate__choices">
+                <button type="button" class="attire-gate__choice" data-attire-choice="guests">Are you a guest?</button>
+                <button type="button" class="attire-gate__choice" data-attire-choice="sponsors">Are you a ninong or ninang?</button>
+              </div>
+            </div>
+            <div class="attire-tabs" role="tablist" aria-label="Attire guides" hidden>
+              <button type="button" class="attire-tab" role="tab" id="attire-tab-guests" aria-selected="false" aria-controls="attire-panel-guests" tabindex="-1" data-attire-tab="guests">Guests</button>
+              <button type="button" class="attire-tab" role="tab" id="attire-tab-sponsors" aria-selected="false" aria-controls="attire-panel-sponsors" tabindex="-1" data-attire-tab="sponsors">Ninong &amp; Ninang</button>
+            </div>
+            <div class="attire-tabpanel" role="tabpanel" id="attire-panel-guests" aria-labelledby="attire-tab-guests" data-attire-panel="guests" hidden>
             <p class="attire-guide__script">Attire Guide</p>
             <p class="attire-guide__invite">
               We invite our guests to come dressed in elegant
@@ -369,6 +381,50 @@
                   </div>
                 </div>
               </div>
+            </div>
+            </div>
+
+            <div class="attire-tabpanel" role="tabpanel" id="attire-panel-sponsors" aria-labelledby="attire-tab-sponsors" data-attire-panel="sponsors" hidden>
+            <div id="ninong-ninang">
+            <p class="attire-guide__script">Ninong &amp; Ninang</p>
+            <p class="attire-guide__invite">
+              For our principal sponsors, we kindly ask for elegant
+              <em>formal attire</em>.
+            </p>
+            <p class="attire-guide__theme">This guide is for ninong and ninang.</p>
+            <div class="attire-swatches attire-swatches--sponsors" aria-label="Ninong and ninang colors">
+              <figure class="swatch">
+                <div class="swatch__chip" style="--swatch:#d7c4a3"></div>
+                <figcaption>Beige</figcaption>
+              </figure>
+              <figure class="swatch">
+                <div class="swatch__chip" style="--swatch:#f3e6c8"></div>
+                <figcaption>Champagne beige</figcaption>
+              </figure>
+            </div>
+            <div class="attire-sponsors">
+              <article class="attire-sponsor">
+                <p class="attire-sponsor__who">Ninongs</p>
+                <p class="attire-sponsor__look">Beige barong</p>
+              </article>
+              <article class="attire-sponsor">
+                <p class="attire-sponsor__who">Ninangs</p>
+                <p class="attire-sponsor__look">Champagne beige</p>
+              </article>
+            </div>
+            <div class="attire-samples">
+              <div class="attire-models attire-models--sponsors">
+                <figure class="attire-model">
+                  <img src="assets/attire/do-ninong.jpg" alt="Man in a beige barong, black trousers, and black leather shoes" width="768" height="1024" loading="lazy" />
+                  <figcaption><strong>Ninong</strong> Beige barong, formal trousers, and leather shoes</figcaption>
+                </figure>
+                <figure class="attire-model">
+                  <img src="assets/attire/do-ninang.jpg" alt="Woman in a champagne beige formal dress with a modest neckline and closed shoes" width="768" height="1024" loading="lazy" />
+                  <figcaption><strong>Ninang</strong> Champagne beige formal dress with sleeves and closed shoes</figcaption>
+                </figure>
+              </div>
+            </div>
+            </div>
             </div>
           </div>
         </div>
@@ -1049,7 +1105,7 @@
   </footer>
 
   <script src="js/config.js?v=6"></script>
-  <script src="js/main.js?v=39"></script>
+  <script src="js/main.js?v=41"></script>
   <script src="js/guestlist.js?v=9"></script>
   <script src="js/rsvp.js?v=74"></script>
 </body>

@@ -1208,6 +1208,40 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   background: #d5e6f2;
 }
 
+.attire-model__open {
+  display: block;
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: zoom-in;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+
+@media (hover: hover) {
+  .attire-model__open:hover {
+    transform: translateY(-8px);
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.65),
+      0 0 0 2px #9fd4ee,
+      0 16px 26px rgba(61, 143, 186, 0.28),
+      0 0 18px rgba(110, 180, 216, 0.55);
+  }
+}
+
+.attire-model__open:focus-visible {
+  outline: 2px solid var(--powder-deep);
+  outline-offset: 3px;
+  border-radius: var(--radius-md);
+}
+
 .attire-model {
   margin: 0;
 }

@@ -746,25 +746,26 @@
 
   /* Gallery lightbox */
   const lightbox = document.querySelector("[data-lightbox]");
-  const lightboxGallery = document.querySelector("[data-lightbox-gallery]");
-  if (lightbox && lightboxGallery && typeof lightbox.showModal === "function") {
-    const items = Array.from(lightboxGallery.querySelectorAll("[data-lightbox-item]"));
+  const lightboxGalleries = Array.from(document.querySelectorAll("[data-lightbox-gallery]"));
+  if (lightbox && lightboxGalleries.length && typeof lightbox.showModal === "function") {
     const imgEl = lightbox.querySelector("[data-lightbox-img]");
     const captionEl = lightbox.querySelector("[data-lightbox-caption]");
     const closeBtn = lightbox.querySelector("[data-lightbox-close]");
     const prevBtn = lightbox.querySelector("[data-lightbox-prev]");
     const nextBtn = lightbox.querySelector("[data-lightbox-next]");
+    let photos = [];
     let activeIndex = 0;
 
-    const photos = items.map((item) => {
-      const img = item.querySelector("img");
-      const caption = item.querySelector("figcaption");
-      return {
-        src: img ? img.currentSrc || img.src : "",
-        alt: img ? img.alt : "",
-        caption: caption ? caption.textContent.replace(/\s+/g, " ").trim() : "",
-      };
-    });
+    const readPhotos = (gallery) =>
+      Array.from(gallery.querySelectorAll("[data-lightbox-item]")).map((item) => {
+        const img = item.querySelector("img");
+        const caption = item.querySelector("figcaption");
+        return {
+          src: img ? img.getAttribute("src") || img.src : "",
+          alt: img ? img.alt : "",
+          caption: caption ? caption.textContent.replace(/\s+/g, " ").trim() : "",
+        };
+      });
 
     const render = (index) => {
       if (!photos.length) return;
@@ -775,7 +776,8 @@
       captionEl.textContent = photo.caption;
     };
 
-    const openAt = (index) => {
+    const openAt = (gallery, index) => {
+      photos = readPhotos(gallery);
       render(index);
       if (!lightbox.open) lightbox.showModal();
     };
@@ -784,10 +786,12 @@
       if (lightbox.open) lightbox.close();
     };
 
-    items.forEach((item, index) => {
-      const trigger = item.querySelector("[data-lightbox-open]");
-      if (!trigger) return;
-      trigger.addEventListener("click", () => openAt(index));
+    lightboxGalleries.forEach((gallery) => {
+      gallery.querySelectorAll("[data-lightbox-item]").forEach((item, index) => {
+        const trigger = item.querySelector("[data-lightbox-open]");
+        if (!trigger) return;
+        trigger.addEventListener("click", () => openAt(gallery, index));
+      });
     });
 
     closeBtn?.addEventListener("click", close);

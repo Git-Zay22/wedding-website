@@ -14,7 +14,7 @@
  * - health (no action)
  *
  * POST actions:
- * - create / update / lookup / list / suggest (JSON body, text/plain) + token
+ * - create / update / lookup / list / invited / suggest (JSON body, text/plain) + token
  * list returns every saved RSVP and is for the owners page only.
  * suggest returns a few invited names that closely match what was typed.
  *
@@ -131,6 +131,22 @@ function suggestRank_(official, queryWords) {
   return 3;
 }
 
+function listInvitedNames_() {
+  var seen = {};
+  var names = [];
+  for (var i = 0; i < GUEST_LIST.length; i++) {
+    var official = String(GUEST_LIST[i] || "").trim();
+    var key = normalizeName_(official);
+    if (!key || key === "reserved" || seen[key]) continue;
+    seen[key] = true;
+    names.push(official);
+  }
+  names.sort(function (a, b) {
+    return String(a).localeCompare(String(b));
+  });
+  return json_({ ok: true, names: names });
+}
+
 function suggestInvitedNames_(data) {
   var queryWords = suggestWords_(data && data.guestName);
   if (!queryWords.length || queryWords.join(" ").length > 80) {
@@ -217,6 +233,9 @@ function doPost(e) {
     }
     if (action === "list") {
       return listRsvps_();
+    }
+    if (action === "invited") {
+      return listInvitedNames_();
     }
     if (action === "lookup") {
       return lookupByName_(data);

@@ -86,6 +86,10 @@
     return list;
   }
 
+  function publishGuests() {
+    document.dispatchEvent(new CustomEvent("cz-guestlist-rows", { detail: { rows: rows.slice() } }));
+  }
+
   function render() {
     const list = filteredRows();
     const pages = Math.max(1, Math.ceil(list.length / pageSize) || 1);
@@ -147,6 +151,7 @@
     if (prevEl) prevEl.disabled = page <= 0 || !total;
     if (nextEl) nextEl.disabled = page >= pages - 1 || !total;
     renderProgress();
+    publishGuests();
   }
 
   function rememberInvited(result) {
@@ -371,6 +376,8 @@
   }
 
   function showLoadError(error) {
+    rows = [];
+    publishGuests();
     countEl.textContent = "Could not load the guestlist.";
     setStatus(
       error === "Missing required fields."

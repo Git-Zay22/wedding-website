@@ -47,7 +47,7 @@
   const clearOwnersHashIfLocked = () => {
     const hash = window.location.hash;
     const cardsHash = hash === "#owners" || hash === "#proposals";
-    if ((cardsHash && !isProposalsUnlocked()) || (hash === "#guestlist" && !isGuestlistUnlocked())) {
+    if (cardsHash && !isProposalsUnlocked()) {
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   };
@@ -56,7 +56,7 @@
 
   ownersNavLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
-      const allowed = link.hasAttribute("data-guestlist-lock") ? isGuestlistUnlocked() : isProposalsUnlocked();
+      const allowed = isProposalsUnlocked();
       if (!allowed) {
         event.preventDefault();
         event.stopPropagation();
@@ -143,7 +143,7 @@
   window.addEventListener("hashchange", () => {
     const hash = window.location.hash;
     const cardsHash = hash === "#owners" || hash === "#proposals";
-    if ((cardsHash && !isProposalsUnlocked()) || (hash === "#guestlist" && !isGuestlistUnlocked())) {
+    if (cardsHash && !isProposalsUnlocked()) {
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   });
@@ -201,6 +201,38 @@
     });
   }
 
+  const closePlannerMenu = (drop) => {
+    if (!drop) return;
+    drop.classList.remove("is-open");
+    const toggleBtn = drop.querySelector("[data-planner-menu-toggle]");
+    if (toggleBtn) toggleBtn.setAttribute("aria-expanded", "false");
+  };
+
+  document.querySelectorAll("[data-planner-menu-toggle]").forEach((toggleBtn) => {
+    toggleBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const drop = toggleBtn.closest(".nav-drop");
+      if (!drop) return;
+      const open = !drop.classList.contains("is-open");
+      closePlannerMenu(drop);
+      if (!open) return;
+      drop.classList.add("is-open");
+      toggleBtn.setAttribute("aria-expanded", "true");
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    document.querySelectorAll(".nav-drop.is-open").forEach((drop) => {
+      if (!drop.contains(event.target)) closePlannerMenu(drop);
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll(".nav-drop.is-open").forEach(closePlannerMenu);
+  });
+
   const header = document.querySelector("[data-header]");
   const nav = document.querySelector("[data-nav]");
   const toggle = document.querySelector("[data-nav-toggle]");
@@ -239,7 +271,11 @@
     });
 
     nav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => setOpen(false));
+      link.addEventListener("click", () => {
+        setOpen(false);
+        const drop = link.closest(".nav-drop");
+        if (drop) closePlannerMenu(drop);
+      });
     });
 
     document.addEventListener("keydown", (event) => {

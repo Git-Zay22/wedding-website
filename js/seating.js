@@ -38,7 +38,7 @@
   let confirmMode = "";
 
   function capacity(kind) {
-    return kind === "long" ? 20 : 8;
+    return kind === "long" ? 20 : 9;
   }
 
   function tableLabel(table) {
@@ -416,9 +416,11 @@
     pickerQuery = "";
     selectedOrder = [];
     if (searchEl) searchEl.value = "";
+    searchSeen = "";
     renderPicker();
     if (pickerEl.showModal) pickerEl.showModal();
-    if (searchEl) searchEl.focus();
+    const touchUi = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    if (searchEl && !touchUi) searchEl.focus();
   }
 
   function fillConfirm(title, copy, names, yesLabel) {
@@ -523,10 +525,27 @@
     button.addEventListener("click", () => addTable(button.getAttribute("data-seating-kind")));
   });
 
+  let searchSeen = "";
   if (searchEl) {
-    searchEl.addEventListener("input", () => {
-      pickerQuery = searchEl.value;
+    let watch = 0;
+    const applySearch = () => {
+      const next = searchEl.value || "";
+      if (next === searchSeen) return;
+      searchSeen = next;
+      pickerQuery = next;
       renderPicker();
+    };
+    ["input", "keyup", "change", "search", "compositionend"].forEach((type) => {
+      searchEl.addEventListener(type, applySearch);
+    });
+    searchEl.addEventListener("focus", () => {
+      if (watch) return;
+      watch = window.setInterval(applySearch, 120);
+    });
+    searchEl.addEventListener("blur", () => {
+      window.clearInterval(watch);
+      watch = 0;
+      window.setTimeout(applySearch, 80);
     });
   }
   if (saveBtn) saveBtn.addEventListener("click", openSaveConfirm);

@@ -2609,6 +2609,7 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   background: rgba(255, 255, 255, 0.72);
   color: var(--ink);
   font: inherit;
+  font-size: 16px;
 }
 
 .guestlist__scroll {
@@ -5539,6 +5540,7 @@ body.is-rsvp-loading {
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
   font: inherit;
+  font-size: 16px;
 }
 
 .seating-dialog__selected {

@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=205" />
+  <link rel="stylesheet" href="css/styles.css?v=206" />
   <script src="js/boot.js?v=4"></script>
 </head>
 <body class="planner-page">
@@ -98,7 +98,7 @@
             </label>
             <label class="guestlist__search">
               <span class="guestlist__search-label">Search</span>
-              <input type="search" data-guestlist-search placeholder="Name, email, mobile, hashtag…" autocomplete="off" />
+              <input type="text" inputmode="search" enterkeyhint="search" data-guestlist-search placeholder="Name, email, mobile, hashtag…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
             </label>
           </div>
           <div class="guestlist__scroll" data-guestlist-scroll>
@@ -161,7 +161,7 @@
                 <div class="seating__kind-row">
                   <button type="button" class="seating__kind" data-seating-kind="normal">
                     <span class="seating__kind-name">Normal table</span>
-                    <span class="seating__kind-meta">8 seats · Table #1, Table #2…</span>
+                    <span class="seating__kind-meta">9 seats · Table #1, Table #2…</span>
                   </button>
                   <button type="button" class="seating__kind" data-seating-kind="long">
                     <span class="seating__kind-name">Long table</span>
@@ -179,7 +179,7 @@
             <p class="seating-dialog__meta" data-seating-picker-meta></p>
             <label class="seating-dialog__search">
               <span class="guestlist__search-label">Search</span>
-              <input type="search" data-seating-search placeholder="Search guests" autocomplete="off" />
+              <input type="text" inputmode="search" enterkeyhint="search" data-seating-search placeholder="Search guests" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
             </label>
             <div class="seating-dialog__selected" data-seating-selected hidden></div>
             <div class="seating-dialog__list" data-seating-options></div>
@@ -243,7 +243,7 @@
 
   <script src="js/config.js?v=6"></script>
   <script src="js/planner.js?v=7"></script>
-  <script src="js/guestlist.js?v=10"></script>
-  <script src="js/seating.js?v=10"></script>
+  <script src="js/guestlist.js?v=11"></script>
+  <script src="js/seating.js?v=12"></script>
 </body>
 </html>

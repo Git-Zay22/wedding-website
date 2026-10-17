@@ -238,7 +238,7 @@ function sanitizeSeatingPlan_(plan) {
       .slice(0, 40);
     var number = Number(table.number) || 0;
     if (!id || number < 1 || number > 200) continue;
-    var cap = kind === "long" ? 20 : 8;
+    var cap = kind === "long" ? 20 : 9;
     var seatsIn = table.seats || [];
     var seats = [];
     for (var s = 0; s < cap; s++) {

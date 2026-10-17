@@ -245,10 +245,27 @@
   });
 
   if (searchEl) {
-    searchEl.addEventListener("input", () => {
-      query = searchEl.value;
+    let seen = searchEl.value || "";
+    let watch = 0;
+    const applySearch = () => {
+      const next = searchEl.value || "";
+      if (next === seen) return;
+      seen = next;
+      query = next;
       page = 0;
       render();
+    };
+    ["input", "keyup", "change", "search", "compositionend"].forEach((type) => {
+      searchEl.addEventListener(type, applySearch);
+    });
+    searchEl.addEventListener("focus", () => {
+      if (watch) return;
+      watch = window.setInterval(applySearch, 120);
+    });
+    searchEl.addEventListener("blur", () => {
+      window.clearInterval(watch);
+      watch = 0;
+      window.setTimeout(applySearch, 80);
     });
   }
 

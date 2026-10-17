@@ -49,48 +49,67 @@
   };
 
   let latestAnswer = "";
+  const rememberTyped = () => {
+    if (!gateInput) return;
+    latestAnswer = gateInput.value || latestAnswer;
+  };
   if (gateInput) {
-    gateInput.addEventListener("input", () => {
-      latestAnswer = gateInput.value;
+    ["input", "change", "keyup", "compositionend", "blur"].forEach((type) => {
+      gateInput.addEventListener(type, rememberTyped);
     });
   }
 
-  const readGateAnswer = (event) => {
-    let raw = latestAnswer || (gateInput ? gateInput.value : "");
-    const form = event && event.target && event.target.elements ? event.target : gateForm;
-    if (form && typeof FormData === "function") {
+  const collectAnswers = () => {
+    const values = [];
+    if (latestAnswer) values.push(latestAnswer);
+    if (gateInput && gateInput.value) values.push(gateInput.value);
+    if (gateForm && typeof FormData === "function") {
       try {
-        const fromForm = new FormData(form).get("answer");
-        if (fromForm) raw = String(fromForm);
+        const fromForm = new FormData(gateForm).get("cz-gate");
+        if (fromForm) values.push(String(fromForm));
       } catch (e) {}
     }
-    if (!raw && gateInput) raw = gateInput.value || latestAnswer;
-    return raw;
+    return values;
   };
 
+  const normalizedAnswer = (raw) =>
+    String(raw || "")
+      .normalize("NFKC")
+      .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z]/g, "");
+
+  let gatePending = false;
   const submitGate = (event) => {
     if (event) event.preventDefault();
-    if (!gateInput) return;
-    if (document.activeElement === gateInput) gateInput.blur();
-    window.setTimeout(() => {
-      const normalized = String(readGateAnswer(event) || "")
-        .normalize("NFKC")
-        .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, "")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z]/g, "");
-      if (FULL_NAMES.has(normalized)) {
+    if (!gateInput || gatePending) return;
+    gatePending = true;
+    try {
+      gateInput.blur();
+    } catch (e) {}
+    const started = Date.now();
+    const attempt = () => {
+      rememberTyped();
+      const matched = collectAnswers().some((value) => FULL_NAMES.has(normalizedAnswer(value)));
+      if (matched) {
         rememberOwners();
         window.setTimeout(() => {
           window.location.reload();
         }, 40);
         return;
       }
+      if (Date.now() - started < 300) {
+        window.setTimeout(attempt, 60);
+        return;
+      }
+      gatePending = false;
       if (gateError) {
         gateError.textContent = "That name does not match. Please try again.";
         gateError.hidden = false;
       }
-    }, 0);
+    };
+    attempt();
   };
 
   if (gateForm) {
@@ -98,7 +117,18 @@
   }
   const gateConfirm = document.querySelector("[data-proposals-gate-confirm]");
   if (gateConfirm) {
+    gateConfirm.addEventListener("touchstart", () => {
+      if (gateInput) {
+        rememberTyped();
+        gateInput.blur();
+      }
+    }, { passive: true });
     gateConfirm.addEventListener("click", submitGate);
+  }
+  if (gateInput) {
+    gateInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") submitGate(event);
+    });
   }
 
   const header = document.querySelector("[data-header]");

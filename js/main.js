@@ -115,23 +115,69 @@
   };
 
   let latestAnswer = "";
+  const rememberTyped = () => {
+    if (!gateInput) return;
+    latestAnswer = gateInput.value || latestAnswer;
+  };
   if (gateInput) {
-    gateInput.addEventListener("input", () => {
-      latestAnswer = gateInput.value;
+    ["input", "change", "keyup", "compositionend", "blur"].forEach((type) => {
+      gateInput.addEventListener(type, rememberTyped);
     });
   }
 
-  const readGateAnswer = (event) => {
-    let raw = latestAnswer || (gateInput ? gateInput.value : "");
-    const form = event && event.target && event.target.elements ? event.target : gateForm;
-    if (form && typeof FormData === "function") {
+  const collectAnswers = () => {
+    const values = [];
+    if (latestAnswer) values.push(latestAnswer);
+    if (gateInput && gateInput.value) values.push(gateInput.value);
+    if (gateForm && typeof FormData === "function") {
       try {
-        const fromForm = new FormData(form).get("answer");
-        if (fromForm) raw = String(fromForm);
+        const fromForm = new FormData(gateForm).get("cz-gate");
+        if (fromForm) values.push(String(fromForm));
       } catch (e) {}
     }
-    if (!raw && gateInput) raw = gateInput.value || latestAnswer;
-    return raw;
+    return values;
+  };
+
+  const unlockOwners = (access) => {
+    rememberOwners(access);
+    applyProposalsVisibility();
+    closeProposalsGate();
+    const base = window.location.pathname + window.location.search;
+    history.replaceState(null, "", base + "#owners");
+    const owners = document.getElementById("owners");
+    if (owners && owners.scrollIntoView) owners.scrollIntoView();
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 60);
+  };
+
+  let gatePending = false;
+  const submitOwnersGate = (event) => {
+    if (event) event.preventDefault();
+    if (!gateInput || gatePending) return;
+    gatePending = true;
+    try {
+      gateInput.blur();
+    } catch (e) {}
+    const started = Date.now();
+    const attempt = () => {
+      rememberTyped();
+      const access = collectAnswers().map(ownersAccessFor).find(Boolean);
+      if (access) {
+        unlockOwners(access);
+        return;
+      }
+      if (Date.now() - started < 300) {
+        window.setTimeout(attempt, 60);
+        return;
+      }
+      gatePending = false;
+      if (gateError) {
+        gateError.textContent = "That name does not match. Please try again.";
+        gateError.hidden = false;
+      }
+    };
+    attempt();
   };
 
   if (unlockTrigger) {
@@ -146,34 +192,6 @@
     });
   }
 
-  const submitOwnersGate = (event) => {
-    if (event) event.preventDefault();
-    if (!gateInput) return;
-    if (document.activeElement === gateInput) gateInput.blur();
-    window.setTimeout(() => {
-      const access = ownersAccessFor(readGateAnswer(event));
-      if (access) {
-        rememberOwners(access);
-        applyProposalsVisibility();
-        closeProposalsGate();
-        const base = window.location.pathname + window.location.search;
-        const next = base + "#owners";
-        history.replaceState(null, "", next);
-        const owners = document.getElementById("owners");
-        if (owners && owners.scrollIntoView) owners.scrollIntoView();
-        window.setTimeout(() => {
-          window.location.reload();
-        }, 60);
-        return;
-      }
-
-      if (gateError) {
-        gateError.textContent = "That name does not match. Please try again.";
-        gateError.hidden = false;
-      }
-    }, 0);
-  };
-
   if (gateCancel) {
     gateCancel.addEventListener("click", closeProposalsGate);
   }
@@ -183,7 +201,18 @@
   }
   const gateConfirm = document.querySelector("[data-proposals-gate-confirm]");
   if (gateConfirm) {
+    gateConfirm.addEventListener("touchstart", () => {
+      if (gateInput) {
+        rememberTyped();
+        gateInput.blur();
+      }
+    }, { passive: true });
     gateConfirm.addEventListener("click", submitOwnersGate);
+  }
+  if (gateInput) {
+    gateInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") submitOwnersGate(event);
+    });
   }
 
   // Legacy hash support + lock guard

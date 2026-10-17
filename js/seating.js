@@ -632,6 +632,7 @@
       })
       .then(() => {
         if (pickerEl.open) renderPicker();
+        renderCounts();
       });
   }
 
@@ -650,7 +651,8 @@
     const source = guestDetail;
     const registered = source && Array.isArray(source.rows) ? source.rows.length : null;
     const invitedRaw = source && source.invitedCount != null && source.invitedCount !== "" ? Number(source.invitedCount) : NaN;
-    const invited = Number.isFinite(invitedRaw) && invitedRaw >= 0 ? invitedRaw : null;
+    const invitedFromList = Number.isFinite(invitedRaw) && invitedRaw >= 0 ? invitedRaw : null;
+    const invited = invitedFromList != null ? invitedFromList : invitedState === "ready" ? guests.length : null;
     let seated = 0;
     let maxSeats = 0;
     let normalCount = 0;

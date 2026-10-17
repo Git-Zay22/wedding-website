@@ -297,7 +297,13 @@ function doPost(e) {
     var tokenBlocked = assertRsvpToken_(data);
     if (tokenBlocked) return tokenBlocked;
 
-    if (action !== "suggest") {
+    if (
+      action !== "suggest" &&
+      action !== "list" &&
+      action !== "invited" &&
+      action !== "seatingload" &&
+      action !== "seatingsave"
+    ) {
       var limited = assertRateLimit_(action || "create", data);
       if (limited) return limited;
     }

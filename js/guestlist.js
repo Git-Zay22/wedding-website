@@ -397,8 +397,6 @@
   }
 
   function showLoadError(error) {
-    rows = [];
-    publishGuests();
     countEl.textContent = "Could not load the guestlist.";
     setStatus(
       error === "Missing required fields."

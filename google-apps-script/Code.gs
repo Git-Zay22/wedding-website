@@ -14,9 +14,10 @@
  * - health (no action)
  *
  * POST actions:
- * - create / update / lookup / list / invited / suggest (JSON body, text/plain) + token
+ * - create / update / lookup / list / invited / suggest / seatingload / seatingsave
  * list returns every saved RSVP and is for the owners page only.
  * suggest returns a few invited names that closely match what was typed.
+ * seatingload / seatingsave keep the planner tables for the owners page.
  *
  * SECURITY: Keep SPREADSHEET_ID, GUEST_LIST, and RSVP_TOKEN only in Apps Script
  * (and RSVP_TOKEN also in Cloudflare Worker secrets). Do not commit real values to GitHub.
@@ -212,6 +213,78 @@ function assertRateLimit_(action, data) {
   return null;
 }
 
+function seatingSheet_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName("Seating");
+  if (!sheet) {
+    sheet = ss.insertSheet("Seating");
+    sheet.getRange(1, 1).setValue("Plan");
+  }
+  return sheet;
+}
+
+function sanitizeSeatingPlan_(plan) {
+  var tables = [];
+  var source = plan && plan.tables;
+  if (!source || !source.length) return { tables: [] };
+  var limit = Math.min(source.length, 40);
+  for (var i = 0; i < limit; i++) {
+    var table = source[i];
+    if (!table) continue;
+    var kind = table.kind === "long" ? "long" : table.kind === "normal" ? "normal" : "";
+    if (!kind) continue;
+    var id = String(table.id || "")
+      .replace(/[^\w-]/g, "")
+      .slice(0, 40);
+    var number = Number(table.number) || 0;
+    if (!id || number < 1 || number > 200) continue;
+    var cap = kind === "long" ? 20 : 8;
+    var seatsIn = table.seats || [];
+    var seats = [];
+    for (var s = 0; s < cap; s++) {
+      var seat = seatsIn[s];
+      if (!seat) {
+        seats.push(null);
+        continue;
+      }
+      var key = String(seat.key || seat.name || "")
+        .trim()
+        .slice(0, 160);
+      var name = String(seat.name || seat.key || "")
+        .trim()
+        .slice(0, 120);
+      if (!key) {
+        seats.push(null);
+        continue;
+      }
+      seats.push({ key: key, name: name || "Guest" });
+    }
+    tables.push({ id: id, kind: kind, number: number, seats: seats });
+  }
+  return { tables: tables };
+}
+
+function loadSeatingPlan_() {
+  var raw = String(seatingSheet_().getRange(2, 1).getValue() || "");
+  var plan = { tables: [] };
+  if (raw) {
+    try {
+      plan = sanitizeSeatingPlan_(JSON.parse(raw));
+    } catch (err) {
+      plan = { tables: [] };
+    }
+  }
+  return json_({ ok: true, plan: plan });
+}
+
+function saveSeatingPlan_(data) {
+  var plan = sanitizeSeatingPlan_(data && data.plan);
+  var sheet = seatingSheet_();
+  sheet.getRange(1, 1).setValue("Plan");
+  sheet.getRange(2, 1).setValue(JSON.stringify(plan));
+  return json_({ ok: true, saved: true, plan: plan });
+}
+
 function doPost(e) {
   try {
     const raw = e.postData && e.postData.contents ? e.postData.contents : "{}";
@@ -236,6 +309,12 @@ function doPost(e) {
     }
     if (action === "invited") {
       return listInvitedNames_();
+    }
+    if (action === "seatingload") {
+      return loadSeatingPlan_();
+    }
+    if (action === "seatingsave") {
+      return saveSeatingPlan_(data);
     }
     if (action === "lookup") {
       return lookupByName_(data);

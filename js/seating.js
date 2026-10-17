@@ -18,6 +18,7 @@
   const confirmEl = root.querySelector("[data-seating-confirm]");
   const searchEl = root.querySelector("[data-seating-search]");
   const optionsEl = root.querySelector("[data-seating-options]");
+  const selectedEl = root.querySelector("[data-seating-selected]");
   const saveBtn = root.querySelector("[data-seating-save]");
   const confirmYes = root.querySelector("[data-seating-confirm-yes]");
   const confirmNo = root.querySelector("[data-seating-confirm-no]");
@@ -62,35 +63,95 @@
     return name || "Guest";
   }
 
+  let planVersion = 0;
+
+  function normalizePlan(raw) {
+    if (!raw || !Array.isArray(raw.tables)) return { tables: [] };
+    const tables = raw.tables
+      .filter((table) => table && (table.kind === "long" || table.kind === "normal") && Array.isArray(table.seats))
+      .map((table) => ({
+        id: String(table.id || ""),
+        kind: table.kind,
+        number: Number(table.number) || 0,
+        seats: table.seats.slice(0, capacity(table.kind)).map((seat) => {
+          if (!seat) return null;
+          const key = String(seat.key || seat.name || "").trim();
+          if (!key) return null;
+          return { key: key, name: String(seat.name || seat.key || "Guest") };
+        }),
+      }))
+      .filter((table) => table.id && table.number > 0);
+    tables.forEach((table) => {
+      while (table.seats.length < capacity(table.kind)) table.seats.push(null);
+    });
+    return { tables: tables };
+  }
+
   function loadPlan() {
     try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "");
-      if (!raw || !Array.isArray(raw.tables)) return { tables: [] };
-      raw.tables = raw.tables
-        .filter((table) => table && (table.kind === "long" || table.kind === "normal") && Array.isArray(table.seats))
-        .map((table) => ({
-          id: String(table.id || ""),
-          kind: table.kind,
-          number: Number(table.number) || 0,
-          seats: table.seats.slice(0, capacity(table.kind)).map((seat) => {
-            if (!seat || !seat.key) return null;
-            return { key: String(seat.key), name: String(seat.name || "Guest") };
-          }),
-        }))
-        .filter((table) => table.id && table.number > 0);
-      raw.tables.forEach((table) => {
-        while (table.seats.length < capacity(table.kind)) table.seats.push(null);
-      });
-      return { tables: raw.tables };
+      return normalizePlan(JSON.parse(localStorage.getItem(STORAGE_KEY) || ""));
     } catch (e) {
       return { tables: [] };
     }
   }
 
-  function savePlan() {
+  function writeLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
     } catch (e) {}
+  }
+
+  function postPlan(action, bodyPlan) {
+    const config = window.RSVP_CONFIG || {};
+    if (!config.scriptUrl || config.demoMode) return Promise.resolve(null);
+    const body = { action: action };
+    if (bodyPlan) body.plan = bodyPlan;
+    return fetch(config.scriptUrl, {
+      method: "POST",
+      mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body),
+    })
+      .then(async (response) => {
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (e) {
+          data = {};
+        }
+        if (!response.ok || !data || data.ok === false) return null;
+        return data;
+      })
+      .catch(() => null);
+  }
+
+  function pushPlan(version) {
+    postPlan("seatingsave", plan).then((data) => {
+      if (version !== planVersion || !data || !data.plan) return;
+    });
+  }
+
+  function pullPlan() {
+    const version = planVersion;
+    postPlan("seatingload").then((data) => {
+      if (version !== planVersion || !data || !data.plan || !Array.isArray(data.plan.tables)) return;
+      if (!data.plan.tables.length) {
+        if (plan.tables.length) pushPlan(planVersion);
+        return;
+      }
+      plan = normalizePlan(data.plan);
+      writeLocal();
+      renderTables();
+    });
+  }
+
+  function savePlan() {
+    planVersion += 1;
+    writeLocal();
+    pushPlan(planVersion);
   }
 
   function assignedKeys() {
@@ -196,6 +257,8 @@
         const name = document.createElement("td");
         if (seat && seat.name) {
           name.textContent = seat.name;
+        } else if (seat && seat.key) {
+          name.textContent = "Guest";
         } else {
           name.textContent = "Empty";
           name.className = "is-empty";
@@ -291,11 +354,23 @@
     const selectedGuests = selectedOrder
       .map((key) => available.find((guest) => guest.key === key))
       .filter(Boolean);
-    const rest = available.filter(
-      (guest) => !selectedSet.has(guest.key) && (!needle || guest.name.toLowerCase().indexOf(needle) !== -1)
+    const shown = available.filter(
+      (guest) => !needle || guest.name.toLowerCase().indexOf(needle) !== -1
     );
+    const listScroll = optionsEl.scrollTop;
 
     optionsEl.replaceChildren();
+    if (selectedEl) {
+      selectedEl.replaceChildren();
+      selectedEl.hidden = selectedGuests.length === 0;
+      if (selectedGuests.length) {
+        const selectedLabel = document.createElement("p");
+        selectedLabel.className = "seating-dialog__group";
+        selectedLabel.textContent = "Selected";
+        selectedEl.appendChild(selectedLabel);
+        selectedGuests.forEach((guest) => selectedEl.appendChild(optionRow(guest, true, open)));
+      }
+    }
     if (!guests.length) {
       const empty = document.createElement("p");
       empty.className = "seating-dialog__empty";
@@ -310,26 +385,23 @@
       empty.textContent = "Every guest on the list is already seated.";
       optionsEl.appendChild(empty);
     } else {
-      if (selectedGuests.length) {
-        const selectedLabel = document.createElement("p");
-        selectedLabel.className = "seating-dialog__group";
-        selectedLabel.textContent = "Selected";
-        optionsEl.appendChild(selectedLabel);
-        selectedGuests.forEach((guest) => optionsEl.appendChild(optionRow(guest, true, open)));
-      }
       const listLabel = document.createElement("p");
       listLabel.className = "seating-dialog__group";
       listLabel.textContent = "Guestlist";
       optionsEl.appendChild(listLabel);
-      if (!rest.length) {
+      if (!shown.length) {
         const empty = document.createElement("p");
         empty.className = "seating-dialog__empty";
         empty.textContent = needle ? "No guests match that search." : "No guests left to add.";
         optionsEl.appendChild(empty);
       } else {
-        rest.forEach((guest) => optionsEl.appendChild(optionRow(guest, false, open)));
+        shown.forEach((guest) => optionsEl.appendChild(optionRow(guest, selectedSet.has(guest.key), open)));
       }
     }
+    optionsEl.scrollTop = listScroll;
+    requestAnimationFrame(() => {
+      optionsEl.scrollTop = listScroll;
+    });
 
     if (pickerStatus) {
       pickerStatus.textContent = selectedOrder.length ? selectedOrder.length + " selected" : "";
@@ -511,4 +583,5 @@
 
   loadInvited();
   renderTables();
+  pullPlan();
 })();

@@ -5494,7 +5494,8 @@ body.is-rsvp-loading {
   padding: 0;
   border: 0;
   width: min(36rem, calc(100vw - 1.5rem));
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 1.5rem);
+  overflow: hidden;
   background: transparent;
 }
 
@@ -5506,7 +5507,10 @@ body.is-rsvp-loading {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
   padding: 1.1rem;
   border: 1px solid var(--tile-border);
   border-radius: var(--radius-md);
@@ -5532,12 +5536,86 @@ body.is-rsvp-loading {
   font: inherit;
 }
 
+.seating-dialog__selected {
+  flex: 0 0 auto;
+  overflow: visible;
+  border: 1px solid rgba(36, 48, 58, 0.1);
+  border-radius: 0.85rem;
+  background: #fff;
+}
+
+.seating-dialog__selected .seating-dialog__group {
+  padding-bottom: 0;
+}
+
+.seating-dialog__selected .seating-option {
+  padding: 0.2rem 0.85rem;
+}
+
+.seating-dialog__selected[hidden] {
+  display: none;
+}
+
 .seating-dialog__list {
-  overflow: auto;
-  max-height: min(24rem, 48vh);
+  flex: 0 0 auto;
+  overflow: visible;
   border: 1px solid rgba(36, 48, 58, 0.1);
   border-radius: 0.85rem;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.seating-dialog__title,
+.seating-dialog__search,
+.seating-dialog__status,
+.seating-dialog__actions {
+  flex-shrink: 0;
+}
+
+.seating-dialog[data-seating-picker][open] {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: calc(100svh - 1.5rem);
+  max-height: calc(100svh - 1.5rem);
+  overflow: hidden;
+}
+
+.seating-dialog[data-seating-picker] .seating-dialog__panel {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.seating-dialog[data-seating-picker] .seating-dialog__selected {
+  flex: 0 0 auto;
+  max-height: 32%;
+  overflow: auto;
+}
+
+.seating-dialog[data-seating-picker] .seating-dialog__selected .seating-option {
+  padding: 0.12rem 0.85rem;
+  line-height: 1.2;
+}
+
+.seating-dialog[data-seating-picker] .seating-dialog__panel .seating-dialog__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+}
+
+.seating-dialog[data-seating-picker] .seating-dialog__actions {
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .seating-dialog__panel {
+    gap: 0.45rem;
+    padding: 0.85rem 0.9rem;
+  }
 }
 
 .seating-dialog__group,

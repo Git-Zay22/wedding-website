@@ -447,8 +447,39 @@ code {
   scroll-margin-top: calc(var(--header-h) + 0.75rem);
 }
 
+.planner-page .site-header {
+  background: rgba(244, 249, 253, 0.96);
+  border-bottom: 1px solid rgba(26, 40, 51, 0.14);
+  box-shadow: 0 4px 16px rgba(26, 40, 51, 0.06);
+}
+
 .planner-page .site-nav {
   margin-left: auto;
+}
+
+.planner-page .logo img {
+  filter: brightness(0) saturate(100%);
+  opacity: 0.88;
+}
+
+.planner-page .site-nav a {
+  color: #1a2833;
+  opacity: 1;
+}
+
+.planner-page .site-nav a:hover {
+  color: #2f7aa3;
+  opacity: 1;
+}
+
+.planner-page .site-nav a.is-active {
+  color: #2f7aa3;
+  font-weight: 500;
+  box-shadow: inset 0 -2px 0 #2f7aa3;
+}
+
+.planner-page .eyebrow {
+  color: #2f7aa3;
 }
 
 .planner-page .site-header.is-scrolled {
@@ -4785,8 +4816,11 @@ body.is-rsvp-loading {
 
   /* Keep drawer links light even when header is scrolled */
   .site-header.is-scrolled.nav-open .site-nav a,
-  .site-header.nav-open .site-nav a {
+  .site-header.nav-open .site-nav a,
+  .planner-page .site-header.nav-open .site-nav a,
+  .planner-page .site-header.nav-open .site-nav a.is-active {
     color: var(--cloud);
+    box-shadow: none;
   }
 
   .nav-cta {

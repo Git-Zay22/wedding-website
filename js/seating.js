@@ -84,6 +84,12 @@
     tables.forEach((table) => {
       while (table.seats.length < capacity(table.kind)) table.seats.push(null);
     });
+    ["normal", "long"].forEach((kind) => {
+      let number = 1;
+      tables.forEach((table) => {
+        if (table.kind === kind) table.number = number++;
+      });
+    });
     return { tables: tables };
   }
 
@@ -170,6 +176,13 @@
       if (table.kind === kind && table.number > max) max = table.number;
     });
     return max + 1;
+  }
+
+  function renumberKind(kind) {
+    let number = 1;
+    plan.tables.forEach((table) => {
+      if (table.kind === kind) table.number = number++;
+    });
   }
 
   function openCount(table) {
@@ -459,6 +472,7 @@
     const table = findTable(pickerTableId);
     if (confirmMode === "delete" && table) {
       plan.tables = plan.tables.filter((item) => item.id !== table.id);
+      renumberKind(table.kind);
       savePlan();
       renderTables();
       pickerTableId = "";

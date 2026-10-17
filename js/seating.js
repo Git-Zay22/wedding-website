@@ -38,10 +38,13 @@
   let confirmMode = "";
 
   function capacity(kind) {
-    return kind === "long" ? 20 : 9;
+    if (kind === "long") return 20;
+    if (kind === "couple") return 2;
+    return 9;
   }
 
   function tableLabel(table) {
+    if (table.kind === "couple") return "Groom & Bride";
     return (table.kind === "long" ? "Long Table #" : "Table #") + table.number;
   }
 
@@ -65,25 +68,39 @@
 
   let planVersion = 0;
 
-  function normalizePlan(raw) {
-    if (!raw || !Array.isArray(raw.tables)) return { tables: [] };
-    const tables = raw.tables
-      .filter((table) => table && (table.kind === "long" || table.kind === "normal") && Array.isArray(table.seats))
-      .map((table) => ({
-        id: String(table.id || ""),
-        kind: table.kind,
-        number: Number(table.number) || 0,
-        seats: table.seats.slice(0, capacity(table.kind)).map((seat) => {
-          if (!seat) return null;
-          const key = String(seat.key || seat.name || "").trim();
-          if (!key) return null;
-          return { key: key, name: String(seat.name || seat.key || "Guest") };
-        }),
-      }))
-      .filter((table) => table.id && table.number > 0);
-    tables.forEach((table) => {
-      while (table.seats.length < capacity(table.kind)) table.seats.push(null);
+  function cleanSeats(table, kind) {
+    const seats = (Array.isArray(table.seats) ? table.seats : []).slice(0, capacity(kind)).map((seat) => {
+      if (!seat) return null;
+      const key = String(seat.key || seat.name || "").trim();
+      if (!key) return null;
+      return { key: key, name: String(seat.name || seat.key || "Guest") };
     });
+    while (seats.length < capacity(kind)) seats.push(null);
+    return seats;
+  }
+
+  function normalizePlan(raw) {
+    const source = raw && Array.isArray(raw.tables) ? raw.tables : [];
+    const tables = [];
+    const coupleSeats = [];
+    source.forEach((table) => {
+      if (!table) return;
+      const kind = table.kind === "long" || table.kind === "normal" || table.kind === "couple" ? table.kind : "";
+      if (!kind || !Array.isArray(table.seats)) return;
+      const seats = cleanSeats(table, kind);
+      if (kind === "couple") {
+        seats.forEach((seat) => {
+          if (coupleSeats.length < 2) coupleSeats.push(seat);
+        });
+        return;
+      }
+      const id = String(table.id || "");
+      const number = Number(table.number) || 0;
+      if (!id || number <= 0) return;
+      tables.push({ id: id, kind: kind, number: number, seats: seats });
+    });
+    while (coupleSeats.length < 2) coupleSeats.push(null);
+    tables.unshift({ id: "couple", kind: "couple", number: 1, seats: coupleSeats.slice(0, 2) });
     ["normal", "long"].forEach((kind) => {
       let number = 1;
       tables.forEach((table) => {
@@ -95,9 +112,9 @@
 
   function loadPlan() {
     try {
-      return normalizePlan(JSON.parse(localStorage.getItem(STORAGE_KEY) || ""));
+      return normalizePlan(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
     } catch (e) {
-      return { tables: [] };
+      return normalizePlan({ tables: [] });
     }
   }
 
@@ -216,12 +233,13 @@
       empty.textContent = "No tables yet.";
       listEl.appendChild(empty);
       if (addSlot) listEl.appendChild(addSlot);
+      renderCounts();
       return;
     }
 
     plan.tables.forEach((table) => {
       const card = document.createElement("article");
-      card.className = "seating-card" + (table.kind === "long" ? " seating-card--long" : "");
+      card.className = "seating-card" + (table.kind === "long" ? " seating-card--long" : "") + (table.kind === "couple" ? " seating-card--couple" : "");
 
       const head = document.createElement("div");
       head.className = "seating-card__head";
@@ -237,14 +255,16 @@
       addGuests.textContent = "Add guests";
       addGuests.disabled = openCount(table) === 0;
       addGuests.addEventListener("click", () => openPicker(table.id));
+      actions.appendChild(addGuests);
 
-      const removeTable = document.createElement("button");
-      removeTable.type = "button";
-      removeTable.className = "btn btn--ghost-ink seating-card__delete";
-      removeTable.textContent = "Delete table";
-      removeTable.addEventListener("click", () => openDelete(table.id));
-
-      actions.append(addGuests, removeTable);
+      if (table.kind !== "couple") {
+        const removeTable = document.createElement("button");
+        removeTable.type = "button";
+        removeTable.className = "btn btn--ghost-ink seating-card__delete";
+        removeTable.textContent = "Delete table";
+        removeTable.addEventListener("click", () => openDelete(table.id));
+        actions.appendChild(removeTable);
+      }
       head.append(title, actions);
 
       const grid = document.createElement("table");
@@ -306,6 +326,7 @@
       listEl.appendChild(card);
     });
     if (addSlot) listEl.appendChild(addSlot);
+    renderCounts();
   }
 
   function addTable(kind) {
@@ -462,7 +483,7 @@
 
   function openDelete(tableId) {
     const table = findTable(tableId);
-    if (!table) return;
+    if (!table || table.kind === "couple") return;
     pickerTableId = tableId;
     confirmMode = "delete";
     fillConfirm("Delete table", "Remove " + tableLabel(table) + " and return its guests to the list?", [], "Delete");
@@ -613,6 +634,51 @@
         if (pickerEl.open) renderPicker();
       });
   }
+
+  const totalEl = root.querySelector("[data-seating-total]");
+  const registeredEl = root.querySelector("[data-seating-registered]");
+  const unregisteredEl = root.querySelector("[data-seating-unregistered]");
+  const seatedEl = root.querySelector("[data-seating-seated]");
+  const unseatedEl = root.querySelector("[data-seating-unseated]");
+  const seatsEl = root.querySelector("[data-seating-seats]");
+  const normalEl = root.querySelector("[data-seating-normal]");
+  const longEl = root.querySelector("[data-seating-long]");
+  let guestDetail = null;
+
+  function renderCounts(detail) {
+    if (detail) guestDetail = detail;
+    const source = guestDetail;
+    const registered = source && Array.isArray(source.rows) ? source.rows.length : null;
+    const invitedRaw = source && source.invitedCount != null && source.invitedCount !== "" ? Number(source.invitedCount) : NaN;
+    const invited = Number.isFinite(invitedRaw) && invitedRaw >= 0 ? invitedRaw : null;
+    let seated = 0;
+    let maxSeats = 0;
+    let normalCount = 0;
+    let longCount = 0;
+    plan.tables.forEach((table) => {
+      maxSeats += table.seats.length;
+      if (table.kind === "normal") normalCount += 1;
+      if (table.kind === "long") longCount += 1;
+      table.seats.forEach((seat) => {
+        if (seat && seat.key) seated += 1;
+      });
+    });
+    if (totalEl) totalEl.textContent = invited == null ? "—" : String(invited);
+    if (registeredEl) registeredEl.textContent = registered == null ? "—" : String(registered);
+    if (unregisteredEl) {
+      unregisteredEl.textContent =
+        invited == null || registered == null ? "—" : String(Math.max(0, invited - registered));
+    }
+    if (seatedEl) seatedEl.textContent = String(seated);
+    if (unseatedEl) unseatedEl.textContent = invited == null ? "—" : String(Math.max(0, invited - seated));
+    if (seatsEl) seatsEl.textContent = String(maxSeats);
+    if (normalEl) normalEl.textContent = String(normalCount);
+    if (longEl) longEl.textContent = String(longCount);
+  }
+
+  document.addEventListener("cz-guestlist-rows", (event) => {
+    renderCounts(event.detail || {});
+  });
 
   loadInvited();
   renderTables();

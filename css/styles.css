@@ -5356,12 +5356,23 @@ body.is-rsvp-loading {
   font-size: 0.82rem;
 }
 
+.seating__stats {
+  margin-top: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+}
+
 .seating__list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
   align-items: start;
+}
+
+.seating-card--couple {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(100%, 28rem);
 }
 
 .seating__add {

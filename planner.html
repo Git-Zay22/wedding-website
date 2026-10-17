@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=206" />
+  <link rel="stylesheet" href="css/styles.css?v=209" />
   <script src="js/boot.js?v=4"></script>
 </head>
 <body class="planner-page">
@@ -153,6 +153,40 @@
           <div class="seating__bar">
             <p class="seating__note" data-seating-note>Add a table, then place anyone on the invited list, including people who have not RSVP’d yet. Someone already seated is hidden the next time you choose.</p>
           </div>
+          <dl class="guestlist__stats seating__stats">
+            <div>
+              <dt>Total guests</dt>
+              <dd data-seating-total>—</dd>
+            </div>
+            <div>
+              <dt>Registered</dt>
+              <dd data-seating-registered>—</dd>
+            </div>
+            <div>
+              <dt>Unregistered</dt>
+              <dd data-seating-unregistered>—</dd>
+            </div>
+            <div>
+              <dt>On a table</dt>
+              <dd data-seating-seated>—</dd>
+            </div>
+            <div>
+              <dt>Not on a table</dt>
+              <dd data-seating-unseated>—</dd>
+            </div>
+            <div>
+              <dt>Maximum seats</dt>
+              <dd data-seating-seats>—</dd>
+            </div>
+            <div>
+              <dt>Normal tables</dt>
+              <dd data-seating-normal>—</dd>
+            </div>
+            <div>
+              <dt>Long tables</dt>
+              <dd data-seating-long>—</dd>
+            </div>
+          </dl>
           <div class="seating__list" data-seating-list>
             <div class="seating__add" data-seating-add-slot>
               <button type="button" class="btn btn--primary" data-seating-add>Add a table</button>
@@ -243,7 +277,7 @@
 
   <script src="js/config.js?v=6"></script>
   <script src="js/planner.js?v=7"></script>
-  <script src="js/guestlist.js?v=11"></script>
-  <script src="js/seating.js?v=13"></script>
+  <script src="js/guestlist.js?v=12"></script>
+  <script src="js/seating.js?v=15"></script>
 </body>
 </html>

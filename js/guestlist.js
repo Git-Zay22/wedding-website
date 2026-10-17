@@ -87,7 +87,11 @@
   }
 
   function publishGuests() {
-    document.dispatchEvent(new CustomEvent("cz-guestlist-rows", { detail: { rows: rows.slice() } }));
+    document.dispatchEvent(
+      new CustomEvent("cz-guestlist-rows", {
+        detail: { rows: rows.slice(), invitedCount: invitedTotal },
+      })
+    );
   }
 
   function render() {

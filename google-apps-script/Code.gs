@@ -231,14 +231,15 @@ function sanitizeSeatingPlan_(plan) {
   for (var i = 0; i < limit; i++) {
     var table = source[i];
     if (!table) continue;
-    var kind = table.kind === "long" ? "long" : table.kind === "normal" ? "normal" : "";
+    var kind =
+      table.kind === "long" ? "long" : table.kind === "normal" ? "normal" : table.kind === "couple" ? "couple" : "";
     if (!kind) continue;
     var id = String(table.id || "")
       .replace(/[^\w-]/g, "")
       .slice(0, 40);
     var number = Number(table.number) || 0;
     if (!id || number < 1 || number > 200) continue;
-    var cap = kind === "long" ? 20 : 9;
+    var cap = kind === "long" ? 20 : kind === "couple" ? 2 : 9;
     var seatsIn = table.seats || [];
     var seats = [];
     for (var s = 0; s < cap; s++) {

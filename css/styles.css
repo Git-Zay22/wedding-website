@@ -683,8 +683,8 @@ html.hero-phone .hero {
 
 .hero__secret {
   display: inline-block;
-  margin: 0;
-  padding: 0;
+  margin: -0.2em -0.12em;
+  padding: 0.2em 0.12em;
   border: 0;
   background: none;
   appearance: none;
@@ -700,6 +700,7 @@ html.hero-phone .hero {
   transform: translateY(0.08em);
   cursor: pointer;
   text-decoration: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -734,18 +735,22 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
 }
 
 .proposals-gate {
+  position: fixed;
+  inset: 0;
   margin: auto;
   padding: 0;
   border: 0;
-  max-width: min(22rem, calc(100vw - 2rem));
+  width: min(22rem, calc(100vw - 2rem));
+  height: fit-content;
+  max-height: calc(100svh - 2rem);
   background: transparent;
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .proposals-gate::backdrop {
   background: rgba(36, 48, 58, 0.55);
-  backdrop-filter: blur(4px);
 }
 
 .proposals-gate__panel {
@@ -798,7 +803,7 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.85);
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: 16px;
   color: var(--ink);
 }
 

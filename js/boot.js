@@ -1,13 +1,43 @@
 (function () {
+  var KEY = "cz-owners-unlock";
+
+  function cookieLevel() {
+    var match = document.cookie.match(/(?:^|; )cz-owners-unlock=([^;]*)/);
+    if (!match) return "";
+    try {
+      return decodeURIComponent(match[1]);
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function normalize(level) {
+    if (level === "all") return "all";
+    if (level === "cards" || level === "1") return "cards";
+    return "";
+  }
+
+  var level = "";
   try {
-    var level = sessionStorage.getItem("cz-owners-unlock");
-    if (level === "cards" || level === "1" || level === "all") {
-      document.documentElement.classList.add("proposals-unlocked");
+    level = normalize(sessionStorage.getItem(KEY) || "");
+  } catch (e) {
+    level = "";
+  }
+  if (!level) {
+    level = normalize(cookieLevel());
+    if (level) {
+      try {
+        sessionStorage.setItem(KEY, level);
+      } catch (e) {}
     }
-    if (level === "all") {
-      document.documentElement.classList.add("guestlist-unlocked");
-    }
-  } catch (e) {}
+  }
+
+  if (level === "cards" || level === "all") {
+    document.documentElement.classList.add("proposals-unlocked");
+  }
+  if (level === "all") {
+    document.documentElement.classList.add("guestlist-unlocked");
+  }
 
   try {
     var screenW = Math.min(screen.width || 0, screen.height || 0);

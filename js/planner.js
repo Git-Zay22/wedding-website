@@ -18,14 +18,17 @@
   const gateCancel = document.querySelector("[data-proposals-gate-cancel]");
 
   const openGate = () => {
-    if (!gateDialog || typeof gateDialog.showModal !== "function") return;
+    if (!gateDialog) return;
     if (gateError) {
       gateError.hidden = true;
       gateError.textContent = "";
     }
     if (gateInput) gateInput.value = "";
-    if (!gateDialog.open) gateDialog.showModal();
-    window.setTimeout(() => gateInput && gateInput.focus(), 50);
+    if (typeof gateDialog.showModal === "function") {
+      if (!gateDialog.open) gateDialog.showModal();
+    } else {
+      gateDialog.setAttribute("open", "");
+    }
   };
 
   if (ownersLevel() !== "all") openGate();
@@ -36,27 +39,66 @@
     });
   }
 
-  if (gateForm) {
-    gateForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      if (!gateInput) return;
-      const normalized = String(gateInput.value || "")
+  const rememberOwners = () => {
+    try {
+      sessionStorage.setItem(UNLOCK_KEY, "all");
+    } catch (e) {}
+    try {
+      document.cookie = "cz-owners-unlock=all; Path=/; SameSite=Lax";
+    } catch (e) {}
+  };
+
+  let latestAnswer = "";
+  if (gateInput) {
+    gateInput.addEventListener("input", () => {
+      latestAnswer = gateInput.value;
+    });
+  }
+
+  const readGateAnswer = (event) => {
+    let raw = latestAnswer || (gateInput ? gateInput.value : "");
+    const form = event && event.target && event.target.elements ? event.target : gateForm;
+    if (form && typeof FormData === "function") {
+      try {
+        const fromForm = new FormData(form).get("answer");
+        if (fromForm) raw = String(fromForm);
+      } catch (e) {}
+    }
+    if (!raw && gateInput) raw = gateInput.value || latestAnswer;
+    return raw;
+  };
+
+  const submitGate = (event) => {
+    if (event) event.preventDefault();
+    if (!gateInput) return;
+    if (document.activeElement === gateInput) gateInput.blur();
+    window.setTimeout(() => {
+      const normalized = String(readGateAnswer(event) || "")
+        .normalize("NFKC")
+        .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, "")
         .trim()
-        .toLowerCase();
+        .toLowerCase()
+        .replace(/[^a-z]/g, "");
       if (FULL_NAMES.has(normalized)) {
-        try {
-          sessionStorage.setItem(UNLOCK_KEY, "all");
-        } catch (e) {}
-        window.location.reload();
+        rememberOwners();
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 40);
         return;
       }
       if (gateError) {
         gateError.textContent = "That name does not match. Please try again.";
         gateError.hidden = false;
       }
-      gateInput.focus();
-      gateInput.select();
-    });
+    }, 0);
+  };
+
+  if (gateForm) {
+    gateForm.addEventListener("submit", submitGate);
+  }
+  const gateConfirm = document.querySelector("[data-proposals-gate-confirm]");
+  if (gateConfirm) {
+    gateConfirm.addEventListener("click", submitGate);
   }
 
   const header = document.querySelector("[data-header]");

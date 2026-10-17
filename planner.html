@@ -17,8 +17,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=204" />
-  <script src="js/boot.js?v=3"></script>
+  <link rel="stylesheet" href="css/styles.css?v=205" />
+  <script src="js/boot.js?v=4"></script>
 </head>
 <body class="planner-page">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -207,7 +207,7 @@
   </main>
 
   <dialog class="proposals-gate" data-proposals-gate aria-labelledby="proposals-gate-title">
-    <form method="dialog" class="proposals-gate__panel" data-proposals-gate-form>
+    <form class="proposals-gate__panel" data-proposals-gate-form action="#">
       <p class="proposals-gate__eyebrow">Confirmation</p>
       <h2 id="proposals-gate-title" class="proposals-gate__title">Who sent you here?</h2>
       <p class="proposals-gate__lead">Enter the name to continue.</p>
@@ -216,14 +216,19 @@
         id="proposals-gate-input"
         class="proposals-gate__input"
         type="text"
+        name="answer"
         autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        spellcheck="false"
+        enterkeyhint="done"
         maxlength="40"
         data-proposals-gate-input
       />
       <p class="proposals-gate__error" data-proposals-gate-error role="alert" hidden></p>
       <div class="proposals-gate__actions">
         <button type="button" class="btn btn--ghost-ink" data-proposals-gate-cancel>Cancel</button>
-        <button type="submit" class="btn btn--primary">Confirm</button>
+        <button type="submit" class="btn btn--primary" data-proposals-gate-confirm>Confirm</button>
       </div>
     </form>
   </dialog>
@@ -237,7 +242,7 @@
   </footer>
 
   <script src="js/config.js?v=6"></script>
-  <script src="js/planner.js?v=4"></script>
+  <script src="js/planner.js?v=6"></script>
   <script src="js/guestlist.js?v=10"></script>
   <script src="js/seating.js?v=10"></script>
 </body>

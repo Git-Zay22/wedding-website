@@ -63,6 +63,25 @@
       }
     });
   });
+  const rememberOwners = (level) => {
+    try {
+      sessionStorage.setItem(PROPOSALS_UNLOCK_KEY, level);
+    } catch (e) {}
+    try {
+      document.cookie =
+        "cz-owners-unlock=" + encodeURIComponent(level) + "; Path=/; SameSite=Lax";
+    } catch (e) {}
+  };
+
+  const forgetOwners = () => {
+    try {
+      sessionStorage.removeItem(PROPOSALS_UNLOCK_KEY);
+    } catch (e) {}
+    try {
+      document.cookie = "cz-owners-unlock=; Path=/; Max-Age=0; SameSite=Lax";
+    } catch (e) {}
+  };
+
   const openProposalsGate = () => {
     if (!gateDialog || isProposalsUnlocked()) return;
     if (gateError) {
@@ -73,8 +92,9 @@
       gateInput.value = "";
     }
     if (typeof gateDialog.showModal === "function") {
-      gateDialog.showModal();
-      window.setTimeout(() => gateInput && gateInput.focus(), 50);
+      if (!gateDialog.open) gateDialog.showModal();
+    } else {
+      gateDialog.setAttribute("open", "");
     }
   };
 
@@ -84,20 +104,41 @@
 
   const ownersAccessFor = (raw) => {
     const normalized = String(raw || "")
+      .normalize("NFKC")
+      .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, "")
       .trim()
-      .toLowerCase();
+      .toLowerCase()
+      .replace(/[^a-z]/g, "");
     if (FULL_NAMES.has(normalized)) return "all";
     if (CARDS_NAMES.has(normalized)) return "cards";
     return "";
+  };
+
+  let latestAnswer = "";
+  if (gateInput) {
+    gateInput.addEventListener("input", () => {
+      latestAnswer = gateInput.value;
+    });
+  }
+
+  const readGateAnswer = (event) => {
+    let raw = latestAnswer || (gateInput ? gateInput.value : "");
+    const form = event && event.target && event.target.elements ? event.target : gateForm;
+    if (form && typeof FormData === "function") {
+      try {
+        const fromForm = new FormData(form).get("answer");
+        if (fromForm) raw = String(fromForm);
+      } catch (e) {}
+    }
+    if (!raw && gateInput) raw = gateInput.value || latestAnswer;
+    return raw;
   };
 
   if (unlockTrigger) {
     unlockTrigger.addEventListener("click", (event) => {
       event.preventDefault();
       if (isProposalsUnlocked()) {
-        try {
-          sessionStorage.removeItem(PROPOSALS_UNLOCK_KEY);
-        } catch (e) {}
+        forgetOwners();
         window.location.replace(window.location.pathname + window.location.search || "/");
         return;
       }
@@ -105,24 +146,24 @@
     });
   }
 
-  if (gateCancel) {
-    gateCancel.addEventListener("click", closeProposalsGate);
-  }
-
-  if (gateForm) {
-    gateForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      if (!gateInput) return;
-
-      const access = ownersAccessFor(gateInput.value);
+  const submitOwnersGate = (event) => {
+    if (event) event.preventDefault();
+    if (!gateInput) return;
+    if (document.activeElement === gateInput) gateInput.blur();
+    window.setTimeout(() => {
+      const access = ownersAccessFor(readGateAnswer(event));
       if (access) {
-        try {
-          sessionStorage.setItem(PROPOSALS_UNLOCK_KEY, access);
-        } catch (e) {}
+        rememberOwners(access);
+        applyProposalsVisibility();
         closeProposalsGate();
         const base = window.location.pathname + window.location.search;
-        window.location.href = base + "#owners";
-        window.location.reload();
+        const next = base + "#owners";
+        history.replaceState(null, "", next);
+        const owners = document.getElementById("owners");
+        if (owners && owners.scrollIntoView) owners.scrollIntoView();
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 60);
         return;
       }
 
@@ -130,9 +171,19 @@
         gateError.textContent = "That name does not match. Please try again.";
         gateError.hidden = false;
       }
-      gateInput.focus();
-      gateInput.select();
-    });
+    }, 0);
+  };
+
+  if (gateCancel) {
+    gateCancel.addEventListener("click", closeProposalsGate);
+  }
+
+  if (gateForm) {
+    gateForm.addEventListener("submit", submitOwnersGate);
+  }
+  const gateConfirm = document.querySelector("[data-proposals-gate-confirm]");
+  if (gateConfirm) {
+    gateConfirm.addEventListener("click", submitOwnersGate);
   }
 
   // Legacy hash support + lock guard

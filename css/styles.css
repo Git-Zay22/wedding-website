@@ -5389,6 +5389,37 @@ body.is-rsvp-loading {
   gap: 0.8rem 1rem;
 }
 
+.seating__sync {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 30;
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 24px rgba(36, 48, 58, 0.12);
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  pointer-events: none;
+}
+
+.seating__sync[hidden] {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .seating__sync {
+    top: calc(var(--header-h) + env(safe-area-inset-top) + 0.45rem);
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: auto;
+  }
+}
+
+.seating__sync-spinner {
+  display: none;
+}
+
 .seating__note,
 .seating__empty,
 .seating-dialog__meta,
@@ -5457,7 +5488,7 @@ body.is-rsvp-loading {
 
 .seating__list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
   align-items: start;
@@ -5467,6 +5498,15 @@ body.is-rsvp-loading {
   grid-column: 1 / -1;
   justify-self: center;
   width: min(100%, 28rem);
+}
+
+.seating-card--long {
+  grid-column: span 3;
+}
+
+.seating-card:not(.seating-card--long):not(.seating-card--couple),
+.seating__add {
+  grid-column: span 2;
 }
 
 .seating__add {
@@ -5516,8 +5556,18 @@ body.is-rsvp-loading {
   gap: 0.45rem;
 }
 
+.seating-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+
 .seating-card__add,
 .seating-card__delete,
+.seating-card__clear,
+.seating-card__extra,
 .seating-dialog__actions .btn {
   min-height: 2.4rem;
   padding: 0.45rem 0.9rem;
@@ -5568,6 +5618,23 @@ body.is-rsvp-loading {
 
 .seating-card__remove-icon {
   display: none;
+}
+
+.seating-card__drop-seat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.15rem;
+  height: 1.35rem;
+  padding: 0 0.45rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c23b3b;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
 }
 
 @media (max-width: 720px) {
@@ -5770,6 +5837,12 @@ body.is-rsvp-loading {
 @media (max-width: 900px) {
   .seating__list {
     grid-template-columns: 1fr;
+  }
+
+  .seating-card--long,
+  .seating-card:not(.seating-card--long):not(.seating-card--couple),
+  .seating__add {
+    grid-column: auto;
   }
 }
 

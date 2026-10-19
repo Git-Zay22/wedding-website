@@ -3,6 +3,47 @@
   const root = document.querySelector("[data-seating]");
   if (!root) return;
 
+  const panels = document.querySelectorAll("[data-planner-panel]");
+  const tabs = document.querySelectorAll("[data-planner-tab]");
+
+  function showTab(name) {
+    tabs.forEach((tab) => {
+      const on = tab.getAttribute("data-planner-tab") === name;
+      tab.classList.toggle("is-active", on);
+      if (on) tab.setAttribute("aria-current", "page");
+      else tab.removeAttribute("aria-current");
+    });
+    panels.forEach((panel) => {
+      panel.hidden = panel.getAttribute("data-planner-panel") !== name;
+    });
+  }
+
+  function tabFromLocation() {
+    const path = location.pathname.replace(/\/+$/, "");
+    if (path.endsWith("/seating") || location.hash === "#seating") return "seating";
+    return "guestlist";
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", (event) => {
+      event.preventDefault();
+      const name = tab.getAttribute("data-planner-tab") === "seating" ? "seating" : "guestlist";
+      const next = name === "seating" ? "../seating/" : "../guestlist/";
+      if (!location.pathname.replace(/\/+$/, "").endsWith("/" + name)) {
+        history.pushState(null, "", next);
+      }
+      showTab(name);
+      const panel = document.querySelector('[data-planner-panel="' + name + '"]');
+      if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  window.addEventListener("popstate", () => {
+    showTab(tabFromLocation());
+  });
+
+  showTab(tabFromLocation());
+
   let seatingUnlocked = false;
   try {
     seatingUnlocked = sessionStorage.getItem("cz-owners-unlock") === "all";
@@ -40,7 +81,13 @@
   function capacity(kind) {
     if (kind === "long") return 20;
     if (kind === "couple") return 2;
-    return 9;
+    return 8;
+  }
+
+  function tableCapacity(table) {
+    const base = capacity(table && table.kind);
+    if (table && table.kind === "normal" && table.extraSeat) return base + 1;
+    return base;
   }
 
   function tableLabel(table) {
@@ -68,15 +115,24 @@
 
   let planVersion = 0;
 
+  function packSeats(seats, table) {
+    const cap = tableCapacity(table);
+    const filled = [];
+    (Array.isArray(seats) ? seats : []).forEach((seat) => {
+      if (seat && seat.key && filled.length < cap) filled.push(seat);
+    });
+    while (filled.length < cap) filled.push(null);
+    return filled;
+  }
+
   function cleanSeats(table, kind) {
-    const seats = (Array.isArray(table.seats) ? table.seats : []).slice(0, capacity(kind)).map((seat) => {
+    const mapped = (Array.isArray(table.seats) ? table.seats : []).map((seat) => {
       if (!seat) return null;
       const key = String(seat.key || seat.name || "").trim();
       if (!key) return null;
       return { key: key, name: String(seat.name || seat.key || "Guest") };
     });
-    while (seats.length < capacity(kind)) seats.push(null);
-    return seats;
+    return packSeats(mapped, { kind: kind, extraSeat: kind === "normal" && !!table.extraSeat });
   }
 
   function normalizePlan(raw) {
@@ -87,7 +143,10 @@
       if (!table) return;
       const kind = table.kind === "long" || table.kind === "normal" || table.kind === "couple" ? table.kind : "";
       if (!kind || !Array.isArray(table.seats)) return;
-      const seats = cleanSeats(table, kind);
+      const ninth = kind === "normal" ? table.seats[8] : null;
+      const ninthFilled = !!(ninth && String(ninth.key || ninth.name || "").trim());
+      const extraSeat = kind === "normal" && (table.extraSeat === true || ninthFilled);
+      const seats = cleanSeats(Object.assign({}, table, { extraSeat: extraSeat }), kind);
       if (kind === "couple") {
         seats.forEach((seat) => {
           if (coupleSeats.length < 2) coupleSeats.push(seat);
@@ -97,7 +156,9 @@
       const id = String(table.id || "");
       const number = Number(table.number) || 0;
       if (!id || number <= 0) return;
-      tables.push({ id: id, kind: kind, number: number, seats: seats });
+      const next = { id: id, kind: kind, number: number, seats: seats };
+      if (extraSeat) next.extraSeat = true;
+      tables.push(next);
     });
     while (coupleSeats.length < 2) coupleSeats.push(null);
     tables.unshift({ id: "couple", kind: "couple", number: 1, seats: coupleSeats.slice(0, 2) });
@@ -151,6 +212,70 @@
       .catch(() => null);
   }
 
+  let syncing = 0;
+  let pollTimer = 0;
+  let flashTimer = 0;
+  let pendingPull = false;
+  const syncEl = document.createElement("p");
+  syncEl.className = "seating__sync";
+  syncEl.hidden = true;
+  syncEl.setAttribute("role", "status");
+  const syncSpinner = document.createElement("span");
+  syncSpinner.className = "seating__sync-spinner";
+  syncSpinner.setAttribute("aria-hidden", "true");
+  const syncText = document.createElement("span");
+  syncEl.append(syncSpinner, syncText);
+  const noteEl = root.querySelector("[data-seating-note]");
+  if (noteEl && noteEl.parentNode) noteEl.parentNode.insertBefore(syncEl, noteEl.nextSibling);
+  else root.prepend(syncEl);
+
+  function endSync() {
+    syncing = Math.max(0, syncing - 1);
+    if (syncing) return;
+    if (pendingPull) {
+      pendingPull = false;
+      pullPlan();
+    }
+  }
+
+  function flashSync(label) {
+    window.clearTimeout(flashTimer);
+    syncText.textContent = label;
+    syncEl.hidden = false;
+    flashTimer = window.setTimeout(() => {
+      syncEl.hidden = true;
+    }, 2200);
+  }
+
+  function releasePull() {
+    if (syncing || !pendingPull) return;
+    pendingPull = false;
+    pullPlan();
+  }
+
+  function adoptRemote(raw) {
+    const next = normalizePlan(raw);
+    if (raw && raw.v === 2) return next;
+    next.tables.forEach((table) => {
+      if (table.kind !== "normal" || table.extraSeat) return;
+      const local = plan.tables.find((item) => item.id === table.id);
+      if (!local || !local.extraSeat) return;
+      table.extraSeat = true;
+      table.seats = packSeats(table.seats, table);
+    });
+    return next;
+  }
+
+  function sameGuests(left, right) {
+    const signature = (source) =>
+      source.tables.map((table) => [
+        table.id,
+        table.kind,
+        table.seats.map((seat) => (seat && seat.key ? seat.key : "")),
+      ]);
+    return JSON.stringify(signature(left)) === JSON.stringify(signature(right));
+  }
+
   function pushPlan(version) {
     postPlan("seatingsave", plan).then((data) => {
       if (version !== planVersion || !data || !data.plan) return;
@@ -158,23 +283,54 @@
   }
 
   function pullPlan() {
+    if (syncing || (pickerEl && pickerEl.open) || (confirmEl && confirmEl.open)) {
+      pendingPull = true;
+      return;
+    }
+    if (document.hidden) return;
     const version = planVersion;
     postPlan("seatingload").then((data) => {
-      if (version !== planVersion || !data || !data.plan || !Array.isArray(data.plan.tables)) return;
+      if (version !== planVersion || syncing) return;
+      if ((pickerEl && pickerEl.open) || (confirmEl && confirmEl.open)) {
+        pendingPull = true;
+        return;
+      }
+      if (!data || !data.plan || !Array.isArray(data.plan.tables)) return;
       if (!data.plan.tables.length) {
         if (plan.tables.length) pushPlan(planVersion);
         return;
       }
-      plan = normalizePlan(data.plan);
+      const next = adoptRemote(data.plan);
+      if (sameGuests(plan, next)) return;
+      plan = next;
       writeLocal();
       renderTables();
+      flashSync("Seating updated");
     });
   }
 
   function savePlan() {
     planVersion += 1;
+    const version = planVersion;
     writeLocal();
-    pushPlan(planVersion);
+    syncing += 1;
+    postPlan("seatingsave", plan)
+      .then((data) => {
+        if (version !== planVersion) return;
+        if (!data || !data.plan || !Array.isArray(data.plan.tables)) {
+          flashSync("Could not refresh seating.");
+          return;
+        }
+        if (!data.plan.tables.length && plan.tables.length) return;
+        const next = adoptRemote(data.plan);
+        if (sameGuests(plan, next)) return;
+        plan = next;
+        writeLocal();
+        renderTables();
+      })
+      .finally(() => {
+        endSync();
+      });
   }
 
   function assignedKeys() {
@@ -225,7 +381,10 @@
 
   const addSlot = root.querySelector("[data-seating-add-slot]");
 
-  function renderTables() {
+  function renderTables(options) {
+    const scrollY = window.scrollY;
+    const active = document.activeElement;
+    if (active && listEl.contains(active) && active.blur) active.blur();
     listEl.replaceChildren();
     if (!plan.tables.length) {
       const empty = document.createElement("p");
@@ -234,10 +393,18 @@
       listEl.appendChild(empty);
       if (addSlot) listEl.appendChild(addSlot);
       renderCounts();
+      window.scrollTo(0, scrollY);
       return;
     }
 
-    plan.tables.forEach((table) => {
+    const ordered = ["couple", "long", "normal"].reduce((list, kind) => {
+      plan.tables.forEach((table) => {
+        if (table.kind === kind) list.push(table);
+      });
+      return list;
+    }, []);
+
+    ordered.forEach((table) => {
       const card = document.createElement("article");
       card.className = "seating-card" + (table.kind === "long" ? " seating-card--long" : "") + (table.kind === "couple" ? " seating-card--couple" : "");
 
@@ -297,6 +464,20 @@
           name.className = "is-empty";
         }
         const action = document.createElement("td");
+        if (table.kind === "normal" && table.extraSeat && index === table.seats.length - 1 && !(seat && seat.key)) {
+          const dropSeat = document.createElement("button");
+          dropSeat.type = "button";
+          dropSeat.className = "seating-card__drop-seat";
+          dropSeat.setAttribute("aria-label", "Remove extra seat");
+          dropSeat.textContent = "\u2212";
+          dropSeat.addEventListener("click", () => {
+            delete table.extraSeat;
+            table.seats = packSeats(table.seats, table);
+            savePlan();
+            renderTables();
+          });
+          action.appendChild(dropSeat);
+        }
         if (seat && seat.key) {
           const remove = document.createElement("button");
           remove.type = "button";
@@ -312,6 +493,7 @@
           remove.append(label, icon);
           remove.addEventListener("click", () => {
             table.seats[index] = null;
+            if (table.kind !== "couple") table.seats = packSeats(table.seats, table);
             savePlan();
             renderTables();
           });
@@ -322,11 +504,37 @@
       });
 
       grid.append(thead, tbody);
-      card.append(head, grid);
+      const foot = document.createElement("div");
+      foot.className = "seating-card__foot";
+      if (table.kind === "normal" && !table.extraSeat) {
+        const addSeat = document.createElement("button");
+        addSeat.type = "button";
+        addSeat.className = "btn btn--ghost-ink seating-card__extra";
+        addSeat.textContent = "Add 1 seat";
+        addSeat.addEventListener("click", () => {
+          table.extraSeat = true;
+          table.seats = packSeats(table.seats, table);
+          savePlan();
+          renderTables();
+        });
+        foot.appendChild(addSeat);
+      }
+      const clearTable = document.createElement("button");
+      clearTable.type = "button";
+      clearTable.className = "btn btn--ghost-ink seating-card__clear";
+      clearTable.textContent = "Clear table";
+      const occupied = table.seats.some((seat) => seat && seat.key);
+      clearTable.disabled = !occupied;
+      clearTable.addEventListener("click", () => openClear(table.id));
+      foot.appendChild(clearTable);
+      card.append(head, grid, foot);
       listEl.appendChild(card);
     });
     if (addSlot) listEl.appendChild(addSlot);
     renderCounts();
+    if (options && options.follow) return;
+    window.scrollTo(0, scrollY);
+    requestAnimationFrame(() => window.scrollTo(0, scrollY));
   }
 
   function addTable(kind) {
@@ -339,7 +547,7 @@
     });
     savePlan();
     kindsEl.hidden = true;
-    renderTables();
+    renderTables({ follow: true });
     const cards = listEl.querySelectorAll(".seating-card");
     const card = cards[cards.length - 1];
     if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -481,6 +689,16 @@
     fillConfirm("Save seating", "Seat these guests at " + tableLabel(table) + "?", names, "Confirm");
   }
 
+  function openClear(tableId) {
+    const table = findTable(tableId);
+    if (!table) return;
+    const names = table.seats.filter((seat) => seat && seat.name).map((seat) => seat.name);
+    if (!names.length) return;
+    pickerTableId = tableId;
+    confirmMode = "clear";
+    fillConfirm("Clear table", "Remove everyone listed at " + tableLabel(table) + "?", names, "Clear");
+  }
+
   function openDelete(tableId) {
     const table = findTable(tableId);
     if (!table || table.kind === "couple") return;
@@ -494,6 +712,11 @@
     if (confirmMode === "delete" && table) {
       plan.tables = plan.tables.filter((item) => item.id !== table.id);
       renumberKind(table.kind);
+      savePlan();
+      renderTables();
+      pickerTableId = "";
+    } else if (confirmMode === "clear" && table) {
+      table.seats = table.seats.map(() => null);
       savePlan();
       renderTables();
       pickerTableId = "";
@@ -513,44 +736,6 @@
     confirmMode = "";
     if (confirmEl.open) confirmEl.close();
   }
-
-  const panels = document.querySelectorAll("[data-planner-panel]");
-  const tabs = document.querySelectorAll("[data-planner-tab]");
-
-  function showTab(name) {
-    tabs.forEach((tab) => {
-      const on = tab.getAttribute("data-planner-tab") === name;
-      tab.classList.toggle("is-active", on);
-      if (on) tab.setAttribute("aria-current", "page");
-      else tab.removeAttribute("aria-current");
-    });
-    panels.forEach((panel) => {
-      panel.hidden = panel.getAttribute("data-planner-panel") !== name;
-    });
-  }
-
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", (event) => {
-      event.preventDefault();
-      const name = tab.getAttribute("data-planner-tab") === "seating" ? "seating" : "guestlist";
-      const hash = name === "seating" ? "#seating" : "#guestlist";
-      if (location.hash !== hash) {
-        history.replaceState(null, "", location.pathname + location.search + hash);
-      }
-      showTab(name);
-      const panel = document.querySelector('[data-planner-panel="' + name + '"]');
-      if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
-
-  window.addEventListener("hashchange", () => {
-    const hash = location.hash;
-    if (hash === "#seating" || hash === "#guestlist" || hash === "#planner") {
-      showTab(hash === "#seating" ? "seating" : "guestlist");
-    }
-  });
-
-  showTab(location.hash === "#seating" ? "seating" : "guestlist");
 
   addBtn.addEventListener("click", () => {
     kindsEl.hidden = !kindsEl.hidden;
@@ -590,7 +775,7 @@
   if (confirmYes) confirmYes.addEventListener("click", applyConfirm);
   if (confirmNo) {
     confirmNo.addEventListener("click", () => {
-      if (confirmMode === "delete") pickerTableId = "";
+      if (confirmMode === "delete" || confirmMode === "clear") pickerTableId = "";
       confirmMode = "";
       if (confirmEl.open) confirmEl.close();
     });
@@ -685,4 +870,17 @@
   loadInvited();
   renderTables();
   pullPlan();
+  pollTimer = window.setInterval(() => {
+    if (!document.hidden) pullPlan();
+  }, 5000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) pullPlan();
+  });
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      if (tab.getAttribute("data-planner-tab") === "seating") pullPlan();
+    });
+  });
+  if (pickerEl) pickerEl.addEventListener("close", releasePull);
+  if (confirmEl) confirmEl.addEventListener("close", releasePull);
 })();

@@ -239,8 +239,11 @@ function sanitizeSeatingPlan_(plan) {
       .slice(0, 40);
     var number = Number(table.number) || 0;
     if (!id || number < 1 || number > 200) continue;
-    var cap = kind === "long" ? 20 : kind === "couple" ? 2 : 9;
     var seatsIn = table.seats || [];
+    var ninth = kind === "normal" ? seatsIn[8] : null;
+    var ninthFilled = !!(ninth && String(ninth.key || ninth.name || "").trim());
+    var extra = kind === "normal" && (table.extraSeat === true || ninthFilled);
+    var cap = kind === "long" ? 20 : kind === "couple" ? 2 : extra ? 9 : 8;
     var seats = [];
     for (var s = 0; s < cap; s++) {
       var seat = seatsIn[s];
@@ -260,9 +263,11 @@ function sanitizeSeatingPlan_(plan) {
       }
       seats.push({ key: key, name: name || "Guest" });
     }
-    tables.push({ id: id, kind: kind, number: number, seats: seats });
+    var next = { id: id, kind: kind, number: number, seats: seats };
+    if (extra) next.extraSeat = true;
+    tables.push(next);
   }
-  return { tables: tables };
+  return { tables: tables, v: 2 };
 }
 
 function loadSeatingPlan_() {

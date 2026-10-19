@@ -92,7 +92,8 @@
 
   function tableLabel(table) {
     if (table.kind === "couple") return "Groom & Bride";
-    return (table.kind === "long" ? "Long Table #" : "Table #") + table.number;
+    const kind = table.kind === "long" ? "Long table" : "Normal table";
+    return "Table #" + table.number + " " + kind;
   }
 
   function guestKey(row) {
@@ -162,11 +163,9 @@
     });
     while (coupleSeats.length < 2) coupleSeats.push(null);
     tables.unshift({ id: "couple", kind: "couple", number: 1, seats: coupleSeats.slice(0, 2) });
-    ["normal", "long"].forEach((kind) => {
-      let number = 1;
-      tables.forEach((table) => {
-        if (table.kind === kind) table.number = number++;
-      });
+    let number = 1;
+    tables.forEach((table) => {
+      if (table.kind !== "couple") table.number = number++;
     });
     return { tables: tables };
   }
@@ -343,18 +342,18 @@
     return taken;
   }
 
-  function nextNumber(kind) {
+  function nextNumber() {
     let max = 0;
     plan.tables.forEach((table) => {
-      if (table.kind === kind && table.number > max) max = table.number;
+      if (table.kind !== "couple" && table.number > max) max = table.number;
     });
     return max + 1;
   }
 
-  function renumberKind(kind) {
+  function renumberTables() {
     let number = 1;
     plan.tables.forEach((table) => {
-      if (table.kind === kind) table.number = number++;
+      if (table.kind !== "couple") table.number = number++;
     });
   }
 
@@ -542,7 +541,7 @@
     plan.tables.push({
       id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       kind: type,
-      number: nextNumber(type),
+      number: nextNumber(),
       seats: Array.from({ length: capacity(type) }, () => null),
     });
     savePlan();
@@ -711,7 +710,7 @@
     const table = findTable(pickerTableId);
     if (confirmMode === "delete" && table) {
       plan.tables = plan.tables.filter((item) => item.id !== table.id);
-      renumberKind(table.kind);
+      renumberTables();
       savePlan();
       renderTables();
       pickerTableId = "";

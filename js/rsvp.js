@@ -662,6 +662,26 @@
     return "#" + text;
   }
 
+  function nameKey(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ñ/g, "n")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  async function officialInvitedName(typed) {
+    const data = await sendAction({ action: "suggest", guestName: typed });
+    const names = data && Array.isArray(data.names) ? data.names : [];
+    const key = nameKey(typed);
+    let exact = "";
+    names.forEach((name) => {
+      if (!exact && nameKey(name) === key) exact = name;
+    });
+    return { exact: exact, names: names };
+  }
+
   function contactValues() {
     const noEmail = Boolean(skipEmail && skipEmail.checked);
     const noPhone = Boolean(skipPhone && skipPhone.checked);
@@ -852,7 +872,9 @@
           ? "Could not reach the RSVP server. Redeploy Apps Script as a Web app with access set to Anyone, then try again."
           : (text && text.slice(0, 160)) ||
             "Something went wrong. Please try again.";
-      throw new Error(data.error || fallback);
+      const error = new Error(data.error || fallback);
+      if (data.reason) error.reason = String(data.reason);
+      throw error;
     }
     return data;
   }
@@ -862,7 +884,14 @@
     return /load failed|failed to fetch|networkerror|network error|aborted|abort|timeout|timed out/i.test(message);
   }
 
+  function duplicateReason(err) {
+    const reason = String((err && err.reason) || "");
+    if (reason.indexOf("duplicate-") === 0) return reason;
+    return "";
+  }
+
   function replyWasUnclear(err) {
+    if (duplicateReason(err)) return false;
     const message = String((err && err.message) || "");
     return (
       networkFailure(err) ||
@@ -914,11 +943,12 @@
       else parent.addEventListener("abort", function () { controller.abort(); }, { once: true });
     }
     opts.signal = controller.signal;
-    opts.cache = "default";
+    opts.cache = "no-store";
     if (opts.headers && opts.headers["Content-Type"]) {
       opts.headers = Object.assign({}, opts.headers, { "Content-Type": "text/plain" });
     }
-    return fetch(url, opts).finally(function () {
+    const fresh = String(url || "") + (String(url || "").indexOf("?") === -1 ? "?" : "&") + "rsvp=" + Date.now();
+    return fetch(fresh, opts).finally(function () {
       window.clearTimeout(timer);
     });
   }
@@ -1123,10 +1153,13 @@
       last.className = "name-suggestions__last";
       last.textContent = parts.last;
       button.appendChild(last);
-      button.addEventListener("mousedown", (event) => {
+      const takeSuggestion = (event) => {
         event.preventDefault();
         chooseNameSuggestion(name);
-      });
+      };
+      button.addEventListener("pointerdown", takeSuggestion);
+      button.addEventListener("mousedown", takeSuggestion);
+      button.addEventListener("touchend", takeSuggestion);
       item.appendChild(button);
       nameSuggestionsEl.appendChild(item);
     });
@@ -1225,7 +1258,7 @@
 
   form.guestName.addEventListener("input", requestNameSuggestions);
   form.guestName.addEventListener("blur", () => {
-    window.setTimeout(hideNameSuggestions, 120);
+    window.setTimeout(hideNameSuggestions, 450);
   });
   document.addEventListener("click", (event) => {
     if (!nameSuggestionsEl || nameSuggestionsEl.hidden) return;
@@ -1397,6 +1430,32 @@
 
     if (form.website && form.website.value.trim() !== "") form.website.value = "";
 
+    submitBusy = true;
+    syncButtonState();
+    showLoading(editMode ? "Updating your RSVP…" : "Sending your RSVP…");
+
+    let invitedName = null;
+    try {
+      invitedName = await officialInvitedName(form.guestName.value.trim());
+    } catch (err) {
+      invitedName = null;
+    }
+    if (invitedName && !invitedName.exact) {
+      hideLoading();
+      submitBusy = false;
+      syncButtonState();
+      renderNameSuggestions(invitedName.names);
+      setStatus(
+        invitedName.names.length
+          ? "Choose your name from the list so it matches the invitation."
+          : "That name is not on the invitation. Check the spelling, then choose it from the list.",
+        "error"
+      );
+      form.guestName.focus();
+      return;
+    }
+    if (invitedName && invitedName.exact) form.guestName.value = invitedName.exact;
+
     const attending = form.attendance.value === "Yes";
     const contact = contactValues();
     const payload = {
@@ -1419,10 +1478,7 @@
       source: window.location.href,
     };
 
-    submitBusy = true;
-    syncButtonState();
     clearStatus();
-    showLoading(editMode ? "Updating your RSVP…" : "Sending your RSVP…");
 
     try {
       if (!isConfigured()) {
@@ -1452,13 +1508,28 @@
       finishSaved();
     } catch (err) {
       console.error(err);
-      const alreadyThere = await savedDespiteError(payload, err);
+      const message = String((err && err.message) || "");
+      const reason = duplicateReason(err);
+      const genericDuplicate = /couldn't be saved|could not be saved/i.test(message);
+      const alreadyThere = reason ? false : await savedDespiteError(payload, err);
       hideLoading();
-      if (alreadyThere) {
+      if (alreadyThere && !genericDuplicate) {
         finishSaved();
         return;
       }
-      setStatus(err.message || "Could not send RSVP. Please try again later.", "error");
+      if (reason === "duplicate-name" || (genericDuplicate && alreadyThere)) {
+        setStatus("This name already has an RSVP. Use Edit your RSVP if you need to change it.", "error");
+      } else if (reason === "duplicate-email") {
+        setStatus("This email is already used on another RSVP. Use a different email, or choose No email and use a mobile number.", "error");
+      } else if (reason === "duplicate-phone") {
+        setStatus("This mobile number is already used on another RSVP. Use a different mobile number, or choose No mobile and use an email.", "error");
+      } else if (reason === "duplicate-contact") {
+        setStatus("This email and mobile number are already used on another RSVP. Use different contact details.", "error");
+      } else if (genericDuplicate) {
+        setStatus("This email or mobile number is already used on another RSVP. Change it, or use Edit your RSVP if this name is already yours.", "error");
+      } else {
+        setStatus(message || "Could not send RSVP. Please try again later.", "error");
+      }
       requestAnimationFrame(() => scrollToStatus(false));
     } finally {
       hideLoading();

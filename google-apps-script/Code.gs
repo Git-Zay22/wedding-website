@@ -407,13 +407,11 @@ function createRsvp_(data) {
   const nameKey = normalizeName_(guestName);
 
   if (findRowByName_(sheet, nameKey)) {
-    return json_({ ok: false, error: errSave });
+    return duplicateJson_("name");
   }
 
-  const duplicate = findDuplicate_(sheet, email, phone, 0);
-  if (duplicate) {
-    return json_({ ok: false, error: errSave });
-  }
+  var duplicate = findDuplicate_(sheet, email, phone, 0);
+  if (duplicate) return duplicateJson_(duplicate);
 
   writeRow_(sheet, sheet.getLastRow() + 1, data, guestName, email, contact.phoneRaw);
   return savedJson_(sheet, { ok: true, saved: true });
@@ -515,13 +513,11 @@ function updateByName_(data) {
 
   const nameOwner = findRowByName_(sheet, normalizeName_(guestName));
   if (nameOwner && nameOwner.rowIndex !== found.rowIndex) {
-    return json_({ ok: false, error: errUpdate });
+    return duplicateJson_("name");
   }
 
-  const duplicate = findDuplicate_(sheet, email, phone, found.rowIndex);
-  if (duplicate) {
-    return json_({ ok: false, error: errUpdate });
-  }
+  var duplicate = findDuplicate_(sheet, email, phone, found.rowIndex);
+  if (duplicate) return duplicateJson_(duplicate);
 
   writeRow_(sheet, found.rowIndex, data, guestName, email, phoneRaw);
   return savedJson_(sheet, { ok: true, saved: true, updated: true });
@@ -741,8 +737,39 @@ function findRowByName_(sheet, nameKey) {
   return match;
 }
 
+function duplicateJson_(kind) {
+  if (kind === "name") {
+    return json_({
+      ok: false,
+      reason: "duplicate-name",
+      error: "This name already has an RSVP. Use Edit your RSVP if you need to change it.",
+    });
+  }
+  if (kind === "email") {
+    return json_({
+      ok: false,
+      reason: "duplicate-email",
+      error: "This email is already used on another RSVP. Use a different email, or choose No email and use a mobile number.",
+    });
+  }
+  if (kind === "phone") {
+    return json_({
+      ok: false,
+      reason: "duplicate-phone",
+      error: "This mobile number is already used on another RSVP. Use a different mobile number, or choose No mobile and use an email.",
+    });
+  }
+  return json_({
+    ok: false,
+    reason: "duplicate-contact",
+    error: "This email and mobile number are already used on another RSVP. Use different contact details.",
+  });
+}
+
 function findDuplicate_(sheet, email, phone, excludeRow) {
   const data = readSheetRowsCached_(sheet);
+  var emailHit = false;
+  var phoneHit = false;
 
   for (var i = 0; i < data.rows.length; i++) {
     var rowIndex = i + 2;
@@ -752,10 +779,14 @@ function findDuplicate_(sheet, email, phone, excludeRow) {
       .trim()
       .toLowerCase();
     const existingPhone = normalizePhone_(data.rows[i][3]);
-    if (email && existingEmail === email) return true;
-    if (phone.length >= 10 && existingPhone === phone) return true;
+    if (email && existingEmail === email) emailHit = true;
+    if (phone.length >= 10 && existingPhone === phone) phoneHit = true;
   }
-  return false;
+
+  if (emailHit && phoneHit) return "both";
+  if (emailHit) return "email";
+  if (phoneHit) return "phone";
+  return "";
 }
 
 function getSpreadsheet_() {

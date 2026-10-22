@@ -35,6 +35,7 @@ function json(data, status, origin) {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
       ...corsHeaders(origin),
     },
   });
@@ -175,6 +176,7 @@ export default {
           status: upstream.status || 200,
           headers: {
             "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store",
             ...corsHeaders(origin),
           },
         });

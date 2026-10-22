@@ -45,6 +45,19 @@ function json(data, status, origin) {
  * That echo URL must be fetched with GET (POST returns HTML 405 "Page Not Found").
  * Note: Response.type (opaqueredirect) is browser-only — not available in Workers.
  */
+function isHtml(text) {
+  return /<!DOCTYPE|<html/i.test(String(text || ""));
+}
+
+async function fetchEcho(loc) {
+  let last = await fetch(loc, { method: "GET", redirect: "follow" });
+  let text = await last.text();
+  if (!isHtml(text)) return { status: last.status || 200, text };
+  last = await fetch(loc, { method: "GET", redirect: "follow" });
+  text = await last.text();
+  return { status: last.status || 200, text };
+}
+
 async function postAppsScript(scriptUrl, bodyText) {
   const headers = { "Content-Type": "text/plain;charset=utf-8" };
 
@@ -57,12 +70,19 @@ async function postAppsScript(scriptUrl, bodyText) {
 
   if (res.status >= 300 && res.status < 400) {
     const loc = res.headers.get("Location");
-    if (loc) {
-      return fetch(loc, { method: "GET", redirect: "follow" });
-    }
+    if (loc) return fetchEcho(loc);
+    return {
+      status: 200,
+      text: JSON.stringify({
+        ok: false,
+        uncertain: true,
+        error: "The RSVP server reply was incomplete.",
+      }),
+    };
   }
 
-  return res;
+  const text = await res.text();
+  return { status: res.status || 200, text };
 }
 
 function normalizeHashtag(value) {
@@ -139,7 +159,18 @@ export default {
         const bodyText = JSON.stringify(body);
 
         const upstream = await postAppsScript(env.SCRIPT_URL, bodyText);
-        const text = await upstream.text();
+        const text = upstream.text;
+        if (isHtml(text)) {
+          return json(
+            {
+              ok: false,
+              uncertain: true,
+              error: "The RSVP server reply was incomplete.",
+            },
+            200,
+            origin
+          );
+        }
         return new Response(text, {
           status: upstream.status || 200,
           headers: {

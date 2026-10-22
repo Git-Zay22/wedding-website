@@ -853,6 +853,43 @@
     return data;
   }
 
+  function replyWasUnclear(err) {
+    const message = String((err && err.message) || "");
+    return /could not reach the rsvp server|did not save to the sheet|couldn't be saved|could not be saved|reply was incomplete|proxy error/i.test(
+      message
+    );
+  }
+
+  async function savedDespiteError(payload, err) {
+    if (!payload || (payload.action !== "create" && payload.action !== "update")) return false;
+    if (!replyWasUnclear(err)) return false;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      if (attempt) await new Promise((resolve) => setTimeout(resolve, 700));
+      try {
+        const data = await sendAction({
+          action: "lookup",
+          guestName: payload.guestName,
+          email: payload.email,
+          phone: payload.phone,
+        });
+        if (data && data.record && data.record.guestName) return true;
+      } catch (_) {}
+    }
+    return false;
+  }
+
+  function finishSaved() {
+    hideLoading();
+    setStatus(
+      editMode ? "Thank you. Your RSVP has been updated." : "Thank you. We have received your RSVP.",
+      "success"
+    );
+    editMode = false;
+    if (editToggle) editToggle.checked = false;
+    resetEditState(false);
+    requestAnimationFrame(() => scrollToStatus(true));
+  }
+
   async function sendAction(payload) {
     return enqueueRsvp(async () => {
       const token = String((config && config.rsvpToken) || "").trim();
@@ -1352,19 +1389,21 @@
       const result = await sendAction(payload);
       if (!result.saved) {
         throw new Error(
-          "RSVP did not save to the sheet. Paste the latest Code.gs, set SPREADSHEET_ID to your sheet ID, then Deploy → New version."
+          result.uncertain
+            ? "The RSVP server reply was incomplete."
+            : "RSVP did not save to the sheet. Paste the latest Code.gs, set SPREADSHEET_ID to your sheet ID, then Deploy → New version."
         );
       }
 
-      hideLoading();
-      setStatus(editMode ? "Thank you. Your RSVP has been updated." : "Thank you. We have received your RSVP.", "success");
-      editMode = false;
-      if (editToggle) editToggle.checked = false;
-      resetEditState(false);
-      requestAnimationFrame(() => scrollToStatus(true));
+      finishSaved();
     } catch (err) {
       console.error(err);
+      const alreadyThere = await savedDespiteError(payload, err);
       hideLoading();
+      if (alreadyThere) {
+        finishSaved();
+        return;
+      }
       setStatus(err.message || "Could not send RSVP. Please try again later.", "error");
       requestAnimationFrame(() => scrollToStatus(false));
     } finally {

@@ -44,6 +44,9 @@
   const trackEl = root.querySelector("[data-guestlist-track]");
   const fillEl = root.querySelector("[data-guestlist-fill]");
   const bodyEl = root.querySelector("[data-guestlist-body]");
+  const invitedBodyEl = root.querySelector("[data-guestlist-invited-body]");
+  const repliesTableEl = root.querySelector('[data-guestlist-table="replies"]');
+  const invitedTableEl = root.querySelector('[data-guestlist-table="invited"]');
   const statusEl = root.querySelector("[data-guestlist-status]");
   const searchEl = root.querySelector("[data-guestlist-search]");
   const lengthEl = root.querySelector("[data-guestlist-length]");
@@ -57,12 +60,32 @@
   const config = window.RSVP_CONFIG || {};
 
   let rows = [];
+  let invitedNames = [];
+  let invitedReady = false;
+  let invitedError = "";
+  let view = "replies";
   let invitedTotal = null;
   let query = "";
   let sortKey = "submittedAt";
   let sortDir = "desc";
   let pageSize = 15;
   let page = 0;
+
+  function guestKey(name) {
+    return String(name || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+  }
+
+  function replyByName() {
+    const map = new Map();
+    rows.forEach((row) => {
+      const key = guestKey(row.guestName);
+      if (key && !map.has(key)) map.set(key, row);
+    });
+    return map;
+  }
 
   function cellText(row, key) {
     return String(row[key] == null ? "" : row[key]);
@@ -94,7 +117,126 @@
     );
   }
 
+  function invitedRows() {
+    const replies = replyByName();
+    const needle = query.trim().toLowerCase();
+    const list = invitedNames.map((name) => {
+      const reply = replies.get(guestKey(name));
+      return {
+        guestName: name,
+        rsvp: reply ? "Registered" : "Not yet",
+      };
+    });
+    const matched = needle
+      ? list.filter(
+          (row) =>
+            row.guestName.toLowerCase().indexOf(needle) !== -1 ||
+            row.rsvp.toLowerCase().indexOf(needle) !== -1
+        )
+      : list;
+    const key = sortKey === "rsvp" ? "rsvp" : "guestName";
+    matched.sort((a, b) => {
+      const left = String(a[key] || "").toLowerCase();
+      const right = String(b[key] || "").toLowerCase();
+      if (left < right) return sortDir === "asc" ? -1 : 1;
+      if (left > right) return sortDir === "asc" ? 1 : -1;
+      return a.guestName.toLowerCase() < b.guestName.toLowerCase() ? -1 : a.guestName.toLowerCase() > b.guestName.toLowerCase() ? 1 : 0;
+    });
+    return matched;
+  }
+
+  function syncView() {
+    root.querySelectorAll("[data-guestlist-view]").forEach((button) => {
+      const selected = button.getAttribute("data-guestlist-view") === view;
+      button.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+    if (repliesTableEl) repliesTableEl.hidden = view !== "replies";
+    if (invitedTableEl) invitedTableEl.hidden = view !== "invited";
+    if (searchEl) {
+      searchEl.placeholder = view === "invited" ? "Name" : "Name, email, mobile, hashtag…";
+    }
+  }
+
+  function renderInvited() {
+    if (!invitedBodyEl) return;
+    syncView();
+    const list = invitedReady ? invitedRows() : [];
+    const pages = Math.max(1, Math.ceil(list.length / pageSize) || 1);
+    if (page > pages - 1) page = pages - 1;
+    if (page < 0) page = 0;
+    const start = list.length ? page * pageSize : 0;
+    const visible = list.slice(start, start + pageSize);
+    invitedBodyEl.replaceChildren();
+
+    if (!invitedReady) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 2;
+      td.className = "guestlist__empty";
+      td.textContent = invitedError || "Loading the invited list…";
+      tr.appendChild(td);
+      invitedBodyEl.appendChild(tr);
+    } else if (!invitedNames.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 2;
+      td.className = "guestlist__empty";
+      td.textContent = "No invited guests yet.";
+      tr.appendChild(td);
+      invitedBodyEl.appendChild(tr);
+    } else if (!list.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 2;
+      td.className = "guestlist__empty";
+      td.textContent = "No guests match that search.";
+      tr.appendChild(td);
+      invitedBodyEl.appendChild(tr);
+    } else {
+      visible.forEach((row) => {
+        const tr = document.createElement("tr");
+        const nameCell = document.createElement("td");
+        nameCell.setAttribute("data-col", "guestName");
+        nameCell.textContent = row.guestName;
+        const statusCell = document.createElement("td");
+        statusCell.setAttribute("data-col", "rsvp");
+        const badge = document.createElement("span");
+        badge.className = "guestlist__rsvp " + (row.rsvp === "Registered" ? "guestlist__rsvp--yes" : "guestlist__rsvp--no");
+        badge.textContent = row.rsvp;
+        statusCell.appendChild(badge);
+        tr.appendChild(nameCell);
+        tr.appendChild(statusCell);
+        invitedBodyEl.appendChild(tr);
+      });
+    }
+
+    const total = invitedReady ? list.length : 0;
+    const from = total ? start + 1 : 0;
+    const to = total ? start + visible.length : 0;
+    countEl.textContent = !invitedReady
+      ? "Loading invited guests…"
+      : invitedNames.length === 1
+        ? "1 invited guest"
+        : invitedNames.length + " invited guests";
+    if (rangeEl) {
+      rangeEl.textContent = !invitedReady
+        ? "Showing 0 of 0"
+        : query.trim()
+          ? "Showing " + from + " to " + to + " of " + total + " matches"
+          : "Showing " + from + " to " + to + " of " + total;
+    }
+    if (prevEl) prevEl.disabled = page <= 0 || !total;
+    if (nextEl) nextEl.disabled = page >= pages - 1 || !total;
+    renderProgress();
+    publishGuests();
+  }
+
   function render() {
+    if (view === "invited") {
+      renderInvited();
+      return;
+    }
+    syncView();
     const list = filteredRows();
     const pages = Math.max(1, Math.ceil(list.length / pageSize) || 1);
     if (page > pages - 1) page = pages - 1;
@@ -239,10 +381,30 @@
   root.querySelectorAll("[data-guestlist-sort]").forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.getAttribute("data-guestlist-sort");
+      if (view === "invited" && key !== "guestName" && key !== "rsvp") return;
+      if (view === "replies" && key === "rsvp") return;
       if (sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
       else {
         sortKey = key;
         sortDir = key === "submittedAt" ? "desc" : "asc";
+      }
+      render();
+    });
+  });
+
+  root.querySelectorAll("[data-guestlist-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const next = button.getAttribute("data-guestlist-view");
+      if (next !== "replies" && next !== "invited") return;
+      if (view === next) return;
+      view = next;
+      page = 0;
+      if (view === "invited") {
+        sortKey = "guestName";
+        sortDir = "asc";
+      } else if (sortKey === "rsvp") {
+        sortKey = "submittedAt";
+        sortDir = "desc";
       }
       render();
     });
@@ -312,6 +474,7 @@
   const POLL_MS = 15000;
   const REFRESH_DELAY_MS = 2000;
   let shownKey = "";
+  let invitedKey = "";
   let pollTimer = 0;
   let refreshTimer = 0;
   let lastCheck = 0;
@@ -396,6 +559,45 @@
       .catch(() => ({ ok: false, error: "" }));
   }
 
+  function requestInvited() {
+    return fetch(url, {
+      method: "POST",
+      mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "invited" }),
+    })
+      .then(async (response) => {
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (e) {
+          data = {};
+        }
+        if (!response.ok || !data || data.ok === false || !Array.isArray(data.names)) {
+          return { ok: false, error: data && data.error ? data.error : "" };
+        }
+        return { ok: true, names: data.names };
+      })
+      .catch(() => ({ ok: false, error: "" }));
+  }
+
+  function rememberInvitedNames(result) {
+    if (!result || !result.ok) {
+      invitedReady = false;
+      invitedError = "Could not load the invited list.";
+      return;
+    }
+    invitedNames = result.names
+      .map((name) => String(name || "").trim())
+      .filter(Boolean);
+    invitedReady = true;
+    invitedError = "";
+    invitedTotal = invitedNames.length;
+  }
+
   function showLoadError(error) {
     countEl.textContent = "Could not load the guestlist.";
     setStatus(
@@ -419,23 +621,30 @@
       schedulePoll();
       return;
     }
-    requestList().then((result) => {
+    Promise.all([requestList(), requestInvited()]).then((results) => {
+      const result = results[0];
+      const invitedResult = results[1];
       if (!result.ok) {
+        if (invitedResult.ok) rememberInvitedNames(invitedResult);
         schedulePoll();
         return;
       }
       const nextKey = rosterKey(result.rows);
-      if (!shownKey || nextKey === shownKey) {
+      const nextInvitedKey = invitedResult.ok ? invitedResult.names.join("\u001e") : "";
+      const invitedChanged = invitedResult.ok && nextInvitedKey !== invitedKey;
+      if ((!shownKey || nextKey === shownKey) && !invitedChanged) {
         schedulePoll();
         return;
       }
       refreshing = true;
-      setTableLoading(true);
+      setTableLoading(view === "replies" || view === "invited");
       window.clearTimeout(refreshTimer);
       refreshTimer = window.setTimeout(() => {
         rows = result.rows;
         rememberInvited(result);
+        if (invitedResult.ok) rememberInvitedNames(invitedResult);
         shownKey = nextKey;
+        if (invitedResult.ok) invitedKey = nextInvitedKey;
         setStatus("");
         render();
         setTableLoading(false);
@@ -451,13 +660,19 @@
     checkForNew();
   });
 
-  requestList().then((result) => {
+  Promise.all([requestList(), requestInvited()]).then((results) => {
+    const result = results[0];
+    const invitedResult = results[1];
+    rememberInvitedNames(invitedResult);
+    if (invitedResult.ok) invitedKey = invitedResult.names.join("\u001e");
     if (!result.ok) {
       showLoadError(result.error);
+      if (view === "invited") render();
       return;
     }
     rows = result.rows;
     rememberInvited(result);
+    if (invitedResult.ok) invitedTotal = invitedNames.length;
     shownKey = rosterKey(rows);
     setStatus("");
     render();

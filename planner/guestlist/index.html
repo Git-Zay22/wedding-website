@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="../../css/styles.css?v=221" />
+  <link rel="stylesheet" href="../../css/styles.css?v=225" />
   <script src="../../js/boot.js?v=4"></script>
 </head>
 <body class="planner-page">
@@ -54,6 +54,10 @@
         <div class="guestlist__panel" data-guestlist>
           <div class="guestlist__head">
             <p class="guestlist__count" data-guestlist-count>Loading replies…</p>
+            <div class="guestlist__views" role="tablist" aria-label="Guestlist views">
+              <button type="button" role="tab" id="guestlist-view-replies" aria-selected="true" aria-controls="guestlist-replies" data-guestlist-view="replies">Replies</button>
+              <button type="button" role="tab" id="guestlist-view-invited" aria-selected="false" aria-controls="guestlist-invited" data-guestlist-view="invited">Invited list</button>
+            </div>
           </div>
           <div class="guestlist__progress" data-guestlist-progress hidden>
             <dl class="guestlist__stats">
@@ -106,7 +110,7 @@
               <span class="guestlist__spinner" aria-hidden="true"></span>
               <span>Updating the guestlist…</span>
             </div>
-            <table class="guestlist__table">
+            <table class="guestlist__table" id="guestlist-replies" data-guestlist-table="replies">
               <thead>
                 <tr>
                   <th data-col="submittedAt"><button type="button" data-guestlist-sort="submittedAt">Submitted</button></th>
@@ -123,6 +127,15 @@
                 </tr>
               </thead>
               <tbody data-guestlist-body></tbody>
+            </table>
+            <table class="guestlist__table guestlist__table--invited" id="guestlist-invited" data-guestlist-table="invited" hidden>
+              <thead>
+                <tr>
+                  <th data-col="guestName"><button type="button" data-guestlist-sort="guestName">Name</button></th>
+                  <th data-col="rsvp"><button type="button" data-guestlist-sort="rsvp">RSVP</button></th>
+                </tr>
+              </thead>
+              <tbody data-guestlist-invited-body></tbody>
             </table>
           </div>
           <div class="guestlist__pager">
@@ -277,7 +290,7 @@
 
   <script src="../../js/config.js?v=6"></script>
   <script src="../../js/planner.js?v=7"></script>
-  <script src="../../js/guestlist.js?v=13"></script>
+  <script src="../../js/guestlist.js?v=14"></script>
   <script src="../../js/seating.js?v=24"></script>
 </body>
 </html>

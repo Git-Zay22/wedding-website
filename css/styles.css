@@ -2440,6 +2440,53 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   font-size: 0.92rem;
 }
 
+.guestlist__views {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.guestlist__views button {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid rgba(36, 48, 58, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.guestlist__views button[aria-selected="true"] {
+  border-color: transparent;
+  background: var(--powder-deep);
+  color: #fff;
+}
+
+.guestlist__table--invited {
+  min-width: 28rem;
+}
+
+.guestlist__rsvp {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.guestlist__rsvp--yes {
+  background: rgba(90, 168, 208, 0.22);
+  color: #24556f;
+}
+
+.guestlist__rsvp--no {
+  background: rgba(245, 215, 110, 0.5);
+  color: #5c4a1e;
+}
+
 .guestlist__progress {
   margin-top: 0.9rem;
 }
@@ -2786,8 +2833,20 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   .guestlist__table td[data-col="guestName"],
   .guestlist__table th[data-col="actions"],
   .guestlist__table td[data-col="actions"],
+  .guestlist__table--invited th[data-col="rsvp"],
+  .guestlist__table--invited td[data-col="rsvp"],
   .guestlist__table td.guestlist__empty {
     display: table-cell;
+  }
+
+  .guestlist__table--invited {
+    min-width: 0;
+  }
+
+  .guestlist__table--invited th[data-col="rsvp"],
+  .guestlist__table--invited td[data-col="rsvp"] {
+    width: 7.5rem;
+    text-align: right;
   }
 
   .guestlist__table th[data-col="actions"],
@@ -3790,6 +3849,7 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 }
 
 .contact-skip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -3807,10 +3867,11 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 
 .contact-skip input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
 }
 
 .contact-skip__ui {
@@ -4413,6 +4474,7 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 }
 
 .rsvp-switch {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.85rem;
@@ -4422,10 +4484,11 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 
 .rsvp-switch input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
 }
 
 .rsvp-switch__ui {
@@ -4514,6 +4577,10 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 .rsvp-edit-instructions__list strong {
   color: var(--ink-soft);
   font-weight: 600;
+}
+
+.rsvp-form .btn {
+  touch-action: manipulation;
 }
 
 .rsvp-form .btn:disabled {

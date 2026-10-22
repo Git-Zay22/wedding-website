@@ -643,9 +643,13 @@
   }
 
   function isValidPhone(value) {
-    const compact = String(value || "").trim().replace(/[\s-]/g, "");
-    if (/^09\d{9}$/.test(compact)) return true;
-    return /^\+63\d{10}$/.test(compact);
+    let digits = String(value || "").replace(/\D/g, "");
+    if (digits.indexOf("00") === 0) digits = digits.slice(2);
+    if (digits.indexOf("63") === 0 && (digits.length === 12 || digits.length === 13)) {
+      digits = digits.slice(2);
+    }
+    if (digits.charAt(0) === "0" && digits.length === 11) digits = digits.slice(1);
+    return /^9\d{9}$/.test(digits);
   }
 
   function normalizeHashtag(value) {
@@ -758,7 +762,7 @@
         focusEl = focusEl || form.email;
       }
       if (phone && !hasPhone) {
-        issues.push({ label: "Mobile", detail: "use 09 and 11 digits, or +63" });
+        issues.push({ label: "Mobile", detail: "use 09, +63, or a 10-digit mobile" });
         focusEl = focusEl || form.phone;
       }
     }
@@ -804,7 +808,7 @@
           issues.push({ label: "Mobile", detail: "is required" });
           focusEl = focusEl || form.phone;
         } else if (!isValidPhone(phone)) {
-          issues.push({ label: "Mobile", detail: "use 09 and 11 digits, or +63" });
+          issues.push({ label: "Mobile", detail: "use 09, +63, or a 10-digit mobile" });
           focusEl = focusEl || form.phone;
         }
       }
@@ -853,10 +857,18 @@
     return data;
   }
 
+  function networkFailure(err) {
+    const message = String((err && (err.name + " " + err.message)) || "");
+    return /load failed|failed to fetch|networkerror|network error|aborted|abort|timeout|timed out/i.test(message);
+  }
+
   function replyWasUnclear(err) {
     const message = String((err && err.message) || "");
-    return /could not reach the rsvp server|did not save to the sheet|couldn't be saved|could not be saved|reply was incomplete|proxy error/i.test(
-      message
+    return (
+      networkFailure(err) ||
+      /could not reach the rsvp server|did not save to the sheet|couldn't be saved|could not be saved|reply was incomplete|proxy error/i.test(
+        message
+      )
     );
   }
 
@@ -890,22 +902,52 @@
     requestAnimationFrame(() => scrollToStatus(true));
   }
 
-  async function sendAction(payload) {
+  function fetchRsvp(url, options) {
+    const opts = Object.assign({}, options || {});
+    const controller = new AbortController();
+    const timer = window.setTimeout(function () {
+      controller.abort();
+    }, 25000);
+    const parent = opts.signal;
+    if (parent) {
+      if (parent.aborted) controller.abort();
+      else parent.addEventListener("abort", function () { controller.abort(); }, { once: true });
+    }
+    opts.signal = controller.signal;
+    opts.cache = "default";
+    if (opts.headers && opts.headers["Content-Type"]) {
+      opts.headers = Object.assign({}, opts.headers, { "Content-Type": "text/plain" });
+    }
+    return fetch(url, opts).finally(function () {
+      window.clearTimeout(timer);
+    });
+  }
+
+  async function postRsvp(payload) {
     return enqueueRsvp(async () => {
       const token = String((config && config.rsvpToken) || "").trim();
       if (token) payload.token = token;
 
       // All actions (create / update / lookup) use POST so PII is not in the URL.
-      const response = await fetch(config.scriptUrl, {
+      const response = await fetchRsvp(config.scriptUrl, {
         method: "POST",
         mode: "cors",
         redirect: "follow",
-        cache: "no-store",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(payload),
       });
       return parseJsonResponse(response);
     });
+  }
+
+  async function sendAction(payload) {
+    try {
+      return await postRsvp(payload);
+    } catch (err) {
+      if (!networkFailure(err)) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return postRsvp(payload);
+    }
   }
 
   async function lookupRsvp() {
@@ -1157,12 +1199,11 @@
     const requestId = nameSuggestRequest;
     const controller = new AbortController();
     nameSuggestController = controller;
-    fetch(config.scriptUrl, {
+    fetchRsvp(config.scriptUrl, {
       method: "POST",
       mode: "cors",
       redirect: "follow",
-      cache: "no-store",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ action: "suggest", guestName: query }),
       signal: controller.signal,
     })
@@ -1293,16 +1334,11 @@
   }
 
   // Warm Apps Script / Worker so the first Find/Send is less likely to cold-start hang.
-  // Goes through the same queue so warm never overlaps a Find/Send.
+  // Kept off the save queue so a slow warm-up cannot block Send on iPhone.
   function warmRsvpEndpoint() {
     const url = String((config && config.scriptUrl) || "").trim();
     if (!url || !isConfigured()) return;
-    if (lookupBusy || submitBusy || requestQueue.length || queueRunning) return;
-    enqueueRsvp(async () => {
-      await fetch(url, { method: "GET", mode: "cors", cache: "no-store" }).catch(
-        function () {}
-      );
-    }).catch(function () {});
+    fetchRsvp(url, { method: "GET", mode: "cors" }).catch(function () {});
   }
   warmRsvpEndpoint();
   if (rsvpSection && "IntersectionObserver" in window) {
@@ -1317,8 +1353,33 @@
     warmOnce.observe(rsvpSection);
   }
 
+  if (submitBtn) {
+    let touchStartY = 0;
+    submitBtn.addEventListener(
+      "touchstart",
+      (event) => {
+        const touch = event.changedTouches && event.changedTouches[0];
+        touchStartY = touch ? touch.clientY : 0;
+      },
+      { passive: true }
+    );
+    submitBtn.addEventListener("touchend", (event) => {
+      if (submitBtn.disabled || submitBusy || lookupBusy) return;
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (touch && Math.abs(touch.clientY - touchStartY) > 12) return;
+      if (event.cancelable) event.preventDefault();
+      if (typeof form.requestSubmit === "function") form.requestSubmit(submitBtn);
+      else form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+    });
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (submitBusy || lookupBusy) return;
+    const active = document.activeElement;
+    if (active && active !== submitBtn && form.contains(active) && typeof active.blur === "function") {
+      active.blur();
+    }
     if (assistOn) stopAssist();
     clearStatus();
 
@@ -1334,14 +1395,7 @@
 
     if (!validateClient()) return;
 
-    // Honeypot
-    if (form.website && form.website.value.trim() !== "") {
-      setStatus("Thank you. We have received your RSVP.", "success");
-      editMode = false;
-      if (editToggle) editToggle.checked = false;
-      resetEditState(false);
-      return;
-    }
+    if (form.website && form.website.value.trim() !== "") form.website.value = "";
 
     const attending = form.attendance.value === "Yes";
     const contact = contactValues();

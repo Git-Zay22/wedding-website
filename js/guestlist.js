@@ -49,8 +49,6 @@
   const invitedTableEl = root.querySelector('[data-guestlist-table="invited"]');
   const statusEl = root.querySelector("[data-guestlist-status]");
   const searchEl = root.querySelector("[data-guestlist-search]");
-  const statusFilterEl = root.querySelector("[data-guestlist-status-filter]");
-  const statusSelectEl = root.querySelector("[data-guestlist-status]");
   const lengthEl = root.querySelector("[data-guestlist-length]");
   const rangeEl = root.querySelector("[data-guestlist-range]");
   const prevEl = root.querySelector("[data-guestlist-prev]");
@@ -164,7 +162,10 @@
     if (searchEl) {
       searchEl.placeholder = view === "invited" ? "Name" : "Name, email, mobile, hashtag…";
     }
-    if (statusFilterEl) statusFilterEl.hidden = view !== "invited";
+    root.querySelectorAll("[data-guestlist-stat]").forEach((button) => {
+      const selected = view === "invited" && button.getAttribute("data-guestlist-stat") === statusFilter;
+      button.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
   }
 
   function renderInvited() {
@@ -422,14 +423,19 @@
     });
   });
 
-  if (statusSelectEl) {
-    statusSelectEl.addEventListener("change", () => {
-      const next = statusSelectEl.value;
+  root.querySelectorAll("[data-guestlist-stat]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const next = button.getAttribute("data-guestlist-stat");
       statusFilter = next === "registered" || next === "pending" ? next : "all";
+      view = "invited";
       page = 0;
+      if (sortKey !== "guestName" && sortKey !== "rsvp") {
+        sortKey = "guestName";
+        sortDir = "asc";
+      }
       render();
     });
-  }
+  });
 
   if (searchEl) {
     let seen = searchEl.value || "";

@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="../../css/styles.css?v=229" />
+  <link rel="stylesheet" href="../../css/styles.css?v=230" />
   <script src="../../js/boot.js?v=4"></script>
 </head>
 <body class="planner-page">
@@ -60,20 +60,20 @@
             </div>
           </div>
           <div class="guestlist__progress" data-guestlist-progress hidden>
-            <dl class="guestlist__stats">
-              <div>
-                <dt>On the list</dt>
-                <dd data-guestlist-invited>0</dd>
-              </div>
-              <div>
-                <dt>Registered</dt>
-                <dd data-guestlist-registered>0</dd>
-              </div>
-              <div>
-                <dt>Not yet registered</dt>
-                <dd data-guestlist-pending>0</dd>
-              </div>
-            </dl>
+            <div class="guestlist__stats">
+              <button type="button" data-guestlist-stat="all" aria-pressed="false">
+                <span>On the list</span>
+                <strong data-guestlist-invited>0</strong>
+              </button>
+              <button type="button" data-guestlist-stat="registered" aria-pressed="false">
+                <span>Registered</span>
+                <strong data-guestlist-registered>0</strong>
+              </button>
+              <button type="button" data-guestlist-stat="pending" aria-pressed="false">
+                <span>Not yet registered</span>
+                <strong data-guestlist-pending>0</strong>
+              </button>
+            </div>
             <div
               class="guestlist__track"
               data-guestlist-track
@@ -98,14 +98,6 @@
                 <option value="40">40</option>
                 <option value="45">45</option>
                 <option value="50">50</option>
-              </select>
-            </label>
-            <label class="guestlist__status-filter" data-guestlist-status-filter hidden>
-              <span class="guestlist__search-label">RSVP</span>
-              <select data-guestlist-status>
-                <option value="all">All</option>
-                <option value="registered">Registered</option>
-                <option value="pending">Not registered</option>
               </select>
             </label>
             <label class="guestlist__search">
@@ -298,7 +290,7 @@
 
   <script src="../../js/config.js?v=6"></script>
   <script src="../../js/planner.js?v=7"></script>
-  <script src="../../js/guestlist.js?v=15"></script>
+  <script src="../../js/guestlist.js?v=16"></script>
   <script src="../../js/seating.js?v=24"></script>
 </body>
 </html>

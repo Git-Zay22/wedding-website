@@ -2555,6 +2555,7 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
 }
 
 .guestlist__length,
+.guestlist__status-filter,
 .guestlist__search {
   display: grid;
   gap: 0.35rem;
@@ -2563,6 +2564,20 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
 
 .guestlist__length select {
   width: 5.5rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid rgba(36, 48, 58, 0.14);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font: inherit;
+}
+
+.guestlist__status-filter[hidden] {
+  display: none;
+}
+
+.guestlist__status-filter select {
+  width: 11.5rem;
   padding: 0.65rem 0.7rem;
   border: 1px solid rgba(36, 48, 58, 0.14);
   border-radius: 0.75rem;
@@ -2813,6 +2828,8 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   }
 
   .guestlist__length,
+  .guestlist__status-filter,
+  .guestlist__status-filter select,
   .guestlist__search,
   .guestlist__search input {
     width: 100%;

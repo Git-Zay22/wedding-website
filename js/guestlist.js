@@ -49,6 +49,8 @@
   const invitedTableEl = root.querySelector('[data-guestlist-table="invited"]');
   const statusEl = root.querySelector("[data-guestlist-status]");
   const searchEl = root.querySelector("[data-guestlist-search]");
+  const statusFilterEl = root.querySelector("[data-guestlist-status-filter]");
+  const statusSelectEl = root.querySelector("[data-guestlist-status]");
   const lengthEl = root.querySelector("[data-guestlist-length]");
   const rangeEl = root.querySelector("[data-guestlist-range]");
   const prevEl = root.querySelector("[data-guestlist-prev]");
@@ -66,6 +68,7 @@
   let view = "replies";
   let invitedTotal = null;
   let query = "";
+  let statusFilter = "all";
   let sortKey = "submittedAt";
   let sortDir = "desc";
   let pageSize = 15;
@@ -127,13 +130,19 @@
         rsvp: reply ? "Registered" : "Not yet",
       };
     });
+    const byStatus =
+      statusFilter === "registered"
+        ? list.filter((row) => row.rsvp === "Registered")
+        : statusFilter === "pending"
+          ? list.filter((row) => row.rsvp !== "Registered")
+          : list;
     const matched = needle
-      ? list.filter(
+      ? byStatus.filter(
           (row) =>
             row.guestName.toLowerCase().indexOf(needle) !== -1 ||
             row.rsvp.toLowerCase().indexOf(needle) !== -1
         )
-      : list;
+      : byStatus;
     const key = sortKey === "rsvp" ? "rsvp" : "guestName";
     matched.sort((a, b) => {
       const left = String(a[key] || "").toLowerCase();
@@ -155,6 +164,7 @@
     if (searchEl) {
       searchEl.placeholder = view === "invited" ? "Name" : "Name, email, mobile, hashtag…";
     }
+    if (statusFilterEl) statusFilterEl.hidden = view !== "invited";
   }
 
   function renderInvited() {
@@ -189,7 +199,9 @@
       const td = document.createElement("td");
       td.colSpan = 2;
       td.className = "guestlist__empty";
-      td.textContent = "No guests match that search.";
+      td.textContent = query.trim()
+        ? "No guests match that search."
+        : "No guests match that filter.";
       tr.appendChild(td);
       invitedBodyEl.appendChild(tr);
     } else {
@@ -221,7 +233,7 @@
     if (rangeEl) {
       rangeEl.textContent = !invitedReady
         ? "Showing 0 of 0"
-        : query.trim()
+        : query.trim() || statusFilter !== "all"
           ? "Showing " + from + " to " + to + " of " + total + " matches"
           : "Showing " + from + " to " + to + " of " + total;
     }
@@ -409,6 +421,15 @@
       render();
     });
   });
+
+  if (statusSelectEl) {
+    statusSelectEl.addEventListener("change", () => {
+      const next = statusSelectEl.value;
+      statusFilter = next === "registered" || next === "pending" ? next : "all";
+      page = 0;
+      render();
+    });
+  }
 
   if (searchEl) {
     let seen = searchEl.value || "";

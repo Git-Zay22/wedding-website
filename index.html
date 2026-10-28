@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Outfit:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=230" />
+  <link rel="stylesheet" href="css/styles.css?v=232" />
   <script src="js/boot.js?v=4"></script>
 </head>
 <body>
@@ -938,6 +938,12 @@
           </div>
           </div>
 
+          <fieldset class="rsvp-party" data-rsvp-party hidden>
+            <legend>Who is included</legend>
+            <p class="rsvp-party__note" data-rsvp-party-note>Check the people from this group who are registering with you.</p>
+            <div class="rsvp-party__list" data-rsvp-party-list></div>
+          </fieldset>
+
           <div class="hp" aria-hidden="true">
             <label for="website">Website</label>
             <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" readonly />
@@ -1049,6 +1055,6 @@
 
   <script src="js/config.js?v=6"></script>
   <script src="js/main.js?v=50"></script>
-  <script src="js/rsvp.js?v=78"></script>
+  <script src="js/rsvp.js?v=80"></script>
 </body>
 </html>

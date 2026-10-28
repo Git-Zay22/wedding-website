@@ -58,6 +58,31 @@
   const detailListEl = document.querySelector("[data-guestlist-detail-list]");
   const detailCloseEl = document.querySelector("[data-guestlist-detail-close]");
   const config = window.RSVP_CONFIG || {};
+  const groupsEl = document.createElement("div");
+  groupsEl.className = "guestlist__groups";
+  groupsEl.hidden = true;
+  const groupsNote = document.createElement("p");
+  groupsNote.className = "guestlist__groups-note";
+  groupsNote.textContent =
+    "Select people who belong together, then save the group. When any of those names is typed on the RSVP, the others are suggested.";
+  const groupsBar = document.createElement("div");
+  groupsBar.className = "guestlist__groups-bar";
+  const selectPageEl = document.createElement("button");
+  selectPageEl.type = "button";
+  selectPageEl.textContent = "Select page";
+  const saveGroupEl = document.createElement("button");
+  saveGroupEl.type = "button";
+  saveGroupEl.textContent = "Save group";
+  saveGroupEl.disabled = true;
+  const groupsStatusEl = document.createElement("p");
+  groupsStatusEl.className = "guestlist__groups-status";
+  groupsStatusEl.setAttribute("role", "status");
+  const groupsListEl = document.createElement("ul");
+  groupsListEl.className = "guestlist__groups-list";
+  groupsBar.append(selectPageEl, saveGroupEl, groupsStatusEl);
+  groupsEl.append(groupsNote, groupsBar, groupsListEl);
+  const toolsEl = root.querySelector(".guestlist__tools");
+  if (toolsEl && toolsEl.parentNode) toolsEl.parentNode.insertBefore(groupsEl, toolsEl.nextSibling);
 
   let rows = [];
   let invitedNames = [];
@@ -71,6 +96,10 @@
   let sortDir = "desc";
   let pageSize = 15;
   let page = 0;
+  const GROUPS_KEY = "cz-guest-groups";
+  const picked = new Set();
+  let groups = [];
+  let groupsStatus = "";
 
   function guestKey(name) {
     return String(name || "")
@@ -166,6 +195,7 @@
       const selected = view === "invited" && button.getAttribute("data-guestlist-stat") === statusFilter;
       button.setAttribute("aria-pressed", selected ? "true" : "false");
     });
+    if (groupsEl) groupsEl.hidden = !(view === "invited" && statusFilter === "pending");
   }
 
   function renderInvited() {
@@ -210,7 +240,32 @@
         const tr = document.createElement("tr");
         const nameCell = document.createElement("td");
         nameCell.setAttribute("data-col", "guestName");
-        nameCell.textContent = row.guestName;
+        const key = guestKey(row.guestName);
+        if (statusFilter === "pending") {
+          const pick = document.createElement("label");
+          pick.className = "guestlist__pick";
+          const box = document.createElement("input");
+          box.type = "checkbox";
+          box.checked = picked.has(key);
+          box.setAttribute("aria-label", "Select " + row.guestName);
+          box.addEventListener("change", () => {
+            if (box.checked) picked.add(key);
+            else picked.delete(key);
+            renderGroups();
+          });
+          const text = document.createElement("span");
+          text.textContent = row.guestName;
+          pick.append(box, text);
+          nameCell.appendChild(pick);
+          if (groupOf(key)) {
+            const tag = document.createElement("span");
+            tag.className = "guestlist__group-tag";
+            tag.textContent = "Grouped";
+            nameCell.appendChild(tag);
+          }
+        } else {
+          nameCell.textContent = row.guestName;
+        }
         const statusCell = document.createElement("td");
         statusCell.setAttribute("data-col", "rsvp");
         const badge = document.createElement("span");
@@ -242,6 +297,7 @@
     if (nextEl) nextEl.disabled = page >= pages - 1 || !total;
     renderProgress();
     publishGuests();
+    renderGroups();
   }
 
   function render() {
@@ -512,6 +568,168 @@
     return;
   }
 
+  function readStoredGroups() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(GROUPS_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function normalizeGroups(source) {
+    const seen = new Set();
+    const next = [];
+    (Array.isArray(source) ? source : []).forEach((group) => {
+      const names = [];
+      ((group && group.names) || []).forEach((name) => {
+        const text = String(name || "").trim().replace(/\s+/g, " ");
+        const key = guestKey(text);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        names.push(text);
+      });
+      if (names.length < 2) return;
+      const id = String((group && group.id) || "").replace(/[^\w-]/g, "").slice(0, 40) || "g" + (next.length + 1);
+      next.push({ id: id, names: names });
+    });
+    return next.slice(0, 80);
+  }
+
+  groups = normalizeGroups(readStoredGroups());
+
+  function writeGroupsLocal() {
+    try {
+      localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
+    } catch (e) {}
+  }
+
+  function groupOf(key) {
+    return groups.find((group) => group.names.some((name) => guestKey(name) === key)) || null;
+  }
+
+  function renderGroups() {
+    saveGroupEl.disabled = picked.size < 2;
+    groupsStatusEl.textContent = groupsStatus;
+    groupsListEl.replaceChildren();
+    groups.forEach((group) => {
+      const item = document.createElement("li");
+      const names = document.createElement("span");
+      names.textContent = group.names.join(", ");
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Ungroup";
+      remove.addEventListener("click", () => {
+        groups = groups.filter((entry) => entry.id !== group.id);
+        writeGroupsLocal();
+        pushGroups();
+        render();
+      });
+      item.append(names, remove);
+      groupsListEl.appendChild(item);
+    });
+  }
+
+  function postGroups(action, groupList) {
+    const body = { action: action };
+    if (groupList) body.groups = groupList;
+    return fetch(url, {
+      method: "POST",
+      mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body),
+    })
+      .then(async (response) => {
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (e) {
+          data = {};
+        }
+        if (!response.ok || !data || data.ok === false || !Array.isArray(data.groups)) return null;
+        return data;
+      })
+      .catch(() => null);
+  }
+
+  let pushingGroups = false;
+
+  function pushGroups() {
+    writeGroupsLocal();
+    groupsStatus = "Saving group…";
+    renderGroups();
+    pushingGroups = true;
+    return postGroups("groupssave", groups)
+      .then((data) => {
+        if (data && Array.isArray(data.groups)) {
+          groups = normalizeGroups(data.groups);
+          writeGroupsLocal();
+          groupsStatus = groups.length
+            ? "Saved. Typing any name in a group on the RSVP suggests the others."
+            : "Saved.";
+        } else {
+          groupsStatus =
+            "Saved on this browser. Deploy the latest Apps Script so the RSVP form can suggest these names.";
+        }
+        renderGroups();
+      })
+      .finally(() => {
+        pushingGroups = false;
+      });
+  }
+
+  function pullGroups() {
+    return postGroups("groupsload").then((data) => {
+      if (!data || pushingGroups) return;
+      const remote = normalizeGroups(data.groups);
+      if (!remote.length && groups.length) {
+        pushGroups();
+        return;
+      }
+      groups = remote;
+      writeGroupsLocal();
+      if (view === "invited") render();
+      else renderGroups();
+    });
+  }
+
+  selectPageEl.addEventListener("click", () => {
+    const list = invitedRows();
+    const pages = Math.max(1, Math.ceil(list.length / pageSize) || 1);
+    const safe = Math.min(Math.max(page, 0), pages - 1);
+    const keys = list.slice(safe * pageSize, safe * pageSize + pageSize).map((row) => guestKey(row.guestName));
+    const allOn = keys.length > 0 && keys.every((key) => picked.has(key));
+    keys.forEach((key) => {
+      if (allOn) picked.delete(key);
+      else picked.add(key);
+    });
+    render();
+  });
+
+  saveGroupEl.addEventListener("click", () => {
+    const names = [];
+    picked.forEach((key) => {
+      const official = invitedNames.find((name) => guestKey(name) === key);
+      if (official) names.push(official);
+    });
+    if (names.length < 2) return;
+    const chosen = new Set(names.map((name) => guestKey(name)));
+    groups = groups
+      .map((group) => ({
+        id: group.id,
+        names: group.names.filter((name) => !chosen.has(guestKey(name))),
+      }))
+      .filter((group) => group.names.length >= 2);
+    groups.push({ id: "g" + Date.now().toString(36), names: names });
+    groups = normalizeGroups(groups);
+    picked.clear();
+    pushGroups();
+    render();
+  });
+
   function rosterKey(list) {
     return list
       .map((row) =>
@@ -687,6 +905,7 @@
     checkForNew();
   });
 
+  pullGroups();
   Promise.all([requestList(), requestInvited()]).then((results) => {
     const result = results[0];
     const invitedResult = results[1];

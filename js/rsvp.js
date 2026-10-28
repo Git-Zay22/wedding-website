@@ -919,10 +919,10 @@
     return false;
   }
 
-  function finishSaved() {
+  function finishSaved(message) {
     hideLoading();
     setStatus(
-      editMode ? "Thank you. Your RSVP has been updated." : "Thank you. We have received your RSVP.",
+      message || (editMode ? "Thank you. Your RSVP has been updated." : "Thank you. We have received your RSVP."),
       "success"
     );
     editMode = false;
@@ -1046,6 +1046,7 @@
     editToggle.addEventListener("change", () => {
       editMode = Boolean(editToggle.checked);
       clearStatus();
+      renderParty();
       if (editMode) {
         editGuideDismissed = false;
         resetEditState(true);
@@ -1217,6 +1218,143 @@
     if (nameSuggestSeen.length > 48) nameSuggestSeen = nameSuggestSeen.slice(-48);
   }
 
+  let savedGroups = [];
+  let savedGroupsReady = false;
+  let savedGroupsPromise = null;
+
+  function groupsOnThisBrowser() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("cz-guest-groups") || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function activeGroups() {
+    return savedGroupsReady ? savedGroups : groupsOnThisBrowser();
+  }
+
+  function loadSavedGroups() {
+    if (savedGroupsPromise || !isConfigured()) return savedGroupsPromise || Promise.resolve(activeGroups());
+    savedGroupsPromise = fetchRsvp(config.scriptUrl, {
+      method: "POST",
+      mode: "cors",
+      redirect: "follow",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: "groupsload" }),
+    })
+      .then((response) => parseJsonResponse(response))
+      .then((data) => {
+        if (data && data.ok !== false && Array.isArray(data.groups)) {
+          savedGroups = data.groups;
+          savedGroupsReady = true;
+        } else {
+          savedGroupsPromise = null;
+        }
+        return activeGroups();
+      })
+      .catch(() => {
+        savedGroupsPromise = null;
+        return activeGroups();
+      });
+    return savedGroupsPromise;
+  }
+
+  function namesWithGroups(names, query) {
+    const merged = [];
+    const seen = new Set();
+    const add = (name) => {
+      const text = String(name || "").trim();
+      const key = text.toLowerCase();
+      if (!text || seen.has(key)) return;
+      seen.add(key);
+      merged.push(text);
+    };
+    (names || []).forEach(add);
+    activeGroups().forEach((group) => {
+      const members = (group && group.names) || [];
+      if (!members.some((name) => nameMatchesQuery(name, query))) return;
+      members.forEach(add);
+    });
+    return merged.slice(0, 12);
+  }
+
+  const partyEl = form.querySelector("[data-rsvp-party]");
+  const partyListEl = form.querySelector("[data-rsvp-party-list]");
+  const partyNoteEl = form.querySelector("[data-rsvp-party-note]");
+  const partyChecked = new Set();
+  let partyGroupId = "";
+
+  function matchingGroup(query) {
+    const groups = activeGroups().filter((group) =>
+      ((group && group.names) || []).some((name) => nameMatchesQuery(name, query))
+    );
+    if (groups.length === 1) return groups[0];
+    const exact = nameKey(query);
+    const exactGroups = groups.filter((group) =>
+      ((group && group.names) || []).some((name) => nameKey(name) === exact)
+    );
+    return exactGroups.length === 1 ? exactGroups[0] : null;
+  }
+
+  function renderParty() {
+    if (!partyEl || !partyListEl) return;
+    const query = form.guestName.value.trim();
+    const group = !editMode && query.length >= 2 ? matchingGroup(query) : null;
+    if (!group) {
+      partyEl.hidden = true;
+      partyGroupId = "";
+      partyListEl.replaceChildren();
+      return;
+    }
+    const id = String(group.id || (group.names || []).join("|"));
+    if (id !== partyGroupId) {
+      partyGroupId = id;
+      partyChecked.clear();
+    }
+    const exact = nameKey(query);
+    if (partyNoteEl) {
+      partyNoteEl.textContent =
+        (group.names || []).some((name) => nameKey(name) === exact)
+          ? "Your name is already included. Check anyone else from this group who is registering with you."
+          : "Check the people from this group who are registering with you.";
+    }
+    partyListEl.replaceChildren();
+    (group.names || []).forEach((name) => {
+      const key = nameKey(name);
+      const locked = key === exact;
+      if (locked) partyChecked.add(key);
+      const label = document.createElement("label");
+      label.className = "choice rsvp-party__choice";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = locked || partyChecked.has(key);
+      box.disabled = locked;
+      box.addEventListener("change", () => {
+        if (box.checked) partyChecked.add(key);
+        else partyChecked.delete(key);
+      });
+      const text = document.createElement("span");
+      text.textContent = name;
+      label.append(box, text);
+      partyListEl.appendChild(label);
+    });
+    partyEl.hidden = false;
+  }
+
+  function selectedPartyNames() {
+    if (!partyEl || partyEl.hidden || !partyListEl) return [];
+    const names = [];
+    partyListEl.querySelectorAll("input[type='checkbox']").forEach((box) => {
+      if (!box.checked || box.disabled) return;
+      const text = box.parentElement && box.parentElement.querySelector("span");
+      const name = text ? text.textContent.trim() : "";
+      if (name) names.push(name);
+    });
+    return names;
+  }
+
   function requestNameSuggestions() {
     const query = form.guestName.value.trim();
     nameSuggestRequest += 1;
@@ -1224,12 +1362,22 @@
     nameSuggestController = null;
     if (query.length < 1 || !isConfigured()) {
       hideNameSuggestions();
+      renderParty();
       return;
     }
-    const local = nameSuggestSeen.filter((name) => nameMatchesQuery(name, query));
-    if (local.length) renderNameSuggestions(local);
-    else hideNameSuggestions();
     const requestId = nameSuggestRequest;
+    const showMerged = (names) => {
+      if (requestId !== nameSuggestRequest || form.guestName.value.trim() !== query) return;
+      renderNameSuggestions(namesWithGroups(names, query));
+    };
+    const local = nameSuggestSeen.filter((name) => nameMatchesQuery(name, query));
+    if (local.length) showMerged(local);
+    else hideNameSuggestions();
+    renderParty();
+    loadSavedGroups().then(() => {
+      showMerged(nameSuggestSeen.filter((name) => nameMatchesQuery(name, query)));
+      renderParty();
+    });
     const controller = new AbortController();
     nameSuggestController = controller;
     fetchRsvp(config.scriptUrl, {
@@ -1244,15 +1392,21 @@
       .then((data) => {
         if (requestId !== nameSuggestRequest || form.guestName.value.trim() !== query) return;
         if (!data || data.ok === false || !Array.isArray(data.names)) {
-          hideNameSuggestions();
+          loadSavedGroups().then(() => showMerged([]));
           return;
         }
         rememberSuggestedNames(data.names);
-        renderNameSuggestions(data.names);
+        const show = () => {
+          showMerged(data.names);
+          renderParty();
+        };
+        show();
+        loadSavedGroups().then(show);
       })
       .catch((err) => {
         if (err && err.name === "AbortError") return;
-        if (requestId === nameSuggestRequest) hideNameSuggestions();
+        if (requestId !== nameSuggestRequest) return;
+        loadSavedGroups().then(() => showMerged([]));
       });
   }
 
@@ -1455,8 +1609,12 @@
       return;
     }
     if (invitedName && invitedName.exact) form.guestName.value = invitedName.exact;
+    renderParty();
 
     const attending = form.attendance.value === "Yes";
+    const partyNames = editMode
+      ? []
+      : selectedPartyNames().filter((name) => nameKey(name) !== nameKey(form.guestName.value));
     const contact = contactValues();
     const payload = {
       action: editMode ? "update" : "create",
@@ -1476,6 +1634,22 @@
       hashtag: normalizeHashtag(form.hashtag && form.hashtag.value),
       submittedAt: new Date().toISOString(),
       source: window.location.href,
+    };
+    if (partyNames.length) payload.also = partyNames;
+
+    const partySavedMessage = (result) => {
+      if (!payload.also || !payload.also.length) return "";
+      const saved = result && typeof result.partySaved === "number" ? result.partySaved : null;
+      const skipped = result && typeof result.partySkipped === "number" ? result.partySkipped : 0;
+      if (saved == null) {
+        return "Thank you. We have received your RSVP. The other people you checked will be added after the latest Apps Script is deployed.";
+      }
+      if (saved > 0 && skipped > 0) {
+        return "Thank you. We have received your RSVP. Some of the people you checked were already registered.";
+      }
+      if (saved > 0) return "Thank you. We have received your RSVP, including the people you checked.";
+      if (skipped > 0) return "Thank you. We have received your RSVP. The other people you checked were already registered.";
+      return "";
     };
 
     clearStatus();
@@ -1505,7 +1679,7 @@
         );
       }
 
-      finishSaved();
+      finishSaved(partySavedMessage(result));
     } catch (err) {
       console.error(err);
       const message = String((err && err.message) || "");

@@ -14,10 +14,11 @@
  * - health (no action)
  *
  * POST actions:
- * - create / update / lookup / list / invited / suggest / seatingload / seatingsave
+ * - create / update / lookup / list / invited / suggest / seatingload / seatingsave / groupsload / groupssave
  * list returns every saved RSVP and is for the owners page only.
- * suggest returns a few invited names that closely match what was typed.
+ * suggest returns invited names that match what was typed, plus anyone saved in the same group.
  * seatingload / seatingsave keep the planner tables for the owners page.
+ * groupsload / groupssave keep owner-made name groups for RSVP suggestions.
  *
  * SECURITY: Keep SPREADSHEET_ID, GUEST_LIST, and RSVP_TOKEN only in Apps Script
  * (and RSVP_TOKEN also in Cloudflare Worker secrets). Do not commit real values to GitHub.
@@ -170,7 +171,28 @@ function suggestInvitedNames_(data) {
     if (last) return last;
     return String(a).localeCompare(String(b));
   });
-  if (names.length > 6) names = names.slice(0, 6);
+  var extras = [];
+  var groups = loadGuestGroups_().groups;
+  for (var g = 0; g < groups.length; g++) {
+    var members = groups[g].names || [];
+    var hit = false;
+    for (var m = 0; m < members.length; m++) {
+      if (suggestMatches_(members[m], queryWords)) {
+        hit = true;
+        break;
+      }
+    }
+    if (!hit) continue;
+    for (var n = 0; n < members.length; n++) {
+      var member = String(members[n] || "").trim();
+      var memberKey = normalizeName_(member);
+      if (!memberKey || memberKey === "reserved" || seen[memberKey]) continue;
+      seen[memberKey] = true;
+      extras.push(member);
+    }
+  }
+  names = names.concat(extras);
+  if (names.length > 12) names = names.slice(0, 12);
   return json_({ ok: true, names: names });
 }
 
@@ -291,6 +313,80 @@ function saveSeatingPlan_(data) {
   return json_({ ok: true, saved: true, plan: plan });
 }
 
+function groupingsSheet_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName("Groupings");
+  if (!sheet) {
+    sheet = ss.insertSheet("Groupings");
+    sheet.getRange(1, 1).setValue("Groups");
+  }
+  return sheet;
+}
+
+function officialGuestName_(name) {
+  var key = normalizeName_(name);
+  if (!key || key === "reserved") return "";
+  for (var i = 0; i < GUEST_LIST.length; i++) {
+    var official = String(GUEST_LIST[i] || "").trim();
+    if (normalizeName_(official) === key) return official;
+  }
+  return "";
+}
+
+function sanitizeGroups_(raw) {
+  var groups = [];
+  var seen = {};
+  var source = raw && raw.length ? raw : raw && raw.groups;
+  if (!source || !source.length) return { groups: [] };
+  var listed = GUEST_LIST.length > 0;
+  var limit = Math.min(source.length, 80);
+  for (var i = 0; i < limit; i++) {
+    var group = source[i];
+    if (!group || !group.names) continue;
+    var names = [];
+    var nameLimit = Math.min(group.names.length, 20);
+    for (var n = 0; n < nameLimit; n++) {
+      var text = String(group.names[n] || "").trim().slice(0, 120);
+      var official = listed ? officialGuestName_(text) : text;
+      var key = normalizeName_(official);
+      if (!official || !key || key === "reserved" || seen[key]) continue;
+      seen[key] = true;
+      names.push(official);
+    }
+    if (names.length < 2) continue;
+    var id = String(group.id || "")
+      .replace(/[^\w-]/g, "")
+      .slice(0, 40);
+    if (!id) id = "g" + (groups.length + 1);
+    groups.push({ id: id, names: names });
+  }
+  return { groups: groups };
+}
+
+function loadGuestGroups_() {
+  var sheet = getSpreadsheet_().getSheetByName("Groupings");
+  if (!sheet) return { groups: [] };
+  var raw = String(sheet.getRange(2, 1).getValue() || "");
+  if (!raw) return { groups: [] };
+  try {
+    return sanitizeGroups_(JSON.parse(raw));
+  } catch (err) {
+    return { groups: [] };
+  }
+}
+
+function loadGuestGroupsJson_() {
+  return json_({ ok: true, groups: loadGuestGroups_().groups });
+}
+
+function saveGuestGroups_(data) {
+  var saved = sanitizeGroups_(data && data.groups);
+  var sheet = groupingsSheet_();
+  sheet.getRange(1, 1).setValue("Groups");
+  sheet.getRange(2, 1).setValue(JSON.stringify(saved));
+  return json_({ ok: true, saved: true, groups: saved.groups });
+}
+
 function doPost(e) {
   try {
     const raw = e.postData && e.postData.contents ? e.postData.contents : "{}";
@@ -307,7 +403,9 @@ function doPost(e) {
       action !== "list" &&
       action !== "invited" &&
       action !== "seatingload" &&
-      action !== "seatingsave"
+      action !== "seatingsave" &&
+      action !== "groupsload" &&
+      action !== "groupssave"
     ) {
       var limited = assertRateLimit_(action || "create", data);
       if (limited) return limited;
@@ -327,6 +425,12 @@ function doPost(e) {
     }
     if (action === "seatingsave") {
       return saveSeatingPlan_(data);
+    }
+    if (action === "groupsload") {
+      return loadGuestGroupsJson_();
+    }
+    if (action === "groupssave") {
+      return saveGuestGroups_(data);
     }
     if (action === "lookup") {
       return lookupByName_(data);
@@ -414,7 +518,43 @@ function createRsvp_(data) {
   if (duplicate) return duplicateJson_(duplicate);
 
   writeRow_(sheet, sheet.getLastRow() + 1, data, guestName, email, contact.phoneRaw);
-  return savedJson_(sheet, { ok: true, saved: true });
+  var party = writePartyMembers_(sheet, data, guestName);
+  return savedJson_(sheet, {
+    ok: true,
+    saved: true,
+    partySaved: party.saved,
+    partySkipped: party.skipped,
+  });
+}
+
+function writePartyMembers_(sheet, data, primaryName) {
+  var source = data && data.also;
+  var saved = 0;
+  var skipped = 0;
+  if (!source || !source.length) return { saved: saved, skipped: skipped };
+  var primaryKey = normalizeName_(primaryName);
+  var partyData = {
+    attendance: data.attendance,
+    events: data.events,
+    commute: data.commute,
+    allergies: data.allergies,
+    message: data.message,
+    hashtag: data.hashtag,
+    submittedAt: data.submittedAt,
+    source: data.source,
+  };
+  var limit = Math.min(source.length, 19);
+  for (var i = 0; i < limit; i++) {
+    var official = resolveInvitedGuestName_(String(source[i] || "").trim());
+    var key = normalizeName_(official);
+    if (!official || !key || key === primaryKey || findRowByName_(sheet, key)) {
+      skipped++;
+      continue;
+    }
+    writeRow_(sheet, sheet.getLastRow() + 1, partyData, official, "", "");
+    saved++;
+  }
+  return { saved: saved, skipped: skipped };
 }
 
 function lookupByName_(data) {

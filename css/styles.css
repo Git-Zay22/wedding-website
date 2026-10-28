@@ -2592,6 +2592,93 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   margin: 0.85rem 0 0.75rem;
 }
 
+.guestlist__groups {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0 0 0.85rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(61, 143, 186, 0.28);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.guestlist__groups[hidden] {
+  display: none;
+}
+
+.guestlist__groups-note,
+.guestlist__groups-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.guestlist__groups-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+}
+
+.guestlist__groups-bar button,
+.guestlist__groups-list button {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(36, 48, 58, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.guestlist__groups-bar button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.guestlist__groups-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guestlist__groups-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
+}
+
+.guestlist__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.guestlist__pick input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+
+.guestlist__group-tag {
+  display: inline-block;
+  margin-left: 0.45rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(110, 180, 216, 0.22);
+  color: var(--powder-deep);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .guestlist__length,
 .guestlist__search {
   display: grid;
@@ -4491,6 +4578,46 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 
 .rsvp-find-hint[hidden] {
   display: none !important;
+}
+
+.rsvp-party {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.15rem 0 0.2rem;
+  padding: 0;
+  border: 0;
+}
+
+.rsvp-party[hidden] {
+  display: none;
+}
+
+.rsvp-party legend {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.rsvp-party__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.rsvp-party__list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.rsvp-party__choice {
+  width: 100%;
+}
+
+.rsvp-party__choice:has(input:disabled) {
+  cursor: default;
 }
 
 .rsvp-edit-switch {

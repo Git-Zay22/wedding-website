@@ -727,19 +727,21 @@ html.hero-phone .hero {
   font-style: normal;
   line-height: 1;
   letter-spacing: 0.02em;
-  color: var(--powder) !important;
+  color: var(--champagne) !important;
   text-shadow: 0 1px 10px rgba(36, 48, 58, 0.28);
   transform: translateY(0.08em);
-  cursor: pointer;
+  cursor: inherit;
   text-decoration: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
 .hero__secret:hover,
-.hero__secret:focus {
-  color: var(--powder) !important;
+.hero__secret:focus,
+.hero__secret:active {
+  color: var(--champagne) !important;
   outline: none;
+  background: none;
 }
 
 html:not(.proposals-unlocked) .divider--proposals,
@@ -4241,6 +4243,10 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
   #guestName {
     order: 3;
   }
+
+  .field:has(#guestName) .rsvp-party {
+    order: 4;
+  }
 }
 
 .form-status.is-assist-notice {
@@ -4583,7 +4589,7 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 .rsvp-party {
   display: grid;
   gap: 0.55rem;
-  margin: 0.15rem 0 0.2rem;
+  margin: 0.85rem 0 0;
   padding: 0;
   border: 0;
 }

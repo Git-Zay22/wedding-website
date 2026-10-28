@@ -1261,82 +1261,65 @@
     return savedGroupsPromise;
   }
 
-  function namesWithGroups(names, query) {
-    const merged = [];
-    const seen = new Set();
-    const add = (name) => {
-      const text = String(name || "").trim();
-      const key = text.toLowerCase();
-      if (!text || seen.has(key)) return;
-      seen.add(key);
-      merged.push(text);
-    };
-    (names || []).forEach(add);
-    activeGroups().forEach((group) => {
-      const members = (group && group.names) || [];
-      if (!members.some((name) => nameMatchesQuery(name, query))) return;
-      members.forEach(add);
-    });
-    return merged.slice(0, 12);
-  }
-
   const partyEl = form.querySelector("[data-rsvp-party]");
   const partyListEl = form.querySelector("[data-rsvp-party-list]");
-  const partyNoteEl = form.querySelector("[data-rsvp-party-note]");
   const partyChecked = new Set();
   let partyGroupId = "";
 
-  function matchingGroup(query) {
-    const groups = activeGroups().filter((group) =>
-      ((group && group.names) || []).some((name) => nameMatchesQuery(name, query))
-    );
-    if (groups.length === 1) return groups[0];
+  function partyCompanions(query) {
+    const groups = activeGroups();
     const exact = nameKey(query);
-    const exactGroups = groups.filter((group) =>
-      ((group && group.names) || []).some((name) => nameKey(name) === exact)
-    );
-    return exactGroups.length === 1 ? exactGroups[0] : null;
+    let group = null;
+    let self = exact;
+    groups.forEach((entry) => {
+      if (group) return;
+      if (((entry && entry.names) || []).some((name) => nameKey(name) === exact)) group = entry;
+    });
+    if (!group) {
+      const hits = [];
+      groups.forEach((entry) => {
+        const matched = ((entry && entry.names) || []).filter((name) => nameMatchesQuery(name, query));
+        if (matched.length) hits.push({ group: entry, matched: matched });
+      });
+      if (hits.length !== 1 || hits[0].matched.length !== 1) return [];
+      group = hits[0].group;
+      self = nameKey(hits[0].matched[0]);
+    }
+    return ((group && group.names) || []).filter((name) => nameKey(name) !== self).map((name) => ({
+      id: String(group.id || (group.names || []).join("|")),
+      name: name,
+    }));
   }
 
   function renderParty() {
     if (!partyEl || !partyListEl) return;
     const query = form.guestName.value.trim();
-    const group = !editMode && query.length >= 2 ? matchingGroup(query) : null;
-    if (!group) {
+    const companions = !editMode && query.length >= 2 ? partyCompanions(query) : [];
+    if (!companions.length) {
       partyEl.hidden = true;
       partyGroupId = "";
       partyListEl.replaceChildren();
       return;
     }
-    const id = String(group.id || (group.names || []).join("|"));
+    const id = companions[0].id;
     if (id !== partyGroupId) {
       partyGroupId = id;
       partyChecked.clear();
     }
-    const exact = nameKey(query);
-    if (partyNoteEl) {
-      partyNoteEl.textContent =
-        (group.names || []).some((name) => nameKey(name) === exact)
-          ? "Your name is already included. Check anyone else from this group who is registering with you."
-          : "Check the people from this group who are registering with you.";
-    }
     partyListEl.replaceChildren();
-    (group.names || []).forEach((name) => {
-      const key = nameKey(name);
-      const locked = key === exact;
-      if (locked) partyChecked.add(key);
+    companions.forEach((person) => {
+      const key = nameKey(person.name);
       const label = document.createElement("label");
       label.className = "choice rsvp-party__choice";
       const box = document.createElement("input");
       box.type = "checkbox";
-      box.checked = locked || partyChecked.has(key);
-      box.disabled = locked;
+      box.checked = partyChecked.has(key);
       box.addEventListener("change", () => {
         if (box.checked) partyChecked.add(key);
         else partyChecked.delete(key);
       });
       const text = document.createElement("span");
-      text.textContent = name;
+      text.textContent = person.name;
       label.append(box, text);
       partyListEl.appendChild(label);
     });
@@ -1366,18 +1349,15 @@
       return;
     }
     const requestId = nameSuggestRequest;
-    const showMerged = (names) => {
+    const showMatches = (names) => {
       if (requestId !== nameSuggestRequest || form.guestName.value.trim() !== query) return;
-      renderNameSuggestions(namesWithGroups(names, query));
+      renderNameSuggestions((names || []).filter((name) => nameMatchesQuery(name, query)));
     };
     const local = nameSuggestSeen.filter((name) => nameMatchesQuery(name, query));
-    if (local.length) showMerged(local);
+    if (local.length) showMatches(local);
     else hideNameSuggestions();
     renderParty();
-    loadSavedGroups().then(() => {
-      showMerged(nameSuggestSeen.filter((name) => nameMatchesQuery(name, query)));
-      renderParty();
-    });
+    loadSavedGroups().then(() => renderParty());
     const controller = new AbortController();
     nameSuggestController = controller;
     fetchRsvp(config.scriptUrl, {
@@ -1392,21 +1372,17 @@
       .then((data) => {
         if (requestId !== nameSuggestRequest || form.guestName.value.trim() !== query) return;
         if (!data || data.ok === false || !Array.isArray(data.names)) {
-          loadSavedGroups().then(() => showMerged([]));
+          renderParty();
           return;
         }
         rememberSuggestedNames(data.names);
-        const show = () => {
-          showMerged(data.names);
-          renderParty();
-        };
-        show();
-        loadSavedGroups().then(show);
+        showMatches(data.names);
+        renderParty();
       })
       .catch((err) => {
         if (err && err.name === "AbortError") return;
         if (requestId !== nameSuggestRequest) return;
-        loadSavedGroups().then(() => showMerged([]));
+        renderParty();
       });
   }
 

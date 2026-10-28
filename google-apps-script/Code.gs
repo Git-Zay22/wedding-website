@@ -16,7 +16,7 @@
  * POST actions:
  * - create / update / lookup / list / invited / suggest / seatingload / seatingsave / groupsload / groupssave
  * list returns every saved RSVP and is for the owners page only.
- * suggest returns invited names that match what was typed, plus anyone saved in the same group.
+ * suggest returns only invited names that match what was typed.
  * seatingload / seatingsave keep the planner tables for the owners page.
  * groupsload / groupssave keep owner-made name groups for RSVP suggestions.
  *
@@ -171,28 +171,7 @@ function suggestInvitedNames_(data) {
     if (last) return last;
     return String(a).localeCompare(String(b));
   });
-  var extras = [];
-  var groups = loadGuestGroups_().groups;
-  for (var g = 0; g < groups.length; g++) {
-    var members = groups[g].names || [];
-    var hit = false;
-    for (var m = 0; m < members.length; m++) {
-      if (suggestMatches_(members[m], queryWords)) {
-        hit = true;
-        break;
-      }
-    }
-    if (!hit) continue;
-    for (var n = 0; n < members.length; n++) {
-      var member = String(members[n] || "").trim();
-      var memberKey = normalizeName_(member);
-      if (!memberKey || memberKey === "reserved" || seen[memberKey]) continue;
-      seen[memberKey] = true;
-      extras.push(member);
-    }
-  }
-  names = names.concat(extras);
-  if (names.length > 12) names = names.slice(0, 12);
+  if (names.length > 6) names = names.slice(0, 6);
   return json_({ ok: true, names: names });
 }
 

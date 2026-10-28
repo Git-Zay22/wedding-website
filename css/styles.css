@@ -727,7 +727,7 @@ html.hero-phone .hero {
   font-style: normal;
   line-height: 1;
   letter-spacing: 0.02em;
-  color: var(--champagne) !important;
+  color: var(--powder) !important;
   text-shadow: 0 1px 10px rgba(36, 48, 58, 0.28);
   transform: translateY(0.08em);
   cursor: inherit;
@@ -739,7 +739,7 @@ html.hero-phone .hero {
 .hero__secret:hover,
 .hero__secret:focus,
 .hero__secret:active {
-  color: var(--champagne) !important;
+  color: var(--powder) !important;
   outline: none;
   background: none;
 }

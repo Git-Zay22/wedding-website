@@ -447,12 +447,12 @@
     setInterval(tick, 1000);
   }
 
-  // RSVP deadline: 31 Oct 2026 end of day, Asia/Manila (UTC+8)
+  // RSVP deadline: 7 Nov 2026 end of day, Asia/Manila (UTC+8)
   const rsvpDeadline = document.querySelector("[data-rsvp-deadline]");
   if (rsvpDeadline) {
     const daysEl = rsvpDeadline.querySelector("[data-rsvp-days]");
     const labelEl = rsvpDeadline.querySelector("[data-rsvp-days-label]");
-    const closeAt = new Date("2026-10-31T23:59:59+08:00").getTime();
+    const closeAt = new Date("2026-11-07T23:59:59+08:00").getTime();
 
     const updateRsvpDays = () => {
       const remaining = Math.max(0, closeAt - Date.now());

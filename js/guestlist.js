@@ -47,6 +47,20 @@
   const invitedBodyEl = root.querySelector("[data-guestlist-invited-body]");
   const repliesTableEl = root.querySelector('[data-guestlist-table="replies"]');
   const invitedTableEl = root.querySelector('[data-guestlist-table="invited"]');
+  const hashtagsTableEl = root.querySelector('[data-guestlist-table="hashtags"]');
+  const hashtagsBodyEl = root.querySelector("[data-guestlist-hashtags-body]");
+  const EXTRA_HASHTAGS = [
+    "#CARENtlymarriedtoZAYROL",
+    "#napasagotCARENniZAYROL",
+    "#napayesCARENniZAYROL",
+    "#CARENsweredPrayerofZAYROL",
+    "#CARENtnlyinlovewithZAYROL",
+    "#ZAYROLisCARENtlytaken",
+    "#CARENtImagineLifeWithoutZAYROL",
+    "#CarenZayestoforever",
+    "#CarenfinallyZaYES",
+    "#ZayCarEverAfter",
+  ];
   const statusEl = root.querySelector("[data-guestlist-status]");
   const searchEl = root.querySelector("[data-guestlist-search]");
   const lengthEl = root.querySelector("[data-guestlist-length]");
@@ -97,9 +111,172 @@
   let pageSize = 15;
   let page = 0;
   const GROUPS_KEY = "cz-guest-groups";
+  const WINNER_KEY = "cz-hashtag-winner";
   const picked = new Set();
   let groups = [];
   let groupsStatus = "";
+  let hashtagWinner = "";
+  let hashtagPick = "";
+  const winnerBar = document.createElement("div");
+  winnerBar.className = "guestlist__winner-bar";
+  winnerBar.hidden = true;
+  const saveWinnerEl = document.createElement("button");
+  saveWinnerEl.type = "button";
+  saveWinnerEl.className = "btn btn--primary";
+  saveWinnerEl.textContent = "Save";
+  saveWinnerEl.disabled = true;
+  winnerBar.appendChild(saveWinnerEl);
+  const winnerBanner = document.createElement("div");
+  winnerBanner.className = "guestlist__saved-winner";
+  winnerBanner.hidden = true;
+  const winnerBannerLabel = document.createElement("p");
+  winnerBannerLabel.className = "guestlist__saved-winner-label";
+  winnerBannerLabel.textContent = "Saved winner";
+  const winnerBannerTag = document.createElement("p");
+  winnerBannerTag.className = "guestlist__saved-winner-tag";
+  winnerBanner.append(winnerBannerLabel, winnerBannerTag);
+  const winnerConfirm = document.createElement("dialog");
+  winnerConfirm.className = "seating-dialog";
+  const winnerConfirmPanel = document.createElement("div");
+  winnerConfirmPanel.className = "seating-dialog__panel";
+  const winnerConfirmTitle = document.createElement("h3");
+  winnerConfirmTitle.className = "seating-dialog__title";
+  winnerConfirmTitle.textContent = "Save winner";
+  const winnerConfirmCopy = document.createElement("p");
+  winnerConfirmCopy.className = "seating-dialog__meta";
+  winnerConfirmCopy.textContent = "Save this hashtag as the winner?";
+  const winnerConfirmTag = document.createElement("p");
+  winnerConfirmTag.className = "guestlist__saved-winner-tag";
+  const winnerConfirmActions = document.createElement("div");
+  winnerConfirmActions.className = "seating-dialog__actions";
+  const winnerConfirmNo = document.createElement("button");
+  winnerConfirmNo.type = "button";
+  winnerConfirmNo.className = "btn btn--ghost-ink";
+  winnerConfirmNo.textContent = "Back";
+  const winnerConfirmYes = document.createElement("button");
+  winnerConfirmYes.type = "button";
+  winnerConfirmYes.className = "btn btn--primary";
+  winnerConfirmYes.textContent = "Confirm";
+  winnerConfirmActions.append(winnerConfirmNo, winnerConfirmYes);
+  winnerConfirmPanel.append(winnerConfirmTitle, winnerConfirmCopy, winnerConfirmTag, winnerConfirmActions);
+  winnerConfirm.appendChild(winnerConfirmPanel);
+  const hashtagScrollEl = root.querySelector("[data-guestlist-scroll]");
+  const hashtagPagerEl = root.querySelector(".guestlist__pager");
+  if (hashtagScrollEl && hashtagScrollEl.parentNode) {
+    hashtagScrollEl.parentNode.insertBefore(winnerBanner, hashtagScrollEl);
+  }
+  if (hashtagPagerEl && hashtagPagerEl.parentNode) {
+    hashtagPagerEl.parentNode.insertBefore(winnerBar, hashtagPagerEl);
+  } else if (hashtagScrollEl && hashtagScrollEl.parentNode) {
+    hashtagScrollEl.parentNode.insertBefore(winnerBar, hashtagScrollEl.nextSibling);
+  }
+  root.appendChild(winnerConfirm);
+
+  function pickHashtag(tag) {
+    hashtagPick = hashtagKey(tag);
+    if (hashtagsBodyEl) {
+      hashtagsBodyEl.querySelectorAll("tr").forEach((tr) => {
+        if (tr.classList.contains("guestlist__saved-winner")) return;
+        const button = tr.querySelector(".guestlist__hashtag-pick");
+        if (!button) return;
+        const on = hashtagKey(button.textContent) === hashtagPick;
+        tr.classList.toggle("is-picked", on);
+        button.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+    saveWinnerEl.disabled = !hashtagPick || hashtagPick === hashtagWinner;
+  }
+
+  function showSavedWinner() {
+    const savedTag = view === "hashtags" ? hashtagLabel(hashtagWinner) : "";
+    winnerBanner.hidden = !savedTag;
+    winnerBannerTag.textContent = savedTag;
+  }
+
+  function saveHashtagWinner() {
+    if (!hashtagPick) return;
+    hashtagWinner = hashtagPick;
+    try {
+      localStorage.setItem(WINNER_KEY, hashtagWinner);
+    } catch (e) {}
+    if (hashtagsBodyEl) {
+      hashtagsBodyEl.querySelectorAll(".guestlist__hashtag-pick").forEach((button) => {
+        const tr = button.closest("tr");
+        if (!tr) return;
+        tr.classList.toggle("guestlist__hashtag--winner", hashtagKey(button.textContent) === hashtagWinner);
+      });
+    }
+    saveWinnerEl.disabled = !hashtagPick || hashtagPick === hashtagWinner;
+    showSavedWinner();
+  }
+
+  function openWinnerConfirm() {
+    if (!hashtagPick || hashtagPick === hashtagWinner) return;
+    winnerConfirmTag.textContent = hashtagLabel(hashtagPick);
+    if (typeof winnerConfirm.showModal === "function" && !winnerConfirm.open) winnerConfirm.showModal();
+  }
+
+  saveWinnerEl.addEventListener("click", openWinnerConfirm);
+  winnerConfirmYes.addEventListener("click", () => {
+    if (winnerConfirm.open) winnerConfirm.close();
+    saveHashtagWinner();
+  });
+  winnerConfirmNo.addEventListener("click", () => {
+    if (winnerConfirm.open) winnerConfirm.close();
+  });
+  winnerConfirm.addEventListener("click", (event) => {
+    if (event.target === winnerConfirm) winnerConfirm.close();
+  });
+
+  function hashtagKey(value) {
+    return String(value || "")
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(/^#+/, "")
+      .toLowerCase();
+  }
+
+  function displayHashtag(value) {
+    const text = String(value || "")
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(/^#+/, "");
+    return text ? "#" + text : "";
+  }
+
+  function hashtagRows() {
+    const preset = new Map();
+    EXTRA_HASHTAGS.forEach((tag) => {
+      const key = hashtagKey(tag);
+      if (key && !preset.has(key)) preset.set(key, displayHashtag(tag));
+    });
+    const seen = new Map();
+    rows.forEach((row) => {
+      const key = hashtagKey(row.hashtag);
+      if (!key || seen.has(key)) return;
+      seen.set(key, preset.get(key) || displayHashtag(row.hashtag));
+    });
+    EXTRA_HASHTAGS.forEach((tag) => {
+      const key = hashtagKey(tag);
+      if (!key || seen.has(key)) return;
+      seen.set(key, displayHashtag(tag));
+    });
+    let list = Array.from(seen.values()).map((hashtag) => ({ hashtag: hashtag }));
+    const needle = query.trim().toLowerCase();
+    if (needle) {
+      list = list.filter((row) => row.hashtag.toLowerCase().indexOf(needle) !== -1);
+    }
+    if (sortKey === "hashtag") {
+      list.sort((a, b) => {
+        const left = a.hashtag.toLowerCase();
+        const right = b.hashtag.toLowerCase();
+        if (left < right) return sortDir === "asc" ? -1 : 1;
+        if (left > right) return sortDir === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    return list;
+  }
 
   function guestKey(name) {
     return String(name || "")
@@ -188,8 +365,12 @@
     });
     if (repliesTableEl) repliesTableEl.hidden = view !== "replies";
     if (invitedTableEl) invitedTableEl.hidden = view !== "invited";
+    if (hashtagsTableEl) hashtagsTableEl.hidden = view !== "hashtags";
+    if (winnerBar) winnerBar.hidden = view !== "hashtags";
+    showSavedWinner();
     if (searchEl) {
-      searchEl.placeholder = view === "invited" ? "Name" : "Name, email, mobile, hashtag…";
+      searchEl.placeholder =
+        view === "invited" ? "Name" : view === "hashtags" ? "Hashtag" : "Name, email, mobile, hashtag…";
     }
     root.querySelectorAll("[data-guestlist-stat]").forEach((button) => {
       const selected = view === "invited" && button.getAttribute("data-guestlist-stat") === statusFilter;
@@ -300,7 +481,89 @@
     renderGroups();
   }
 
+  function renderHashtags() {
+    if (!hashtagsBodyEl) return;
+    syncView();
+    if (progressEl) progressEl.hidden = true;
+    const all = hashtagRows();
+    const list = all;
+    const pages = Math.max(1, Math.ceil(list.length / pageSize) || 1);
+    if (page > pages - 1) page = pages - 1;
+    if (page < 0) page = 0;
+    const start = list.length ? page * pageSize : 0;
+    const visible = list.slice(start, start + pageSize);
+    hashtagsBodyEl.replaceChildren();
+    saveWinnerEl.disabled = !hashtagPick || hashtagPick === hashtagWinner;
+    showSavedWinner();
+
+    if (!list.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 1;
+      td.className = "guestlist__empty";
+      td.textContent = query.trim() ? "No hashtags match that search." : "No hashtags yet.";
+      tr.appendChild(td);
+      hashtagsBodyEl.appendChild(tr);
+    } else {
+      visible.forEach((row) => {
+        const tr = document.createElement("tr");
+        const key = hashtagKey(row.hashtag);
+        if (key === hashtagPick) tr.classList.add("is-picked");
+        if (key === hashtagWinner) tr.classList.add("guestlist__hashtag--winner");
+        const td = document.createElement("td");
+        td.setAttribute("data-col", "hashtag");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "guestlist__hashtag-pick";
+        button.textContent = row.hashtag;
+        button.setAttribute("aria-pressed", key === hashtagPick ? "true" : "false");
+        button.addEventListener("click", () => pickHashtag(row.hashtag));
+        td.appendChild(button);
+        tr.appendChild(td);
+        hashtagsBodyEl.appendChild(tr);
+      });
+    }
+
+    const total = list.length;
+    const from = total ? start + 1 : 0;
+    const to = total ? start + visible.length : 0;
+    const unfiltered = query.trim() ? hashtagRowsUnfilteredCount() : total;
+    countEl.textContent = unfiltered === 1 ? "1 hashtag" : unfiltered + " hashtags";
+    if (rangeEl) {
+      rangeEl.textContent = query.trim()
+        ? "Showing " + from + " to " + to + " of " + total + " matches"
+        : "Showing " + from + " to " + to + " of " + total;
+    }
+    if (prevEl) prevEl.disabled = page <= 0 || !total;
+    if (nextEl) nextEl.disabled = page >= pages - 1 || !total;
+    if (groupsEl) groupsEl.hidden = true;
+  }
+
+  function hashtagLabel(key) {
+    if (!key) return "";
+    const saved = query;
+    const savedSort = sortKey;
+    query = "";
+    sortKey = "order";
+    const match = hashtagRows().find((row) => hashtagKey(row.hashtag) === key);
+    query = saved;
+    sortKey = savedSort;
+    return match ? match.hashtag : "";
+  }
+
+  function hashtagRowsUnfilteredCount() {
+    const saved = query;
+    query = "";
+    const count = hashtagRows().length;
+    query = saved;
+    return count;
+  }
+
   function render() {
+    if (view === "hashtags") {
+      renderHashtags();
+      return;
+    }
     if (view === "invited") {
       renderInvited();
       return;
@@ -451,6 +714,7 @@
     button.addEventListener("click", () => {
       const key = button.getAttribute("data-guestlist-sort");
       if (view === "invited" && key !== "guestName" && key !== "rsvp") return;
+      if (view === "hashtags" && key !== "hashtag") return;
       if (view === "replies" && key === "rsvp") return;
       if (sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
       else {
@@ -464,14 +728,17 @@
   root.querySelectorAll("[data-guestlist-view]").forEach((button) => {
     button.addEventListener("click", () => {
       const next = button.getAttribute("data-guestlist-view");
-      if (next !== "replies" && next !== "invited") return;
+      if (next !== "replies" && next !== "invited" && next !== "hashtags") return;
       if (view === next) return;
       view = next;
       page = 0;
-      if (view === "invited") {
+      if (view === "hashtags") {
+        sortKey = "order";
+        sortDir = "asc";
+      } else if (view === "invited") {
         sortKey = "guestName";
         sortDir = "asc";
-      } else if (sortKey === "rsvp") {
+      } else if (sortKey === "rsvp" || sortKey === "order") {
         sortKey = "submittedAt";
         sortDir = "desc";
       }
@@ -882,7 +1149,7 @@
         return;
       }
       refreshing = true;
-      setTableLoading(view === "replies" || view === "invited");
+      setTableLoading(view === "replies" || view === "invited" || view === "hashtags");
       window.clearTimeout(refreshTimer);
       refreshTimer = window.setTimeout(() => {
         rows = result.rows;

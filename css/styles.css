@@ -4086,12 +4086,17 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
 }
 
 .contact-skip input {
+  appearance: none;
+  -webkit-appearance: none;
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   margin: 0;
+  border: 0;
+  background: transparent;
   opacity: 0;
+  cursor: pointer;
 }
 
 .contact-skip__ui {
@@ -4132,7 +4137,8 @@ html.is-rsvp-assist .rsvp__frame > :not(.rsvp-form) {
   outline-offset: 3px;
 }
 
-.field.is-skipped input {
+.field.is-skipped > .email-check input,
+.field.is-skipped > .phone-check input {
   opacity: 0.55;
   cursor: not-allowed;
 }

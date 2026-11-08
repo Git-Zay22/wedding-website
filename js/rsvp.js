@@ -18,6 +18,15 @@
   const phoneCheckEl = form.querySelector("[data-phone-check]");
   const phoneReq = form.querySelector("[data-phone-req]");
   const config = window.RSVP_CONFIG || {};
+  const rsvpCloseAt = new Date(config.rsvpClosesAt || "2026-11-14T23:59:59+08:00").getTime();
+  const rsvpClosed = !Number.isNaN(rsvpCloseAt) && Date.now() > rsvpCloseAt;
+
+  if (rsvpClosed) {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+    return;
+  }
   let editMode = false;
   let editLoaded = false;
   let originalGuestName = "";

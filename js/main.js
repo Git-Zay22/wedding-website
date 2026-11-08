@@ -447,19 +447,34 @@
     setInterval(tick, 1000);
   }
 
-  // RSVP deadline: 7 Nov 2026 end of day, Asia/Manila (UTC+8)
+  // RSVP deadline: end of day Asia/Manila (UTC+8)
+  const rsvpSection = document.getElementById("rsvp");
   const rsvpDeadline = document.querySelector("[data-rsvp-deadline]");
-  if (rsvpDeadline) {
-    const daysEl = rsvpDeadline.querySelector("[data-rsvp-days]");
-    const labelEl = rsvpDeadline.querySelector("[data-rsvp-days-label]");
-    const closeAt = new Date("2026-11-07T23:59:59+08:00").getTime();
+  const rsvpForm = document.getElementById("rsvp-form");
+  const rsvpCloseAt = new Date(
+    (window.RSVP_CONFIG && window.RSVP_CONFIG.rsvpClosesAt) || "2026-11-14T23:59:59+08:00"
+  ).getTime();
+
+  const closeRsvpForm = () => {
+    if (rsvpSection) rsvpSection.classList.add("is-rsvp-closed");
+    if (rsvpDeadline) rsvpDeadline.textContent = "RSVP is now closed.";
+    if (!rsvpForm) return;
+    rsvpForm.setAttribute("aria-hidden", "true");
+    rsvpForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
+      el.disabled = true;
+    });
+  };
+
+  if (rsvpDeadline || rsvpForm) {
+    const daysEl = rsvpDeadline && rsvpDeadline.querySelector("[data-rsvp-days]");
+    const labelEl = rsvpDeadline && rsvpDeadline.querySelector("[data-rsvp-days-label]");
 
     const updateRsvpDays = () => {
-      const remaining = Math.max(0, closeAt - Date.now());
+      const remaining = Math.max(0, rsvpCloseAt - Date.now());
       const days = Math.ceil(remaining / 86400000);
 
       if (days <= 0) {
-        rsvpDeadline.textContent = "RSVP is now closed.";
+        closeRsvpForm();
         return;
       }
 

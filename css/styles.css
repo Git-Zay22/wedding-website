@@ -3599,6 +3599,18 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   color: var(--ink-soft);
 }
 
+#rsvp.is-rsvp-closed .rsvp__intro {
+  display: none;
+}
+
+#rsvp.is-rsvp-closed .rsvp__closes {
+  margin-bottom: 0;
+}
+
+#rsvp.is-rsvp-closed #rsvp-form {
+  display: none;
+}
+
 .rsvp__intro strong {
   color: var(--ink-soft);
   font-weight: 500;

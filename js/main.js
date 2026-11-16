@@ -452,7 +452,7 @@
   const rsvpDeadline = document.querySelector("[data-rsvp-deadline]");
   const rsvpForm = document.getElementById("rsvp-form");
   const rsvpCloseAt = new Date(
-    (window.RSVP_CONFIG && window.RSVP_CONFIG.rsvpClosesAt) || "2026-11-14T23:59:59+08:00"
+    (window.RSVP_CONFIG && window.RSVP_CONFIG.rsvpClosesAt) || "2026-11-21T23:59:59+08:00"
   ).getTime();
 
   const closeRsvpForm = () => {

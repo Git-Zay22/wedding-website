@@ -79,7 +79,7 @@
   let confirmMode = "";
 
   function capacity(kind) {
-    if (kind === "long") return 20;
+    if (kind === "long") return 10;
     if (kind === "couple") return 2;
     return 8;
   }

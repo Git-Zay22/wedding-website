@@ -3447,7 +3447,7 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
 }
 
 .proposals__credit {
-  margin: 1.35rem 0 0;
+  margin: 1.35rem auto 0;
   display: flex;
   flex-direction: column;
   align-items: center;

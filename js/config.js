@@ -5,5 +5,5 @@ window.RSVP_CONFIG = {
   // Used only until Apps Script list returns invitedCount. Remove after that deploy.
   invitedCount: 105,
   // End of day Asia/Manila — after this, the form is closed.
-  rsvpClosesAt: "2026-11-14T23:59:59+08:00",
+  rsvpClosesAt: "2026-11-21T23:59:59+08:00",
 };

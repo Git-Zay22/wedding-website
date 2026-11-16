@@ -500,6 +500,7 @@
     adminBusy = true;
     if (adminConfirm.open) adminConfirm.close();
     setStatus(action === "adminadd" ? "Adding to RSVP…" : "Removing RSVP…");
+    render();
     postAdminRsvp(action, guestName)
       .then((result) => {
         if (!result.ok) {
@@ -514,6 +515,7 @@
         adminBusy = false;
         adminPendingAction = "";
         adminPendingName = "";
+        render();
       });
   }
 

@@ -466,17 +466,31 @@
   }
 
   function refreshAfterAdmin() {
-    return requestList().then((result) => {
-      if (!result.ok) {
-        setStatus(result.error || "Saved, but the list could not refresh. Reload the page.");
-        return;
-      }
-      rows = result.rows;
-      rememberInvited(result);
-      shownKey = rosterKey(rows);
-      setStatus("");
-      render();
-    });
+    window.clearTimeout(refreshTimer);
+    refreshing = true;
+    setTableLoading(true);
+    return Promise.all([requestList(), requestInvited()])
+      .then((results) => {
+        const result = results[0];
+        const invitedResult = results[1];
+        if (!result.ok) {
+          setStatus(result.error || "Saved, but the list could not refresh. Reload the page.");
+          return false;
+        }
+        rows = result.rows;
+        rememberInvited(result);
+        rememberInvitedNames(invitedResult);
+        shownKey = rosterKey(rows);
+        if (invitedResult.ok) invitedKey = invitedResult.names.join("\u001e");
+        setStatus("");
+        render();
+        return true;
+      })
+      .finally(() => {
+        setTableLoading(false);
+        refreshing = false;
+        schedulePoll();
+      });
   }
 
   function runAdminConfirm() {
@@ -492,8 +506,8 @@
           setStatus(result.error || "Could not update that RSVP.");
           return;
         }
-        return refreshAfterAdmin().then(() => {
-          setStatus(action === "adminadd" ? "Added to RSVP." : "Removed from RSVP.");
+        return refreshAfterAdmin().then((ok) => {
+          if (ok) setStatus(action === "adminadd" ? "Added to RSVP." : "Removed from RSVP.");
         });
       })
       .finally(() => {

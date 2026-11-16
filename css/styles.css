@@ -2467,7 +2467,27 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
 }
 
 .guestlist__table--invited {
-  min-width: 28rem;
+  min-width: 36rem;
+}
+
+.guestlist__table--invited th[data-col="actions"],
+.guestlist__table--invited td[data-col="actions"] {
+  width: 10.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.guestlist__admin-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.guestlist__admin-actions .btn {
+  min-height: 2rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.68rem;
 }
 
 .guestlist__table.guestlist__table--hashtags {
@@ -3039,6 +3059,8 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
   .guestlist__table td[data-col="actions"],
   .guestlist__table--invited th[data-col="rsvp"],
   .guestlist__table--invited td[data-col="rsvp"],
+  .guestlist__table--invited th[data-col="actions"],
+  .guestlist__table--invited td[data-col="actions"],
   .guestlist__table--hashtags th[data-col="hashtag"],
   .guestlist__table--hashtags td[data-col="hashtag"],
   .guestlist__table td.guestlist__empty {
@@ -3052,8 +3074,13 @@ html:not(.guestlist-unlocked) .site-nav.is-open a[data-nav-guestlist] {
 
   .guestlist__table--invited th[data-col="rsvp"],
   .guestlist__table--invited td[data-col="rsvp"] {
-    width: 7.5rem;
+    width: 6.5rem;
     text-align: right;
+  }
+
+  .guestlist__table--invited th[data-col="actions"],
+  .guestlist__table--invited td[data-col="actions"] {
+    width: 7.5rem;
   }
 
   .guestlist__table th[data-col="actions"],

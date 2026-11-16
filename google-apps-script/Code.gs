@@ -15,10 +15,13 @@
  *
  * POST actions:
  * - create / update / lookup / list / invited / suggest / seatingload / seatingsave / groupsload / groupssave
+ * - adminadd / adminremove (owners planner: add or delete an admin-marked RSVP row)
  * list returns every saved RSVP and is for the owners page only.
  * suggest returns only invited names that match what was typed.
  * seatingload / seatingsave keep the planner tables for the owners page.
  * groupsload / groupssave keep owner-made name groups for RSVP suggestions.
+ * adminadd writes Name + Attendance Yes + Events Yes + Message "Added by the Admin".
+ * adminremove deletes that row only when Message is still "Added by the Admin".
  *
  * SECURITY: Keep SPREADSHEET_ID, GUEST_LIST, and RSVP_TOKEN only in Apps Script
  * (and RSVP_TOKEN also in Cloudflare Worker secrets). Do not commit real values to GitHub.
@@ -384,7 +387,9 @@ function doPost(e) {
       action !== "seatingload" &&
       action !== "seatingsave" &&
       action !== "groupsload" &&
-      action !== "groupssave"
+      action !== "groupssave" &&
+      action !== "adminadd" &&
+      action !== "adminremove"
     ) {
       var limited = assertRateLimit_(action || "create", data);
       if (limited) return limited;
@@ -410,6 +415,12 @@ function doPost(e) {
     }
     if (action === "groupssave") {
       return saveGuestGroups_(data);
+    }
+    if (action === "adminadd") {
+      return adminAddRsvp_(data);
+    }
+    if (action === "adminremove") {
+      return adminRemoveRsvp_(data);
     }
     if (action === "lookup") {
       return lookupByName_(data);
@@ -461,6 +472,59 @@ function readContact_(data) {
   }
 
   return { email: email, phone: phone, phoneRaw: phoneRaw };
+}
+
+var ADMIN_RSVP_MESSAGE_ = "Added by the Admin";
+
+function adminAddRsvp_(data) {
+  var guestNameRaw = String(data.guestName || "").trim();
+  if (!guestNameRaw) {
+    return json_({ ok: false, error: "Missing required fields." });
+  }
+  var guestName = resolveInvitedGuestName_(guestNameRaw);
+  if (!guestName) {
+    return json_({ ok: false, error: "That name is not on the invited list." });
+  }
+  var sheet = getSheet_();
+  if (findRowByName_(sheet, normalizeName_(guestName))) {
+    return json_({ ok: false, error: "That guest already has an RSVP." });
+  }
+  writeRow_(
+    sheet,
+    sheet.getLastRow() + 1,
+    {
+      attendance: "Yes",
+      events: "Yes",
+      commute: "",
+      allergies: "",
+      message: ADMIN_RSVP_MESSAGE_,
+      hashtag: "",
+      source: "admin",
+      submittedAt: data && data.submittedAt,
+    },
+    guestName,
+    "",
+    ""
+  );
+  return savedJson_(sheet, { ok: true, saved: true, adminAdded: true });
+}
+
+function adminRemoveRsvp_(data) {
+  var guestNameRaw = String(data.guestName || "").trim();
+  if (!guestNameRaw) {
+    return json_({ ok: false, error: "Missing required fields." });
+  }
+  var sheet = getSheet_();
+  var found = findRowByName_(sheet, normalizeName_(guestNameRaw));
+  if (!found || !found.record) {
+    return json_({ ok: false, error: "No RSVP found for that name." });
+  }
+  if (String(found.record.message || "").trim() !== ADMIN_RSVP_MESSAGE_) {
+    return json_({ ok: false, error: "Only RSVPs added by admin can be removed here." });
+  }
+  sheet.deleteRow(found.rowIndex);
+  invalidateSheetCache_(sheet);
+  return savedJson_(sheet, { ok: true, removed: true });
 }
 
 function createRsvp_(data) {

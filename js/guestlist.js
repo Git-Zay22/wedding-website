@@ -112,11 +112,21 @@
   let page = 0;
   const GROUPS_KEY = "cz-guest-groups";
   const WINNER_KEY = "cz-hashtag-winner";
+  const ADMIN_RSVP_MESSAGE = "Added by the Admin";
   const picked = new Set();
   let groups = [];
   let groupsStatus = "";
   let hashtagWinner = "";
   let hashtagPick = "";
+  let adminBusy = false;
+  let adminPendingName = "";
+  let adminPendingAction = "";
+  try {
+    hashtagWinner = localStorage.getItem(WINNER_KEY) || "";
+  } catch (e) {
+    hashtagWinner = "";
+  }
+  hashtagPick = hashtagWinner;
   const winnerBar = document.createElement("div");
   winnerBar.className = "guestlist__winner-bar";
   winnerBar.hidden = true;
@@ -171,6 +181,32 @@
     hashtagScrollEl.parentNode.insertBefore(winnerBar, hashtagScrollEl.nextSibling);
   }
   root.appendChild(winnerConfirm);
+
+  const adminConfirm = document.createElement("dialog");
+  adminConfirm.className = "seating-dialog";
+  const adminConfirmPanel = document.createElement("div");
+  adminConfirmPanel.className = "seating-dialog__panel";
+  const adminConfirmTitle = document.createElement("h3");
+  adminConfirmTitle.className = "seating-dialog__title";
+  adminConfirmTitle.textContent = "Confirm";
+  const adminConfirmCopy = document.createElement("p");
+  adminConfirmCopy.className = "seating-dialog__meta";
+  const adminConfirmName = document.createElement("p");
+  adminConfirmName.className = "guestlist__saved-winner-tag";
+  const adminConfirmActions = document.createElement("div");
+  adminConfirmActions.className = "seating-dialog__actions";
+  const adminConfirmNo = document.createElement("button");
+  adminConfirmNo.type = "button";
+  adminConfirmNo.className = "btn btn--ghost-ink";
+  adminConfirmNo.textContent = "Back";
+  const adminConfirmYes = document.createElement("button");
+  adminConfirmYes.type = "button";
+  adminConfirmYes.className = "btn btn--primary";
+  adminConfirmYes.textContent = "Confirm";
+  adminConfirmActions.append(adminConfirmNo, adminConfirmYes);
+  adminConfirmPanel.append(adminConfirmTitle, adminConfirmCopy, adminConfirmName, adminConfirmActions);
+  adminConfirm.appendChild(adminConfirmPanel);
+  root.appendChild(adminConfirm);
 
   function pickHashtag(tag) {
     hashtagPick = hashtagKey(tag);
@@ -324,6 +360,10 @@
     );
   }
 
+  function isAdminAddedReply(reply) {
+    return !!(reply && String(reply.message || "").trim() === ADMIN_RSVP_MESSAGE);
+  }
+
   function invitedRows() {
     const replies = replyByName();
     const needle = query.trim().toLowerCase();
@@ -332,6 +372,7 @@
       return {
         guestName: name,
         rsvp: reply ? "Registered" : "Not yet",
+        adminAdded: isAdminAddedReply(reply),
       };
     });
     const byStatus =
@@ -379,6 +420,103 @@
     if (groupsEl) groupsEl.hidden = !(view === "invited" && statusFilter === "pending");
   }
 
+  function openAdminConfirm(action, guestName) {
+    if (adminBusy || !guestName) return;
+    adminPendingAction = action;
+    adminPendingName = guestName;
+    if (action === "adminadd") {
+      adminConfirmTitle.textContent = "Add to RSVP";
+      adminConfirmCopy.textContent = "Add this guest to the RSVP sheet as attending?";
+      adminConfirmYes.textContent = "Add";
+    } else {
+      adminConfirmTitle.textContent = "Remove RSVP";
+      adminConfirmCopy.textContent = "Remove this admin-added RSVP from the sheet?";
+      adminConfirmYes.textContent = "Remove";
+    }
+    adminConfirmName.textContent = guestName;
+    if (typeof adminConfirm.showModal === "function" && !adminConfirm.open) adminConfirm.showModal();
+  }
+
+  function postAdminRsvp(action, guestName) {
+    return fetch(url, {
+      method: "POST",
+      mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: action, guestName: guestName }),
+    })
+      .then(async (response) => {
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (e) {
+          data = {};
+        }
+        if (!response.ok || !data || data.ok === false) {
+          return {
+            ok: false,
+            error: data && data.error ? data.error : "Could not update that RSVP.",
+          };
+        }
+        return { ok: true, data: data };
+      })
+      .catch(() => ({ ok: false, error: "Could not reach the RSVP server." }));
+  }
+
+  function refreshAfterAdmin() {
+    return requestList().then((result) => {
+      if (!result.ok) {
+        setStatus(result.error || "Saved, but the list could not refresh. Reload the page.");
+        return;
+      }
+      rows = result.rows;
+      rememberInvited(result);
+      shownKey = rosterKey(rows);
+      setStatus("");
+      render();
+    });
+  }
+
+  function runAdminConfirm() {
+    if (adminBusy || !adminPendingName || !adminPendingAction) return;
+    const action = adminPendingAction;
+    const guestName = adminPendingName;
+    adminBusy = true;
+    if (adminConfirm.open) adminConfirm.close();
+    setStatus(action === "adminadd" ? "Adding to RSVP…" : "Removing RSVP…");
+    postAdminRsvp(action, guestName)
+      .then((result) => {
+        if (!result.ok) {
+          setStatus(result.error || "Could not update that RSVP.");
+          return;
+        }
+        return refreshAfterAdmin().then(() => {
+          setStatus(action === "adminadd" ? "Added to RSVP." : "Removed from RSVP.");
+        });
+      })
+      .finally(() => {
+        adminBusy = false;
+        adminPendingAction = "";
+        adminPendingName = "";
+      });
+  }
+
+  adminConfirmYes.addEventListener("click", runAdminConfirm);
+  adminConfirmNo.addEventListener("click", () => {
+    if (adminConfirm.open) adminConfirm.close();
+    adminPendingAction = "";
+    adminPendingName = "";
+  });
+  adminConfirm.addEventListener("click", (event) => {
+    if (event.target === adminConfirm) {
+      adminConfirm.close();
+      adminPendingAction = "";
+      adminPendingName = "";
+    }
+  });
+
   function renderInvited() {
     if (!invitedBodyEl) return;
     syncView();
@@ -393,7 +531,7 @@
     if (!invitedReady) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 2;
+      td.colSpan = 3;
       td.className = "guestlist__empty";
       td.textContent = invitedError || "Loading the invited list…";
       tr.appendChild(td);
@@ -401,7 +539,7 @@
     } else if (!invitedNames.length) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 2;
+      td.colSpan = 3;
       td.className = "guestlist__empty";
       td.textContent = "No invited guests yet.";
       tr.appendChild(td);
@@ -409,7 +547,7 @@
     } else if (!list.length) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 2;
+      td.colSpan = 3;
       td.className = "guestlist__empty";
       td.textContent = query.trim()
         ? "No guests match that search."
@@ -453,8 +591,29 @@
         badge.className = "guestlist__rsvp " + (row.rsvp === "Registered" ? "guestlist__rsvp--yes" : "guestlist__rsvp--no");
         badge.textContent = row.rsvp;
         statusCell.appendChild(badge);
-        tr.appendChild(nameCell);
-        tr.appendChild(statusCell);
+        const actionCell = document.createElement("td");
+        actionCell.setAttribute("data-col", "actions");
+        const actions = document.createElement("div");
+        actions.className = "guestlist__admin-actions";
+        if (row.rsvp !== "Registered") {
+          const addBtn = document.createElement("button");
+          addBtn.type = "button";
+          addBtn.className = "btn btn--primary";
+          addBtn.textContent = "Add to RSVP";
+          addBtn.disabled = adminBusy;
+          addBtn.addEventListener("click", () => openAdminConfirm("adminadd", row.guestName));
+          actions.appendChild(addBtn);
+        } else if (row.adminAdded) {
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn btn--ghost-ink";
+          removeBtn.textContent = "Remove RSVP";
+          removeBtn.disabled = adminBusy;
+          removeBtn.addEventListener("click", () => openAdminConfirm("adminremove", row.guestName));
+          actions.appendChild(removeBtn);
+        }
+        if (actions.childNodes.length) actionCell.appendChild(actions);
+        tr.append(nameCell, statusCell, actionCell);
         invitedBodyEl.appendChild(tr);
       });
     }

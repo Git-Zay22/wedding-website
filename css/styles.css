@@ -5902,12 +5902,65 @@ body.is-rsvp-loading {
   grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
 }
 
+.seating__toolbar {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.seating__report {
+  border: 0;
+  background: #2f7d4a;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(47, 125, 74, 0.22);
+}
+
+.seating__report:hover {
+  background: #24633a;
+}
+
 .seating__list {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
   align-items: start;
+}
+
+.seating__group {
+  grid-column: 1 / -1;
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.seating-card__number-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.28rem 0.4rem;
+  border: 1px solid rgba(36, 48, 58, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  flex: 0 0 auto;
+}
+
+.seating-card__number-edit input {
+  width: 2.5rem;
+  min-height: 1.6rem;
+  padding: 0.1rem 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: center;
 }
 
 .seating-card--couple {
@@ -5942,6 +5995,7 @@ body.is-rsvp-loading {
 }
 
 .seating-card {
+  position: relative;
   padding: 1rem;
   border: 1px solid var(--tile-border);
   border-radius: var(--radius-md);
@@ -5969,6 +6023,7 @@ body.is-rsvp-loading {
 .seating-card__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
 }
 
@@ -6255,6 +6310,11 @@ body.is-rsvp-loading {
     grid-template-columns: 1fr;
   }
 
+  .seating-card--couple {
+    width: 100%;
+    justify-self: stretch;
+  }
+
   .seating-card--long,
   .seating-card:not(.seating-card--long):not(.seating-card--couple),
   .seating__add {
@@ -6263,8 +6323,34 @@ body.is-rsvp-loading {
 }
 
 @media (max-width: 720px) {
+  .seating__panel {
+    width: min(100% - 1rem, 92rem);
+  }
+
+  .seating__bar {
+    align-items: stretch;
+  }
+
+  .seating__toolbar {
+    margin-top: 0.85rem;
+  }
+
+  .seating__report {
+    width: 100%;
+    min-height: 2.75rem;
+  }
+
+  .seating__group {
+    margin: 0.75rem 0 0.15rem;
+    font-size: 0.7rem;
+  }
+
   .seating__kind-row {
     grid-template-columns: 1fr;
+  }
+
+  .seating-card {
+    padding: 0.9rem 0.85rem;
   }
 
   .seating-card__head,
@@ -6272,14 +6358,63 @@ body.is-rsvp-loading {
     align-items: stretch;
   }
 
+  .seating-card__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .seating-card__title {
+    font-size: clamp(1.35rem, 6vw, 1.7rem);
+    line-height: 1.15;
+    word-break: break-word;
+  }
+
   .seating-card__actions,
   .seating-dialog__actions {
     width: 100%;
   }
 
+  .seating-card__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+
   .seating-card__actions .btn,
   .seating-dialog__actions .btn {
+    width: 100%;
+    min-height: 2.75rem;
+    flex: 0 0 auto;
+  }
+
+  .seating-card__actions .btn:only-child {
+    grid-column: 1 / -1;
+  }
+
+  .seating-card__number-edit {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.35rem 0.55rem;
+    box-sizing: border-box;
+  }
+
+  .seating-card__number-edit input {
+    width: 3.25rem;
+    min-height: 2rem;
+    font-size: 1rem;
+  }
+
+  .seating-card__foot {
+    justify-content: stretch;
+  }
+
+  .seating-card__foot .btn {
     flex: 1 1 auto;
+    min-height: 2.75rem;
   }
 
   .nav-drop {

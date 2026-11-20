@@ -163,11 +163,19 @@
     });
     while (coupleSeats.length < 2) coupleSeats.push(null);
     tables.unshift({ id: "couple", kind: "couple", number: 1, seats: coupleSeats.slice(0, 2) });
-    let number = 1;
-    tables.forEach((table) => {
-      if (table.kind !== "couple") table.number = number++;
+    const couple = tables.filter((table) => table.kind === "couple");
+    const ordered = couple.slice();
+    ["long", "normal"].forEach((kind) => {
+      let number = 1;
+      tables
+        .filter((table) => table.kind === kind)
+        .sort((left, right) => left.number - right.number || String(left.id).localeCompare(String(right.id)))
+        .forEach((table) => {
+          table.number = number++;
+          ordered.push(table);
+        });
     });
-    return { tables: tables };
+    return { tables: ordered };
   }
 
   function loadPlan() {
@@ -342,19 +350,134 @@
     return taken;
   }
 
-  function nextNumber() {
+  function nextNumber(kind) {
     let max = 0;
     plan.tables.forEach((table) => {
-      if (table.kind !== "couple" && table.number > max) max = table.number;
+      if (table.kind === kind && table.number > max) max = table.number;
     });
     return max + 1;
   }
 
   function renumberTables() {
-    let number = 1;
-    plan.tables.forEach((table) => {
-      if (table.kind !== "couple") table.number = number++;
+    ["long", "normal"].forEach((kind) => {
+      let number = 1;
+      plan.tables.forEach((table) => {
+        if (table.kind === kind) table.number = number++;
+      });
     });
+  }
+
+  function sortGuestTables() {
+    const couple = plan.tables.filter((table) => table.kind === "couple");
+    const ordered = couple.slice();
+    ["long", "normal"].forEach((kind) => {
+      plan.tables
+        .filter((table) => table.kind === kind)
+        .sort((left, right) => left.number - right.number || String(left.id).localeCompare(String(right.id)))
+        .forEach((table) => ordered.push(table));
+    });
+    plan.tables = ordered;
+  }
+
+  function swapTableNumber(tableId, nextNumber) {
+    const table = findTable(tableId);
+    if (!table || table.kind === "couple") return;
+    const wanted = Math.floor(Number(nextNumber));
+    const kindCount = plan.tables.filter((item) => item.kind === table.kind).length;
+    if (!Number.isFinite(wanted) || wanted < 1 || wanted > kindCount || wanted === table.number) {
+      renderTables();
+      return;
+    }
+    const other = plan.tables.find(
+      (item) => item.kind === table.kind && item.number === wanted
+    );
+    if (!other) {
+      renderTables();
+      return;
+    }
+    const current = table.number;
+    table.number = wanted;
+    other.number = current;
+    sortGuestTables();
+    savePlan();
+    renderTables();
+  }
+
+  function xmlEscape(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function excelRows(rows) {
+    return rows
+      .map((row) => {
+        const cells = row
+          .map((cell) => '<Cell><Data ss:Type="String">' + xmlEscape(cell) + "</Data></Cell>")
+          .join("");
+        return "<Row>" + cells + "</Row>";
+      })
+      .join("");
+  }
+
+  function buildSeatingWorkbook() {
+    const summary = [
+      ["Label", "Count"],
+      ["Total guests", (totalEl && totalEl.textContent) || ""],
+      ["Registered", (registeredEl && registeredEl.textContent) || ""],
+      ["Unregistered", (unregisteredEl && unregisteredEl.textContent) || ""],
+      ["On a table", (seatedEl && seatedEl.textContent) || ""],
+      ["Not on a table", (unseatedEl && unseatedEl.textContent) || ""],
+      ["Maximum seats", (seatsEl && seatsEl.textContent) || ""],
+      ["Normal tables", (normalEl && normalEl.textContent) || ""],
+      ["Long tables", (longEl && longEl.textContent) || ""],
+    ];
+    const seating = [["Table", "Kind", "Seat", "Guest"]];
+    plan.tables.forEach((table) => {
+      const kind =
+        table.kind === "couple" ? "Groom & Bride" : table.kind === "long" ? "Long" : "Normal";
+      const label = tableLabel(table);
+      table.seats.forEach((seat, index) => {
+        seating.push([
+          label,
+          kind,
+          String(index + 1),
+          seat && seat.name ? seat.name : seat && seat.key ? "Guest" : "Empty",
+        ]);
+      });
+    });
+    const sheet = (name, rows) =>
+      '<Worksheet ss:Name="' +
+      xmlEscape(name) +
+      '"><Table>' +
+      excelRows(rows) +
+      "</Table></Worksheet>";
+    return (
+      '<?xml version="1.0"?>' +
+      '<?mso-application progid="Excel.Sheet"?>' +
+      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
+      'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+      sheet("Summary", summary) +
+      sheet("Seating", seating) +
+      "</Workbook>"
+    );
+  }
+
+  function downloadSeatingReport() {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([buildSeatingWorkbook()], {
+      type: "application/vnd.ms-excel;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "seating-report-" + stamp + ".xls";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function openCount(table) {
@@ -396,14 +519,16 @@
       return;
     }
 
-    const ordered = ["couple", "long", "normal"].reduce((list, kind) => {
-      plan.tables.forEach((table) => {
-        if (table.kind === kind) list.push(table);
-      });
-      return list;
-    }, []);
+    let lastKind = "";
+    plan.tables.forEach((table) => {
+      if (table.kind !== "couple" && table.kind !== lastKind) {
+        const group = document.createElement("p");
+        group.className = "seating__group";
+        group.textContent = table.kind === "long" ? "Long tables" : "Normal tables";
+        listEl.appendChild(group);
+        lastKind = table.kind;
+      }
 
-    ordered.forEach((table) => {
       const card = document.createElement("article");
       card.className = "seating-card" + (table.kind === "long" ? " seating-card--long" : "") + (table.kind === "couple" ? " seating-card--couple" : "");
 
@@ -430,6 +555,26 @@
         removeTable.textContent = "Delete table";
         removeTable.addEventListener("click", () => openDelete(table.id));
         actions.appendChild(removeTable);
+
+        const numberField = document.createElement("label");
+        numberField.className = "seating-card__number-edit";
+        const numberPrefix = document.createElement("span");
+        numberPrefix.textContent = "#";
+        const numberInput = document.createElement("input");
+        numberInput.type = "number";
+        numberInput.min = "1";
+        numberInput.max = String(plan.tables.filter((item) => item.kind === table.kind).length);
+        numberInput.value = String(table.number);
+        numberInput.setAttribute("aria-label", "Table number");
+        numberInput.addEventListener("change", () => swapTableNumber(table.id, numberInput.value));
+        numberInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            numberInput.blur();
+          }
+        });
+        numberField.append(numberPrefix, numberInput);
+        actions.appendChild(numberField);
       }
       head.append(title, actions);
 
@@ -541,9 +686,10 @@
     plan.tables.push({
       id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       kind: type,
-      number: nextNumber(),
+      number: nextNumber(type),
       seats: Array.from({ length: capacity(type) }, () => null),
     });
+    sortGuestTables();
     savePlan();
     kindsEl.hidden = true;
     renderTables({ follow: true });
@@ -739,6 +885,9 @@
   addBtn.addEventListener("click", () => {
     kindsEl.hidden = !kindsEl.hidden;
   });
+
+  const reportBtn = root.querySelector("[data-seating-report]");
+  if (reportBtn) reportBtn.addEventListener("click", downloadSeatingReport);
 
   root.querySelectorAll("[data-seating-kind]").forEach((button) => {
     button.addEventListener("click", () => addTable(button.getAttribute("data-seating-kind")));

@@ -164,18 +164,18 @@
     while (coupleSeats.length < 2) coupleSeats.push(null);
     tables.unshift({ id: "couple", kind: "couple", number: 1, seats: coupleSeats.slice(0, 2) });
     const couple = tables.filter((table) => table.kind === "couple");
-    const ordered = couple.slice();
+    const guests = [];
     ["long", "normal"].forEach((kind) => {
-      let number = 1;
       tables
         .filter((table) => table.kind === kind)
         .sort((left, right) => left.number - right.number || String(left.id).localeCompare(String(right.id)))
-        .forEach((table) => {
-          table.number = number++;
-          ordered.push(table);
-        });
+        .forEach((table) => guests.push(table));
     });
-    return { tables: ordered };
+    let number = 1;
+    guests.forEach((table) => {
+      table.number = number++;
+    });
+    return { tables: couple.concat(guests) };
   }
 
   function loadPlan() {
@@ -350,20 +350,18 @@
     return taken;
   }
 
-  function nextNumber(kind) {
+  function nextNumber() {
     let max = 0;
     plan.tables.forEach((table) => {
-      if (table.kind === kind && table.number > max) max = table.number;
+      if (table.kind !== "couple" && table.number > max) max = table.number;
     });
     return max + 1;
   }
 
   function renumberTables() {
-    ["long", "normal"].forEach((kind) => {
-      let number = 1;
-      plan.tables.forEach((table) => {
-        if (table.kind === kind) table.number = number++;
-      });
+    let number = 1;
+    plan.tables.forEach((table) => {
+      if (table.kind !== "couple") table.number = number++;
     });
   }
 
@@ -379,18 +377,16 @@
     plan.tables = ordered;
   }
 
-  function swapTableNumber(tableId, nextNumber) {
+  function swapTableNumber(tableId, nextNumberValue) {
     const table = findTable(tableId);
     if (!table || table.kind === "couple") return;
-    const wanted = Math.floor(Number(nextNumber));
-    const kindCount = plan.tables.filter((item) => item.kind === table.kind).length;
-    if (!Number.isFinite(wanted) || wanted < 1 || wanted > kindCount || wanted === table.number) {
+    const wanted = Math.floor(Number(nextNumberValue));
+    const guestCount = plan.tables.filter((item) => item.kind !== "couple").length;
+    if (!Number.isFinite(wanted) || wanted < 1 || wanted > guestCount || wanted === table.number) {
       renderTables();
       return;
     }
-    const other = plan.tables.find(
-      (item) => item.kind === table.kind && item.number === wanted
-    );
+    const other = plan.tables.find((item) => item.kind !== "couple" && item.number === wanted);
     if (!other) {
       renderTables();
       return;
@@ -423,45 +419,28 @@
   }
 
   function buildSeatingWorkbook() {
-    const summary = [
-      ["Label", "Count"],
-      ["Total guests", (totalEl && totalEl.textContent) || ""],
-      ["Registered", (registeredEl && registeredEl.textContent) || ""],
-      ["Unregistered", (unregisteredEl && unregisteredEl.textContent) || ""],
-      ["On a table", (seatedEl && seatedEl.textContent) || ""],
-      ["Not on a table", (unseatedEl && unseatedEl.textContent) || ""],
-      ["Maximum seats", (seatsEl && seatsEl.textContent) || ""],
-      ["Normal tables", (normalEl && normalEl.textContent) || ""],
-      ["Long tables", (longEl && longEl.textContent) || ""],
-    ];
-    const seating = [["Table", "Kind", "Seat", "Guest"]];
-    plan.tables.forEach((table) => {
-      const kind =
-        table.kind === "couple" ? "Groom & Bride" : table.kind === "long" ? "Long" : "Normal";
-      const label = tableLabel(table);
-      table.seats.forEach((seat, index) => {
-        seating.push([
-          label,
-          kind,
-          String(index + 1),
-          seat && seat.name ? seat.name : seat && seat.key ? "Guest" : "Empty",
-        ]);
-      });
+    const seating = [];
+    plan.tables.forEach((table, tableIndex) => {
+      if (tableIndex > 0) seating.push([""]);
+      seating.push([tableLabel(table)]);
+      seating.push([""]);
+      const names = table.seats
+        .map((seat) => (seat && seat.name ? seat.name : seat && seat.key ? "Guest" : ""))
+        .filter((name) => name);
+      if (names.length) {
+        names.forEach((name) => seating.push([name]));
+      } else {
+        seating.push(["(empty)"]);
+      }
     });
-    const sheet = (name, rows) =>
-      '<Worksheet ss:Name="' +
-      xmlEscape(name) +
-      '"><Table>' +
-      excelRows(rows) +
-      "</Table></Worksheet>";
     return (
       '<?xml version="1.0"?>' +
       '<?mso-application progid="Excel.Sheet"?>' +
       '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
       'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
-      sheet("Summary", summary) +
-      sheet("Seating", seating) +
-      "</Workbook>"
+      '<Worksheet ss:Name="Seating"><Table>' +
+      excelRows(seating) +
+      "</Table></Worksheet></Workbook>"
     );
   }
 
@@ -563,7 +542,7 @@
         const numberInput = document.createElement("input");
         numberInput.type = "number";
         numberInput.min = "1";
-        numberInput.max = String(plan.tables.filter((item) => item.kind === table.kind).length);
+        numberInput.max = String(plan.tables.filter((item) => item.kind !== "couple").length);
         numberInput.value = String(table.number);
         numberInput.setAttribute("aria-label", "Table number");
         numberInput.addEventListener("change", () => swapTableNumber(table.id, numberInput.value));
@@ -686,7 +665,7 @@
     plan.tables.push({
       id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       kind: type,
-      number: nextNumber(type),
+      number: nextNumber(),
       seats: Array.from({ length: capacity(type) }, () => null),
     });
     sortGuestTables();
